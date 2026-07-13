@@ -1,0 +1,24 @@
+# OS noise
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+out/
+mobile/dist/
+mobile/.expo/
+mobile/android/
+mobile/ios/
+
+# Secrets & server-local state — never in the repo
+.env
+*.env
+!*.env.example
+server/uploads/
+
+# Archives / scratch
+server.zip
+*.log
+scratch.js

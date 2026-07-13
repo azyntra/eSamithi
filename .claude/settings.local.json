@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "WebSearch",
+      "Bash(command -v wine wine64)",
+      "Bash(npx expo *)",
+      "Bash(npm i *)",
+      "Bash(echo \"tsc exit: $?\")",
+      "Bash(tee /private/tmp/claude-501/-Volumes-Data-eSamithi/5e21abd3-ba77-42bb-920e-2580d30509a3/scratchpad/expo-start.log)",
+      "Bash(curl -s http://localhost:8081/status)",
+      "Bash(xcrun simctl *)",
+      "Bash(osascript)",
+      "Bash(echo \"mobile tsc exit: $?\")",
+      "Bash(node --check server/routes/members.routes.js)",
+      "Bash(node --check server/routes/me.routes.js)",
+      "Bash(node --check server/routes/memberAuth.routes.js)",
+      "Bash(pkill -f \"expo start\")",
+      "Bash(tee /private/tmp/claude-501/-Volumes-Data-eSamithi/5e21abd3-ba77-42bb-920e-2580d30509a3/scratchpad/expo3.log)",
+      "Bash(curl -s --max-time 3 http://localhost:8081/status)",
+      "Bash(tee /private/tmp/claude-501/-Volumes-Data-eSamithi/5e21abd3-ba77-42bb-920e-2580d30509a3/scratchpad/expo4.log)",
+      "Bash(ssh -o BatchMode=yes -o ConnectTimeout=6 root@212.227.103.150 'echo SSH-OK')",
+      "Bash(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=6 root@212.227.103.150 'echo SSH-OK')",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" --max-time 8 http://212.227.103.150/api/v1/health)",
+      "Bash(curl -s --max-time 8 http://212.227.103.150/api/v1/health)",
+      "Bash(grep -vE \"^\\\\s*$\")",
+      "Bash(tee /private/tmp/claude-501/-Volumes-Data-eSamithi/5e21abd3-ba77-42bb-920e-2580d30509a3/scratchpad/expo7.log)",
+      "Bash(python3 -c ' *)",
+      "Bash(echo \"web tsc exit: $?\")",
+      "Bash(env -u ELECTRON_RUN_AS_NODE npm run build)",
+      "Bash(node --check server/server.js)",
+      "Bash(node --check server/routes/events.routes.js)",
+      "Bash(node --check server/db.js)",
+      "Bash(~/Library/Android/sdk/platform-tools/adb shell *)",
+      "Bash(~/Library/Android/sdk/platform-tools/adb exec-out *)",
+      "Bash(npm install *)",
+      "Bash(cd /Volumes/Data/eSamithi/mobile && rm \"src/app/\\(tabs\\)/market.tsx\" \"src/app/market/[id].tsx\" src/app/new-listing.tsx src/app/my-listings.tsx && rmdir src/app/market && echo \"old screens removed\")"
+    ],
+    "additionalDirectories": [
+      "/Volumes/Data/eSamithi/src/app/market"
+    ]
+  }
+}
