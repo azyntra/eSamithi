@@ -41,7 +41,7 @@ export default function SettingsPage({ user }: SettingsPageProps): React.ReactEl
   const [savingUser, setSavingUser] = useState(false)
 
   // Samithi connection (multi-samithi; change is admin-only)
-  const [samithiState, setSamithiState] = useState<{ code: string | null; name: string | null } | null>(null)
+  const [samithiState, setSamithiState] = useState<{ code: string | null; name: string | null; api_url: string | null } | null>(null)
   const [newSamithiCode, setNewSamithiCode] = useState('')
   const [changingSamithi, setChangingSamithi] = useState(false)
 
@@ -67,7 +67,7 @@ export default function SettingsPage({ user }: SettingsPageProps): React.ReactEl
   useEffect(() => {
     window.api.setup
       ?.getState?.()
-      .then((s) => setSamithiState({ code: s.code, name: s.name }))
+      .then((s) => setSamithiState({ code: s.code, name: s.name, api_url: s.api_url }))
       .catch(() => setSamithiState(null))
   }, [])
 
@@ -585,14 +585,16 @@ export default function SettingsPage({ user }: SettingsPageProps): React.ReactEl
             </div>
           </div>
 
-          {/* Samithi connection (multi-samithi) */}
-          {samithiState?.code && (
+          {/* Samithi connection (multi-samithi). Machines configured before
+              join codes existed show their server URL instead. */}
+          {samithiState?.api_url && (
             <div style={{ padding: '20px', background: 'var(--bg-page)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', marginBottom: '24px' }}>
               <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
                 {t('settings.samithiSection')}
               </h4>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 12px' }}>
-                {samithiState.name} · <span style={{ fontFamily: 'monospace' }}>{samithiState.code}</span>
+                {samithiState.name || samithiState.api_url}
+                {samithiState.code && <> · <span style={{ fontFamily: 'monospace' }}>{samithiState.code}</span></>}
               </p>
               {isAdmin && (
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
