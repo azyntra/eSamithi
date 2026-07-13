@@ -1,0 +1,85 @@
+name: API
+
+on:
+  push:
+    branches: [main]
+    paths: ['server/**', '.github/workflows/api.yml']
+  pull_request:
+    paths: ['server/**', '.github/workflows/api.yml']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: citest
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "mysql -h127.0.0.1 -uroot -pcitest -e 'SELECT 1'"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Tenant isolation unit tests (no DB)
+        working-directory: server
+        run: node --test 'test/*.test.js'
+
+      - name: Migration runner from zero (two fake tenants)
+        working-directory: server
+        env:
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASSWORD: citest
+          TENANTS_FILE: ${{ github.workspace }}/server/test/fixtures/tenants.ci.json
+        run: |
+          mysql -h127.0.0.1 -uroot -pcitest -e \
+            "CREATE DATABASE IF NOT EXISTS esamithi_ci1; CREATE DATABASE IF NOT EXISTS esamithi_ci2;"
+          node migrate.js
+
+      - name: End-to-end cross-tenant smoke (real API + MySQL)
+        run: bash server/test/ci-e2e.sh
+
+  deploy-testbed:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: testbed
+    concurrency: testbed-deploy
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install SSH key
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.TESTBED_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Push server code
+        run: |
+          tar -C server --exclude node_modules --exclude uploads --exclude .env -cf - . \
+            | ssh -o StrictHostKeyChecking=accept-new root@212.227.103.150 'tar -C /opt/server -xf -'
+
+      - name: Rebuild API, migrate all tenants, health check
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new root@212.227.103.150 '
+            set -e
+            cd /opt/esamithi
+            docker compose up -d --build api
+            for i in $(seq 1 30); do curl -sf http://localhost/api/v1/health >/dev/null && break; sleep 2; done
+            docker compose exec -T api node migrate.js
+            curl -sf "http://localhost/api/v1/health?deep=1"
+          '

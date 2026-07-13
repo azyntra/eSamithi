@@ -841,7 +841,26 @@ export const en = {
   'msg.pkExpiryTitle': 'Post expiry period',
   'msg.pkExpiryHint': 'Days a post stays active before it must be renewed (1–365).',
   'msg.pkExpirySaved': 'Expiry period saved',
-  'msg.pkExpiryInvalid': 'Enter a number of days between 1 and 365'
+  'msg.pkExpiryInvalid': 'Enter a number of days between 1 and 365',
+  'setup.title': 'Connect your samithi',
+  'setup.intro': 'Enter the samithi code provided by eSamithi to set up this computer. You only do this once.',
+  'setup.codeLabel': 'Samithi code',
+  'setup.codePlaceholder': 'e.g. TST-2481',
+  'setup.check': 'Find samithi',
+  'setup.checking': 'Checking…',
+  'setup.foundIntro': 'This computer will connect to:',
+  'setup.continue': 'Continue to sign in',
+  'setup.changeCode': 'Use a different code',
+  'setup.errCode': 'Please enter your samithi code',
+  'setup.errResolve': 'Could not find that samithi. Check the code and your connection.',
+  'setup.help': 'The code is on your society\'s welcome letter',
+  'settings.samithiSection': 'Samithi connection',
+  'settings.samithiCodePlaceholder': 'New samithi code',
+  'settings.changeSamithi': 'Change samithi',
+  'settings.samithiChanging': 'Changing…',
+  'settings.samithiChanged': 'Connected to {name}. Restarting…',
+  'settings.samithiChangeFailed': 'Could not change the samithi',
+  'settings.changeSamithiWarn': 'Changing reconnects this computer to a different society — you will need to sign in again.'
 }
 
 export type TranslationKey = keyof typeof en

@@ -8,7 +8,9 @@ node_modules/
 dist/
 out/
 mobile/dist/
-mobile/.expo/
+# typed-routes snapshot stays tracked so CI can typecheck without Metro
+mobile/.expo/*
+!mobile/.expo/types/
 mobile/android/
 mobile/ios/
 
@@ -22,3 +24,8 @@ server/uploads/
 server.zip
 *.log
 scratch.js
+
+# App binaries (EAS build downloads)
+*.apk
+*.aab
+*.ipa

@@ -28,7 +28,7 @@ router.post('/login', async (req, res, next) => {
     }
 
     const user = rows[0];
-    const token = generateToken(user);
+    const token = generateToken(user, req.tenant);
 
     res.json({ success: true, user, token });
   } catch (err) {

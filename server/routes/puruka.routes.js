@@ -18,13 +18,20 @@ const MAX_ACTIVE_PER_MEMBER = 5;
 const SOLD_VISIBLE_DAYS = 7;
 const PAGE_SIZE = 20;
 
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads', 'puruka');
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+// Photos live under uploads/<tenant>/puruka/ so each samithi's files can be
+// backed up, restored, or moved on their own.
+const UPLOADS_ROOT = path.join(__dirname, '..', 'uploads');
+
+function tenantUploadDir(tenant) {
+  const dir = path.join(UPLOADS_ROOT, tenant, 'puruka');
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
 
 const EXT_BY_MIME = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
 const upload = multer({
   storage: multer.diskStorage({
-    destination: UPLOAD_DIR,
+    destination: (req, _file, cb) => cb(null, tenantUploadDir(req.tenant)),
     filename: (_req, file, cb) => {
       cb(null, crypto.randomBytes(16).toString('hex') + (EXT_BY_MIME[file.mimetype] || '.jpg'));
     }
@@ -54,7 +61,7 @@ async function sweepExpired(pool) {
   await pool.query("UPDATE puruka_posts SET status = 'Inactive' WHERE status = 'Active' AND expires_at < CURDATE()");
 }
 
-async function attachPhotos(pool, posts) {
+async function attachPhotos(pool, posts, tenant) {
   if (posts.length === 0) return posts;
   const ids = posts.map(p => p.id);
   const [photos] = await pool.query(
@@ -64,7 +71,7 @@ async function attachPhotos(pool, posts) {
   const byPost = new Map();
   for (const p of photos) {
     if (!byPost.has(p.post_id)) byPost.set(p.post_id, []);
-    byPost.get(p.post_id).push(`/api/v1/uploads/puruka/${p.filename}`);
+    byPost.get(p.post_id).push(`/api/v1/uploads/${tenant}/puruka/${p.filename}`);
   }
   return posts.map(p => ({ ...p, photos: byPost.get(p.id) || [] }));
 }
@@ -133,7 +140,7 @@ router.get('/', async (req, res, next) => {
     `, [...params, PAGE_SIZE + 1, (page - 1) * PAGE_SIZE]);
 
     const hasMore = rows.length > PAGE_SIZE;
-    const items = await attachPhotos(pool, rows.slice(0, PAGE_SIZE).map(serialize));
+    const items = await attachPhotos(pool, rows.slice(0, PAGE_SIZE).map(serialize), req.tenant);
     res.json({ items, page, has_more: hasMore });
   } catch (err) { next(err); }
 });
@@ -150,7 +157,7 @@ router.get('/mine', async (req, res, next) => {
       WHERE p.member_id = ? AND p.status != 'Deleted'
       ORDER BY p.created_at DESC, p.id DESC
     `, [req.member.id]);
-    res.json(await attachPhotos(pool, rows.map(serialize)));
+    res.json(await attachPhotos(pool, rows.map(serialize), req.tenant));
   } catch (err) { next(err); }
 });
 
@@ -173,7 +180,7 @@ router.get('/:id', async (req, res, next) => {
       throw httpError('Post not found', 404);
     }
 
-    const [withPhotos] = await attachPhotos(pool, [serialize(row)]);
+    const [withPhotos] = await attachPhotos(pool, [serialize(row)], req.tenant);
     res.json({ ...withPhotos, is_owner: isOwner });
   } catch (err) { next(err); }
 });

@@ -1,0 +1,16 @@
+{
+  "TST-2481": {
+    "slug": "test01",
+    "name": "eSamithi Test Samithi",
+    "api_url": "http://212.227.103.150/api/v1",
+    "status": "active",
+    "min_app_version": "1.1.0"
+  },
+  "DEM-9034": {
+    "slug": "demo02",
+    "name": "Demo Samithi",
+    "api_url": "http://212.227.103.150/api/v1",
+    "status": "active",
+    "min_app_version": "1.1.0"
+  }
+}

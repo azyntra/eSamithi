@@ -58,6 +58,10 @@ const api = {
       return () => ipcRenderer.removeListener('auth:session-expired', handler)
     }
   },
+  setup: {
+    getState: () => invoke('setup:getState'),
+    resolve: (code: string) => invoke('setup:resolve', code)
+  },
   network: {
     ping: () => invoke('network:ping'),
     onOffline: (callback: () => void) => {

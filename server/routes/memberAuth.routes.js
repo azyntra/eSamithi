@@ -15,12 +15,15 @@ const REFRESH_TOKEN_DAYS = 30;
 const MAX_PIN_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
-// Brute-force guard on the identity/PIN endpoints (per IP)
+// Brute-force guard on the identity/PIN endpoints. Keyed by IP + samithi so
+// one samithi's lockout never affects members of another behind the same IP.
+const { ipKeyGenerator } = rateLimit;
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => `${ipKeyGenerator(req.ip)}|${req.tenant || ''}`,
   message: { error: 'Too many attempts. Please try again later.' }
 });
 
@@ -32,12 +35,12 @@ function sha256(s) {
   return crypto.createHash('sha256').update(s).digest('hex');
 }
 
-function signEnrollToken(memberId) {
-  return jwt.sign({ member_id: memberId, typ: 'enroll' }, process.env.JWT_SECRET, { expiresIn: ENROLL_TOKEN_TTL });
+function signEnrollToken(memberId, tenant) {
+  return jwt.sign({ member_id: memberId, typ: 'enroll', sam: tenant }, process.env.JWT_SECRET, { expiresIn: ENROLL_TOKEN_TTL });
 }
 
-function signAccessToken(memberId) {
-  return jwt.sign({ member_id: memberId, typ: 'member' }, process.env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
+function signAccessToken(memberId, tenant) {
+  return jwt.sign({ member_id: memberId, typ: 'member', sam: tenant }, process.env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
 }
 
 async function issueRefreshToken(runner, memberId) {
@@ -83,7 +86,7 @@ async function verifyIdentityHandler(req, res, next) {
     const enabled = member.app_enabled === null || Number(member.app_enabled) === 1;
     if (!active || !enabled) return res.status(401).json(VERIFY_FAILED);
 
-    res.json({ success: true, enroll_token: signEnrollToken(member.id) });
+    res.json({ success: true, enroll_token: signEnrollToken(member.id, req.tenant) });
   } catch (err) { next(err); }
 }
 
@@ -111,7 +114,7 @@ router.post('/set-pin', enrollAuthMiddleware, async (req, res, next) => {
     await pool.query('UPDATE member_refresh_tokens SET revoked_at = NOW() WHERE member_id = ? AND revoked_at IS NULL', [req.member.id]);
 
     const refreshToken = await issueRefreshToken(pool, req.member.id);
-    res.json({ success: true, token: signAccessToken(req.member.id), refresh_token: refreshToken });
+    res.json({ success: true, token: signAccessToken(req.member.id, req.tenant), refresh_token: refreshToken });
   } catch (err) { next(err); }
 });
 
@@ -157,7 +160,7 @@ router.post('/login', authLimiter, async (req, res, next) => {
 
     await pool.query('UPDATE members SET failed_pin_attempts = 0, pin_locked_until = NULL WHERE id = ?', [member.id]);
     const refreshToken = await issueRefreshToken(pool, member.id);
-    res.json({ success: true, token: signAccessToken(member.id), refresh_token: refreshToken });
+    res.json({ success: true, token: signAccessToken(member.id, req.tenant), refresh_token: refreshToken });
   } catch (err) { next(err); }
 });
 
@@ -185,7 +188,7 @@ router.post('/refresh', async (req, res, next) => {
     // Rotation: the presented token is spent whether or not anything else fails
     await pool.query('UPDATE member_refresh_tokens SET revoked_at = NOW() WHERE id = ?', [row.id]);
     const refreshToken = await issueRefreshToken(pool, row.member_id);
-    res.json({ success: true, token: signAccessToken(row.member_id), refresh_token: refreshToken });
+    res.json({ success: true, token: signAccessToken(row.member_id, req.tenant), refresh_token: refreshToken });
   } catch (err) { next(err); }
 });
 

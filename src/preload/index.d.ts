@@ -96,6 +96,10 @@ interface ElectronAPI {
     logout: () => Promise<{ success: boolean }>
     onSessionExpired: (callback: () => void) => () => void
   }
+  setup: {
+    getState: () => Promise<{ configured: boolean; code: string | null; name: string | null; api_url: string | null }>
+    resolve: (code: string) => Promise<{ slug: string; name: string; api_url: string }>
+  }
   network: {
     ping: () => Promise<boolean>
     onOffline: (callback: () => void) => () => void

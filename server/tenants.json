@@ -1,0 +1,4 @@
+{
+  "test01": { "name": "eSamithi Test Samithi", "db": "esamithi", "status": "active" },
+  "demo02": { "name": "Demo Samithi", "db": "esamithi_demo02", "status": "active" }
+}

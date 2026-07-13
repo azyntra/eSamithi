@@ -40,6 +40,11 @@ export default function SettingsPage({ user }: SettingsPageProps): React.ReactEl
   const [userFormError, setUserFormError] = useState('')
   const [savingUser, setSavingUser] = useState(false)
 
+  // Samithi connection (multi-samithi; change is admin-only)
+  const [samithiState, setSamithiState] = useState<{ code: string | null; name: string | null } | null>(null)
+  const [newSamithiCode, setNewSamithiCode] = useState('')
+  const [changingSamithi, setChangingSamithi] = useState(false)
+
   // Updater state
   const [appVersion, setAppVersion] = useState('')
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error'>('idle')
@@ -58,6 +63,27 @@ export default function SettingsPage({ user }: SettingsPageProps): React.ReactEl
       fetchUsers()
     }
   }, [activeTab, isAdmin])
+
+  useEffect(() => {
+    window.api.setup
+      ?.getState?.()
+      .then((s) => setSamithiState({ code: s.code, name: s.name }))
+      .catch(() => setSamithiState(null))
+  }, [])
+
+  const handleChangeSamithi = async (): Promise<void> => {
+    if (!newSamithiCode.trim() || changingSamithi) return
+    setChangingSamithi(true)
+    try {
+      const record = await window.api.setup.resolve(newSamithiCode)
+      showToast('success', t('settings.samithiChanged', { name: record.name }))
+      // New samithi = new server/tenant: current session and caches are stale
+      setTimeout(() => window.location.reload(), 1200)
+    } catch (err: any) {
+      showToast('error', err?.message || t('settings.samithiChangeFailed'))
+      setChangingSamithi(false)
+    }
+  }
 
   // Load app version and listen for update events
   useEffect(() => {
@@ -558,6 +584,34 @@ export default function SettingsPage({ user }: SettingsPageProps): React.ReactEl
               </span>
             </div>
           </div>
+
+          {/* Samithi connection (multi-samithi) */}
+          {samithiState?.code && (
+            <div style={{ padding: '20px', background: 'var(--bg-page)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', marginBottom: '24px' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                {t('settings.samithiSection')}
+              </h4>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 12px' }}>
+                {samithiState.name} · <span style={{ fontFamily: 'monospace' }}>{samithiState.code}</span>
+              </p>
+              {isAdmin && (
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    style={{ maxWidth: '200px' }}
+                    placeholder={t('settings.samithiCodePlaceholder')}
+                    value={newSamithiCode}
+                    onChange={(e) => setNewSamithiCode(e.target.value.toUpperCase())}
+                  />
+                  <button className="btn btn-secondary" onClick={handleChangeSamithi} disabled={changingSamithi || !newSamithiCode.trim()}>
+                    {changingSamithi ? t('settings.samithiChanging') : t('settings.changeSamithi')}
+                  </button>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{t('settings.changeSamithiWarn')}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Update Section */}
           <div style={{ padding: '20px', background: 'var(--bg-page)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>

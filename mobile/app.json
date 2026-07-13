@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "eSamithi",
+    "slug": "esamithi-member",
+    "version": "1.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "esamithi",
+    "userInterfaceStyle": "automatic",
+    "extra": {
+      "apiEnv": "testbed",
+      "apiUrls": {
+        "prod": "http://141.147.75.132/api/v1",
+        "testbed": "http://212.227.103.150/api/v1"
+      },
+      "samithis": {
+        "testbed": "test01"
+      },
+      "directoryUrl": "http://212.227.103.150/directory",
+      "router": {},
+      "eas": {
+        "projectId": "741f24ff-0b1b-4b30-8034-08f7a6f8d7eb"
+      }
+    },
+    "ios": {
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "lk.esamithi.member",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
+    },
+    "android": {
+      "package": "lk.esamithi.member",
+      "adaptiveIcon": {
+        "backgroundColor": "#1E6FD0",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#208AEF",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "owner": "azyntra-technologies"
+  }
+}

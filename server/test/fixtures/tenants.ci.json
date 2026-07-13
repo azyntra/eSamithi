@@ -1,0 +1,5 @@
+{
+  "ci1": { "name": "CI Tenant One", "db": "esamithi_ci1", "status": "active" },
+  "ci2": { "name": "CI Tenant Two", "db": "esamithi_ci2", "status": "active" },
+  "gone03": { "name": "Suspended Tenant", "db": "esamithi_gone03", "status": "suspended" }
+}

@@ -1,0 +1,72 @@
+# eSamithi testbed stack (multi-samithi plan §3.2, minus TLS/directory/backup —
+# those arrive with the domain). Lives at /opt/esamithi on the server.
+#
+# First-time cutover from pm2: bash migrate-to-docker.sh (same directory).
+# Day-to-day: docker compose up -d --build api   (after copying new server code)
+services:
+  nginx:
+    image: nginx:1.27
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+      - ./updates:/srv/updates:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      directory:
+        condition: service_healthy
+    restart: unless-stopped
+
+  directory:
+    build:
+      context: /opt/directory
+    volumes:
+      - ./directory.json:/app/directory.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: /opt/server
+    env_file: .env
+    environment:
+      TENANTS_FILE: /etc/esamithi/tenants.json
+    volumes:
+      - ./tenants.json:/etc/esamithi/tenants.json:ro
+      - /opt/server/uploads:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/v1/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.4
+    command: --gtid-mode=ON --enforce-gtid-consistency=ON --log-bin
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      # A real query over TCP: mysqladmin ping exits 0 even on auth errors and
+      # the init-phase temp server answers on the socket — both false-healthy.
+      test: ["CMD-SHELL", "mysql -h127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

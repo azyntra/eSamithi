@@ -3,5 +3,8 @@
   "environments": {
     "prod": "http://141.147.75.132/api/v1",
     "testbed": "http://212.227.103.150/api/v1"
+  },
+  "samithis": {
+    "testbed": "test01"
   }
 }

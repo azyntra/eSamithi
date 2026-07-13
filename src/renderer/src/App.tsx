@@ -6,6 +6,7 @@ import { I18nProvider } from './i18n'
 import ToastContainer, { showToast } from './components/Toast'
 import { clearAllCaches } from './utils/cache'
 import LoginPage from './pages/LoginPage'
+import SetupPage from './pages/SetupPage'
 import Dashboard from './pages/Dashboard'
 import Members from './pages/Members'
 import Incomes from './pages/Incomes'
@@ -84,6 +85,16 @@ function OfflineBar(): React.ReactElement {
 export default function App(): React.ReactElement {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [offline, setOffline] = useState(false)
+  // null = still asking the main process; true = no samithi configured yet
+  // (first run) → show the samithi-code setup screen before login
+  const [setupNeeded, setSetupNeeded] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    window.api.setup
+      ?.getState?.()
+      .then((s) => setSetupNeeded(!s.configured))
+      .catch(() => setSetupNeeded(false))
+  }, [])
 
   // JWT expired mid-session (main process saw a 401) — return to login
   useEffect(() => {
@@ -127,13 +138,17 @@ export default function App(): React.ReactElement {
     setUser(null)
   }
 
-  // Show login screen if not authenticated
+  // Show setup (first run) or login screen if not authenticated
   if (!user) {
     return (
       <I18nProvider>
         <ToastContainer />
         {offline && <OfflineBar />}
-        <LoginPage onLogin={handleLogin} />
+        {setupNeeded === null ? null : setupNeeded ? (
+          <SetupPage onDone={() => setSetupNeeded(false)} />
+        ) : (
+          <LoginPage onLogin={handleLogin} />
+        )}
       </I18nProvider>
     )
   }

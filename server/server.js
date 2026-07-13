@@ -3,7 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const { initPool } = require('./db');
+const { initPool, getPool, getTenants } = require('./db');
+const { tenantMiddleware } = require('./middleware/tenant');
 
 // Route imports
 const authRoutes = require('./routes/auth.routes');
@@ -51,11 +52,36 @@ app.use('/api/v1/uploads', (req, res, next) => {
 }, express.static(path.join(__dirname, 'uploads'), { maxAge: '7d', immutable: true }));
 
 // ── Health Check ─────────────────────────────────────────────
-app.get('/api/v1/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Plain: process liveness. ?deep=1: pings every tenant pool so one broken
+// samithi shows up without affecting the others (multi-samithi plan §3.5).
+app.get('/api/v1/health', async (req, res) => {
+  if (req.query.deep === undefined) {
+    return res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  }
+  const tenants = {};
+  for (const [slug, tenant] of Object.entries(getTenants())) {
+    if (tenant.status !== 'active') {
+      tenants[slug] = tenant.status;
+      continue;
+    }
+    try {
+      await getPool(slug).query('SELECT 1');
+      tenants[slug] = 'ok';
+    } catch {
+      tenants[slug] = 'error';
+    }
+  }
+  const degraded = Object.values(tenants).includes('error');
+  res.status(degraded ? 503 : 200).json({
+    status: degraded ? 'degraded' : 'ok',
+    tenants,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // ── API Routes ───────────────────────────────────────────────
+// Everything below is tenant-scoped (health and uploads above are not)
+app.use('/api/v1', tenantMiddleware);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', usersRoutes);
 app.use('/api/v1/members', membersRoutes);
@@ -97,27 +123,30 @@ async function start() {
 
     // Puruka pre-expiry reminders (requirement P9.2): push to owners of posts
     // expiring within 3 days, once per post; flag resets on renew.
-    const { getPool } = require('./db');
+    // Runs per tenant — one samithi's failure never blocks the others.
     const { sendPushToMembers } = require('./lib/push');
     const notifyExpiring = async () => {
-      try {
-        const pool = getPool();
-        const [rows] = await pool.query(`
-          SELECT id, member_id, title FROM puruka_posts
-          WHERE status = 'Active' AND expiry_notified = 0
-            AND expires_at <= DATE_ADD(CURDATE(), INTERVAL 3 DAY)
-        `);
-        for (const post of rows) {
-          await sendPushToMembers(pool, [post.member_id], {
-            title: 'පුරුක — ඔබේ දැන්වීම ළඟදීම කල් ඉකුත් වේ',
-            body: post.title,
-            data: { screen: 'puruka-mine' }
-          });
-          await pool.query('UPDATE puruka_posts SET expiry_notified = 1 WHERE id = ?', [post.id]);
+      for (const [slug, tenant] of Object.entries(getTenants())) {
+        if (tenant.status !== 'active') continue;
+        try {
+          const pool = getPool(slug);
+          const [rows] = await pool.query(`
+            SELECT id, member_id, title FROM puruka_posts
+            WHERE status = 'Active' AND expiry_notified = 0
+              AND expires_at <= DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+          `);
+          for (const post of rows) {
+            await sendPushToMembers(pool, [post.member_id], {
+              title: 'පුරුක — ඔබේ දැන්වීම ළඟදීම කල් ඉකුත් වේ',
+              body: post.title,
+              data: { screen: 'puruka-mine' }
+            });
+            await pool.query('UPDATE puruka_posts SET expiry_notified = 1 WHERE id = ?', [post.id]);
+          }
+          if (rows.length > 0) console.log(`[puruka] ${slug}: expiry reminders sent: ${rows.length}`);
+        } catch (err) {
+          console.error(`[puruka] ${slug}: expiry sweep failed:`, err.message);
         }
-        if (rows.length > 0) console.log(`[puruka] expiry reminders sent: ${rows.length}`);
-      } catch (err) {
-        console.error('[puruka] expiry sweep failed:', err.message);
       }
     };
     notifyExpiring();

@@ -55,6 +55,15 @@ export function registerIpcHandlers(): void {
     return apiClient.ping()
   })
 
+  // ── First-run samithi setup (multi-samithi) ──────────────────
+  ipcMain.handle('setup:getState', () => {
+    return apiClient.getSetupState()
+  })
+
+  ipcMain.handle('setup:resolve', async (_event, code: string) => {
+    return apiClient.resolveSamithi(code)
+  })
+
   // ── User Management (admin only) ──────────────────────────────
   ipcMain.handle('users:getAll', async () => {
     try {
