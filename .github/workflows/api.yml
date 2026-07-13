@@ -36,7 +36,8 @@ jobs:
 
       - name: Tenant isolation unit tests (no DB)
         working-directory: server
-        run: node --test 'test/*.test.js'
+        # explicit file: node 20's --test has no glob support (node 21+)
+        run: node --test test/isolation.test.js
 
       - name: Migration runner from zero (two fake tenants)
         working-directory: server
