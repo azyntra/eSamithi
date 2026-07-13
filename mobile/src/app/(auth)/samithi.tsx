@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useAuth } from '../../auth/AuthContext'
 import { resolveSamithiCode, type ResolveErrorKind, type SamithiProfile } from '../../lib/profiles'
@@ -15,6 +16,7 @@ export default function SamithiCode(): React.ReactElement {
   const p = usePalette()
   const router = useRouter()
   const { profiles, setPendingProfile } = useAuth()
+  const insets = useSafeAreaInsets()
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -45,7 +47,11 @@ export default function SamithiCode(): React.ReactElement {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={{ flex: 1, backgroundColor: p.bg }} contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={{ flex: 1, backgroundColor: p.bg }}
+        contentContainerStyle={{ padding: 24, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <Title>{t('mob.samithiTitle')}</Title>
         <Subtitle>{t('mob.samithiIntro')}</Subtitle>
 
