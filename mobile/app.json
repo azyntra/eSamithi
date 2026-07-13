@@ -2,7 +2,13 @@
   "expo": {
     "name": "eSamithi",
     "slug": "esamithi-member",
-    "version": "1.1.0",
+    "version": "1.2.0",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/741f24ff-0b1b-4b30-8034-08f7a6f8d7eb"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "esamithi",

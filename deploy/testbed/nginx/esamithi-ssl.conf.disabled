@@ -1,16 +1,16 @@
-# Testbed vhost — mirrors the host nginx it replaces: /api/ proxied to the
-# Node API, /updates/ serves the desktop electron-updater feed (if present).
+# HTTPS vhost for testbed.esamithi.com — enabled by enable-tls.sh after the
+# certificate is issued (nginx refuses to start if the cert files are absent,
+# hence the .disabled suffix until then). Port 80 stays fully functional for
+# already-installed clients that still use the plain-HTTP IP.
 server {
-    listen 80 default_server;
-    server_name _;
+    listen 443 ssl;
+    http2 on;
+    server_name testbed.esamithi.com;
 
-    # Puruka photo uploads ride /api/v1/uploads through this same proxy
+    ssl_certificate     /etc/letsencrypt/live/testbed.esamithi.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/testbed.esamithi.com/privkey.pem;
+
     client_max_body_size 20m;
-
-    # Let's Encrypt HTTP-01 challenges (enable-tls.sh)
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
 
     location /api/ {
         proxy_pass http://api:3000;
@@ -22,7 +22,6 @@ server {
         proxy_read_timeout 60s;
     }
 
-    # Samithi join-code resolution (directory.esamithi.lk once the domain exists)
     location /directory/ {
         proxy_pass http://directory:8080/;
         proxy_set_header Host $host;

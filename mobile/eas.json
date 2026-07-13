@@ -6,18 +6,21 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "testbed",
       "android": {
         "buildType": "apk"
       }
     },
     "preview": {
       "distribution": "internal",
+      "channel": "testbed",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "channel": "prod"
     }
   },
   "submit": {

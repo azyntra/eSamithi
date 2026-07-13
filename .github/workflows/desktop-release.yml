@@ -1,0 +1,30 @@
+name: Desktop release
+
+# Tag-triggered installer builds (multi-samithi plan §4.2):
+#   git tag desktop-v1.4.0 && git push origin desktop-v1.4.0
+# The Windows installer + electron-updater feed files land as a workflow
+# artifact; publish them to the /updates/ feed once it moves to the domain.
+on:
+  push:
+    tags: ['desktop-v*']
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build Windows installer
+        run: npm run build:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: esamithi-windows-${{ github.ref_name }}
+          path: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/latest.yml
+          retention-days: 30
