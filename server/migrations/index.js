@@ -208,11 +208,27 @@ async function puruka(pool) {
   );
 }
 
+// 009 — staff-user lifecycle for the super-admin panel (FR-4.2): disable/enable
+// a staff login and record last sign-in. Both nullable/defaulted so existing
+// rows keep working (is_active defaults on = no behaviour change for tenants).
+async function staffUserLifecycle(pool) {
+  const [cols] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'is_active'`
+  );
+  if (cols.length === 0) {
+    await pool.query(`ALTER TABLE users
+      ADD COLUMN is_active     TINYINT   DEFAULT 1,
+      ADD COLUMN last_login_at TIMESTAMP NULL DEFAULT NULL`);
+  }
+}
+
 module.exports = [
   { id: '000_base_schema', up: baseSchema },
   { id: '004_loan_payment_wallet', up: loanPaymentWallet },
   { id: '005_member_app_auth', up: memberAppAuth },
   { id: '006_announcements_requests_push', up: announcementsRequestsPush },
   { id: '007_attendance', up: attendance },
-  { id: '008_puruka', up: puruka }
+  { id: '008_puruka', up: puruka },
+  { id: '009_staff_user_lifecycle', up: staffUserLifecycle }
 ];

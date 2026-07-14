@@ -11,14 +11,17 @@ function newJoinCode(slug) {
   return `${slug.replace(/[^a-z]/gi, '').slice(0, 3).toUpperCase()}-${crypto.randomInt(1000, 10000)}`;
 }
 
+function internalToken() {
+  return jwt.sign({ typ: 'internal' }, process.env.INTERNAL_SECRET || '', { expiresIn: '30s' });
+}
+
 // Live read from a tenant's internal surface (signed like the collector)
 async function tenantDetail(apiUrl, slug) {
-  const token = jwt.sign({ typ: 'internal' }, process.env.INTERNAL_SECRET || '', { expiresIn: '30s' });
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 10000);
   try {
     const res = await fetch(`${apiUrl}/internal/detail`, {
-      headers: { Authorization: `Bearer ${token}`, 'X-Samithi': slug },
+      headers: { Authorization: `Bearer ${internalToken()}`, 'X-Samithi': slug },
       signal: ctrl.signal
     });
     if (!res.ok) return null;
@@ -28,6 +31,40 @@ async function tenantDetail(apiUrl, slug) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Signed write proxy into a tenant's internal control surface (FR-4.2/4.3).
+// Returns { status, data }; the caller maps errors to the operator response.
+async function tenantWrite(apiUrl, slug, method, path, body) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const res = await fetch(`${apiUrl}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${internalToken()}`,
+        'X-Samithi': slug,
+        'Content-Type': 'application/json'
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: ctrl.signal
+    });
+    const data = await res.json().catch(() => ({}));
+    return { status: res.status, data };
+  } catch {
+    return { status: 502, data: { error: 'Samithi API unreachable' } };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Look up an active tenant's api_url (staff/PIN admin only touches live tenants)
+async function activeTenant(slug) {
+  const [[s]] = await getPool().query(
+    `SELECT s.slug, s.status, v.api_url FROM samithis s JOIN servers v ON v.id = s.server_id WHERE s.slug = ?`,
+    [slug]
+  );
+  return s;
 }
 
 // GET /pa/v1/samithis/:slug — registry row + cached snapshot + live detail
@@ -91,6 +128,87 @@ router.patch('/:slug', requireSuperadmin, async (req, res, next) => {
       after: { status: after.status, join_code: after.join_code, name_en: after.name_en, min_app_version: after.min_app_version }
     };
     res.json({ success: true, samithi: after });
+  } catch (err) { next(err); }
+});
+
+// ── Staff-user management (FR-4.2) & PIN unlock (FR-4.3) ─────────────────────
+// All superadmin-only and audited (auditMiddleware writes a row from
+// res.locals.audit). The platform never stores tenant passwords — a reset
+// generates a one-time temporary password, hands it to the tenant to hash, and
+// returns the plaintext to the operator exactly once.
+
+function tempPassword() {
+  return crypto.randomBytes(6).toString('base64url'); // ~8 chars, url-safe
+}
+
+// POST /pa/v1/samithis/:slug/users — create a staff login
+router.post('/:slug/users', requireSuperadmin, async (req, res, next) => {
+  try {
+    const s = await activeTenant(req.params.slug);
+    if (!s) return res.status(404).json({ error: 'Unknown samithi' });
+    if (s.status !== 'active') return res.status(409).json({ error: 'Samithi is not active' });
+    const { username, full_name, role } = req.body || {};
+    const password = tempPassword();
+    const r = await tenantWrite(s.api_url, s.slug, 'POST', '/internal/users', { username, full_name, role, password });
+    res.locals.audit = { action: 'staff_user_create', samithi: s.slug, after: { username, full_name, role } };
+    if (r.status >= 400) return res.status(r.status).json(r.data);
+    res.json({ success: true, id: r.data.id, temp_password: password });
+  } catch (err) { next(err); }
+});
+
+// PATCH /pa/v1/samithis/:slug/users/:id — change role / enable / disable
+router.patch('/:slug/users/:id', requireSuperadmin, async (req, res, next) => {
+  try {
+    const s = await activeTenant(req.params.slug);
+    if (!s) return res.status(404).json({ error: 'Unknown samithi' });
+    if (s.status !== 'active') return res.status(409).json({ error: 'Samithi is not active' });
+    const body = {};
+    if (req.body.role !== undefined) body.role = req.body.role;
+    if (req.body.is_active !== undefined) body.is_active = req.body.is_active;
+    const r = await tenantWrite(s.api_url, s.slug, 'PATCH', `/internal/users/${req.params.id}`, body);
+    res.locals.audit = { action: 'staff_user_update', samithi: s.slug, after: { user_id: req.params.id, ...body } };
+    if (r.status >= 400) return res.status(r.status).json(r.data);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+// POST /pa/v1/samithis/:slug/users/:id/reset-password — temp password shown once
+router.post('/:slug/users/:id/reset-password', requireSuperadmin, async (req, res, next) => {
+  try {
+    const s = await activeTenant(req.params.slug);
+    if (!s) return res.status(404).json({ error: 'Unknown samithi' });
+    if (s.status !== 'active') return res.status(409).json({ error: 'Samithi is not active' });
+    const password = tempPassword();
+    const r = await tenantWrite(s.api_url, s.slug, 'POST', `/internal/users/${req.params.id}/reset-password`, { password });
+    res.locals.audit = { action: 'staff_user_reset_password', samithi: s.slug, after: { user_id: req.params.id } };
+    if (r.status >= 400) return res.status(r.status).json(r.data);
+    res.json({ success: true, temp_password: password });
+  } catch (err) { next(err); }
+});
+
+// DELETE /pa/v1/samithis/:slug/users/:id — remove a staff login
+router.delete('/:slug/users/:id', requireSuperadmin, async (req, res, next) => {
+  try {
+    const s = await activeTenant(req.params.slug);
+    if (!s) return res.status(404).json({ error: 'Unknown samithi' });
+    if (s.status !== 'active') return res.status(409).json({ error: 'Samithi is not active' });
+    const r = await tenantWrite(s.api_url, s.slug, 'DELETE', `/internal/users/${req.params.id}`);
+    res.locals.audit = { action: 'staff_user_delete', samithi: s.slug, after: { user_id: req.params.id } };
+    if (r.status >= 400) return res.status(r.status).json(r.data);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+// POST /pa/v1/samithis/:slug/members/:id/unlock-pin — clear a mobile lockout
+router.post('/:slug/members/:id/unlock-pin', requireSuperadmin, async (req, res, next) => {
+  try {
+    const s = await activeTenant(req.params.slug);
+    if (!s) return res.status(404).json({ error: 'Unknown samithi' });
+    if (s.status !== 'active') return res.status(409).json({ error: 'Samithi is not active' });
+    const r = await tenantWrite(s.api_url, s.slug, 'POST', `/internal/members/${req.params.id}/unlock-pin`);
+    res.locals.audit = { action: 'member_pin_unlock', samithi: s.slug, after: { member_id: req.params.id } };
+    if (r.status >= 400) return res.status(r.status).json(r.data);
+    res.json({ success: true });
   } catch (err) { next(err); }
 });
 

@@ -19,7 +19,7 @@ router.post('/login', async (req, res, next) => {
 
     const hashedPassword = hashPassword(password);
     const [rows] = await getPool().execute(
-      'SELECT id, username, full_name, role FROM users WHERE username = ? AND password = ?',
+      'SELECT id, username, full_name, role, is_active FROM users WHERE username = ? AND password = ?',
       [username, hashedPassword]
     );
 
@@ -28,6 +28,13 @@ router.post('/login', async (req, res, next) => {
     }
 
     const user = rows[0];
+    // A super-admin can disable a staff login from the panel (FR-4.2). Column
+    // is nullable/defaulted, so pre-migration rows (is_active null) stay valid.
+    if (user.is_active === 0) {
+      return res.status(403).json({ error: 'This account has been disabled. Contact your administrator.' });
+    }
+    delete user.is_active;
+    getPool().execute('UPDATE users SET last_login_at = NOW() WHERE id = ?', [user.id]).catch(() => {});
     const token = generateToken(user, req.tenant);
 
     res.json({ success: true, user, token });

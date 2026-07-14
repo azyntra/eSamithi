@@ -1,6 +1,12 @@
 const express = require('express');
+const crypto = require('crypto');
 const { getPool } = require('../db');
 const { internalAuth } = require('../middleware/internal');
+
+// Staff passwords are sha256 (matches auth.routes.js / provision-tenant.js)
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
 
 // Platform stats pull (super-admin panel §4.3). Tenant is resolved by the
 // normal X-Samithi middleware; internalAuth gates it to platform-api.
@@ -70,9 +76,15 @@ router.get('/detail', async (_req, res, next) => {
     const [[fds]] = await pool.query("SELECT COUNT(*) AS n, IFNULL(SUM(principal),0) AS cents FROM fixed_deposits WHERE status = 'Active'");
     const [[pending]] = await pool.query("SELECT COUNT(*) AS n FROM member_requests WHERE status = 'Pending'");
     const [wallets] = await pool.query('SELECT id, name, balance, is_active FROM wallets ORDER BY is_active DESC, name');
-    const [staff] = await pool.query('SELECT id, username, full_name, role FROM users ORDER BY role, username');
+    const [staff] = await pool.query('SELECT id, username, full_name, role, is_active, last_login_at FROM users ORDER BY role, username');
     const [settings] = await pool.query('SELECT `key`, `value` FROM settings ORDER BY `key`');
     const [migrations] = await pool.query('SELECT id, applied_at FROM schema_migrations ORDER BY id');
+    // Members currently locked out of the mobile app (FR-4.3 — each is unlockable)
+    const [lockedMembers] = await pool.query(
+      `SELECT id, society_id, full_name, pin_locked_until, failed_pin_attempts
+       FROM members WHERE pin_locked_until IS NOT NULL AND pin_locked_until > NOW()
+       ORDER BY pin_locked_until DESC`
+    );
 
     res.json({
       members: {
@@ -84,10 +96,105 @@ router.get('/detail', async (_req, res, next) => {
       fds: { count: Number(fds.n), value_cents: Number(fds.cents) },
       pending_requests: Number(pending.n),
       wallets: wallets.map((w) => ({ id: w.id, name: w.name, balance_cents: Number(w.balance), is_active: Number(w.is_active) })),
-      staff: staff.map((u) => ({ id: u.id, username: u.username, full_name: u.full_name, role: u.role })),
+      staff: staff.map((u) => ({
+        id: u.id, username: u.username, full_name: u.full_name, role: u.role,
+        is_active: u.is_active === null ? 1 : Number(u.is_active), last_login_at: u.last_login_at
+      })),
+      locked_members: lockedMembers.map((m) => ({
+        id: m.id, society_id: m.society_id, full_name: m.full_name,
+        pin_locked_until: m.pin_locked_until, failed_pin_attempts: Number(m.failed_pin_attempts)
+      })),
       settings: settings.map((s) => ({ key: s.key, value: s.value })),
       migrations: migrations.map((m) => ({ id: m.id, applied_at: m.applied_at }))
     });
+  } catch (err) { next(err); }
+});
+
+// ── Write endpoints (super-admin panel Phase C, FR-4.2/4.3) ──────────────────
+// Mutating tenant control operations the platform-api proxies on the operator's
+// behalf. Gated by internalAuth (platform-only signed JWT). The platform audits
+// each call on its side; these stay thin.
+
+// POST /internal/users — create a staff login
+router.post('/users', async (req, res, next) => {
+  try {
+    const { username, full_name, role, password } = req.body || {};
+    if (!username || !full_name || !password) return res.status(400).json({ error: 'username, full_name and password are required' });
+    if (!['admin', 'user'].includes(role)) return res.status(400).json({ error: 'role must be admin or user' });
+    const pool = getPool();
+    const [dupe] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
+    if (dupe.length) return res.status(409).json({ error: 'Username already exists' });
+    const [r] = await pool.query(
+      'INSERT INTO users (username, password, full_name, role, is_active) VALUES (?, ?, ?, ?, 1)',
+      [username, hashPassword(password), full_name, role]
+    );
+    res.json({ success: true, id: r.insertId });
+  } catch (err) { next(err); }
+});
+
+// PATCH /internal/users/:id — change role and/or enable/disable
+router.patch('/users/:id', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const pool = getPool();
+    const [[target]] = await pool.query('SELECT id, role, is_active FROM users WHERE id = ?', [id]);
+    if (!target) return res.status(404).json({ error: 'Unknown user' });
+    const fields = {};
+    if (req.body.role !== undefined) {
+      if (!['admin', 'user'].includes(req.body.role)) return res.status(400).json({ error: 'role must be admin or user' });
+      fields.role = req.body.role;
+    }
+    if (req.body.is_active !== undefined) fields.is_active = req.body.is_active ? 1 : 0;
+    // Never leave a tenant with no active administrator
+    const demotes = (fields.role && fields.role !== 'admin' && target.role === 'admin') ||
+                    (fields.is_active === 0 && target.role === 'admin');
+    if (demotes) {
+      const [[{ n }]] = await pool.query("SELECT COUNT(*) AS n FROM users WHERE role = 'admin' AND (is_active = 1 OR is_active IS NULL) AND id <> ?", [id]);
+      if (n === 0) return res.status(403).json({ error: 'Cannot remove the last active administrator' });
+    }
+    if (!Object.keys(fields).length) return res.status(400).json({ error: 'Nothing to update' });
+    await pool.query('UPDATE users SET ? WHERE id = ?', [fields, id]);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+// POST /internal/users/:id/reset-password — set a supplied temporary password
+router.post('/users/:id/reset-password', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { password } = req.body || {};
+    if (!password) return res.status(400).json({ error: 'password required' });
+    const [r] = await getPool().query('UPDATE users SET password = ? WHERE id = ?', [hashPassword(password), id]);
+    if (!r.affectedRows) return res.status(404).json({ error: 'Unknown user' });
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+// DELETE /internal/users/:id — remove a staff login (guards last admin)
+router.delete('/users/:id', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const pool = getPool();
+    const [[target]] = await pool.query('SELECT role FROM users WHERE id = ?', [id]);
+    if (!target) return res.status(404).json({ error: 'Unknown user' });
+    if (target.role === 'admin') {
+      const [[{ n }]] = await pool.query("SELECT COUNT(*) AS n FROM users WHERE role = 'admin' AND id <> ?", [id]);
+      if (n === 0) return res.status(403).json({ error: 'Cannot delete the last administrator' });
+    }
+    await pool.query('DELETE FROM users WHERE id = ?', [id]);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+// POST /internal/members/:id/unlock-pin — clear a mobile PIN lockout (FR-4.3)
+router.post('/members/:id/unlock-pin', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const [r] = await getPool().query(
+      'UPDATE members SET failed_pin_attempts = 0, pin_locked_until = NULL WHERE id = ?', [id]
+    );
+    if (!r.affectedRows) return res.status(404).json({ error: 'Unknown member' });
+    res.json({ success: true });
   } catch (err) { next(err); }
 });
 
