@@ -1,5 +1,6 @@
 const express = require('express');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const { getPool } = require('../db');
 const { requireSuperadmin } = require('../middleware/auth');
 const { syncTenantsFile } = require('../lib/sync');
@@ -9,6 +10,40 @@ const router = express.Router();
 function newJoinCode(slug) {
   return `${slug.replace(/[^a-z]/gi, '').slice(0, 3).toUpperCase()}-${crypto.randomInt(1000, 10000)}`;
 }
+
+// Live read from a tenant's internal surface (signed like the collector)
+async function tenantDetail(apiUrl, slug) {
+  const token = jwt.sign({ typ: 'internal' }, process.env.INTERNAL_SECRET || '', { expiresIn: '30s' });
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const res = await fetch(`${apiUrl}/internal/detail`, {
+      headers: { Authorization: `Bearer ${token}`, 'X-Samithi': slug },
+      signal: ctrl.signal
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// GET /pa/v1/samithis/:slug — registry row + cached snapshot + live detail
+router.get('/:slug', async (req, res, next) => {
+  try {
+    const pool = getPool();
+    const [[s]] = await pool.query(`
+      SELECT s.id, s.slug, s.join_code, s.name_en, s.name_si, s.db_name, s.status,
+             s.min_app_version, s.onboarded_at, s.suspended_at, v.code AS server_code, v.api_url
+      FROM samithis s JOIN servers v ON v.id = s.server_id WHERE s.slug = ?`, [req.params.slug]);
+    if (!s) return res.status(404).json({ error: 'Unknown samithi' });
+    const [[snapshot]] = await pool.query('SELECT * FROM tenant_stats_current WHERE samithi_slug = ?', [req.params.slug]);
+    const detail = s.status === 'active' ? await tenantDetail(s.api_url, s.slug) : null;
+    res.json({ samithi: s, snapshot: snapshot || null, detail, reachable: detail !== null });
+  } catch (err) { next(err); }
+});
 
 // GET /pa/v1/samithis — registry (all roles incl. auditor)
 router.get('/', async (_req, res, next) => {

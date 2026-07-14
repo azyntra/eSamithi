@@ -82,14 +82,20 @@ function OfflineBar(): React.ReactElement {
   )
 }
 
+// Super-admin support workspace injects a pre-authenticated user (the
+// impersonation token is already valid) so we skip the login/setup screens.
+// Undefined in the normal desktop app — zero effect there.
+const impersonationUser = (globalThis as { __IMPERSONATION__?: { user: AuthUser } }).__IMPERSONATION__?.user
+
 export default function App(): React.ReactElement {
-  const [user, setUser] = useState<AuthUser | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(impersonationUser ?? null)
   const [offline, setOffline] = useState(false)
   // null = still asking the main process; true = no samithi configured yet
   // (first run) → show the samithi-code setup screen before login
-  const [setupNeeded, setSetupNeeded] = useState<boolean | null>(null)
+  const [setupNeeded, setSetupNeeded] = useState<boolean | null>(impersonationUser ? false : null)
 
   useEffect(() => {
+    if (impersonationUser) return // workspace: already authenticated
     window.api.setup
       ?.getState?.()
       .then((s) => setSetupNeeded(!s.configured))

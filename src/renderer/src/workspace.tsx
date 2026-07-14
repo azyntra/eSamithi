@@ -83,29 +83,39 @@ function SupportBanner({ session }: { session: WorkspaceSession }): React.ReactE
 }
 
 function Root(): React.ReactElement {
-  const session = bootstrapSession()
-  if (!session) {
-    return (
-      <div style={{ padding: 40, fontFamily: 'system-ui', textAlign: 'center' }}>
-        <h2>No active support session</h2>
-        <p>Open a samithi from the <a href="/admin/">platform console</a>.</p>
-      </div>
-    )
-  }
-  installShim(session)
   return (
     <>
-      <SupportBanner session={session} />
-      {/* push the app below the fixed banner */}
-      <div style={{ paddingTop: 34 }}>
-        <App />
-      </div>
+      <SupportBanner session={activeSession!} />
+      <App />
     </>
   )
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <Root />
-  </React.StrictMode>
-)
+const activeSession = bootstrapSession()
+
+if (!activeSession) {
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <div style={{ padding: 40, fontFamily: 'system-ui', textAlign: 'center' }}>
+      <h2>No active support session</h2>
+      <p>Open a samithi from the <a href="/admin/">platform console</a>.</p>
+    </div>
+  )
+} else {
+  installShim(activeSession)
+  // Pre-authenticate the desktop App (skips its login screen) and offset the
+  // whole fixed layout below the 34px support banner.
+  ;(globalThis as { __IMPERSONATION__?: unknown }).__IMPERSONATION__ = {
+    user: { id: 0, username: activeSession.actorEmail, full_name: 'eSamithi Support', role: 'admin' }
+  }
+  const style = document.createElement('style')
+  style.textContent = `
+    .sidebar { top: 34px !important; height: calc(100vh - 34px) !important; }
+    .app-layout { height: calc(100vh - 34px) !important; margin-top: 34px !important; }
+  `
+  document.head.appendChild(style)
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <Root />
+    </React.StrictMode>
+  )
+}

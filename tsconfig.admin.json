@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx", "module": "esnext", "moduleResolution": "bundler",
+    "target": "es2020", "strict": true, "skipLibCheck": true,
+    "lib": ["es2020", "dom", "dom.iterable"], "noEmit": true, "esModuleInterop": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src/admin/**/*"]
+}
