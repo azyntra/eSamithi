@@ -1,0 +1,72 @@
+# eSamithi PROD stack (multi-samithi platform, server "prod"). Lives at
+# /opt/esamithi-stack on the prod server — /opt/esamithi is the LEGACY pm2 app
+# and stays untouched for rollback.
+#
+# No platform/kuma here: the control plane (console.esamithi.com) runs on the
+# platform server and manages this host through the tenant API's
+# /internal/server/* surface. This stack is just nginx + api + mysql.
+#
+# First-time cutover from pm2: bash cutover.sh (same directory).
+# Day-to-day: docker compose up -d --build api   (after copying new code)
+services:
+  nginx:
+    image: nginx:1.27
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+      - /opt/esamithi-updates:/srv/updates:ro   # desktop electron-updater feed
+      - ./privacy:/srv/privacy:ro               # https://api.esamithi.com/privacy
+      - ./certbot-www:/var/www/certbot:ro
+      - certs:/etc/letsencrypt:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  api:
+    build:
+      context: /opt/esamithi-server
+    # required:false so images can be pre-built before cutover.sh writes .env
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      TENANTS_FILE: /etc/esamithi/tenants.json
+    volumes:
+      # Writable: the platform publishes registry updates through the API's
+      # /internal/server/registry endpoint (multi-server control plane)
+      - ./tenants.json:/etc/esamithi/tenants.json
+      - /opt/esamithi-server/uploads:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/v1/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.4
+    command: --gtid-mode=ON --enforce-gtid-consistency=ON --log-bin
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      # A real query over TCP: mysqladmin ping exits 0 even on auth errors and
+      # the init-phase temp server answers on the socket — both false-healthy.
+      test: ["CMD-SHELL", "mysql -h127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  certs:

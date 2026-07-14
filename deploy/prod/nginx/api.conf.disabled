@@ -1,0 +1,65 @@
+# api.esamithi.com — the production API domain the Play Store mobile app uses.
+# Enabled by enable-api-tls.sh once the certificate exists (nginx won't start
+# if the cert files are missing, hence the .disabled suffix).
+#
+# Serves: the tenant API over TLS, the public directory (proxied to the
+# platform server — the registry lives on the control plane), the privacy
+# policy required by Google Play, and the desktop update feed.
+
+server {
+    listen 80;
+    server_name api.esamithi.com;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 301 https://$host$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name api.esamithi.com;
+
+    ssl_certificate     /etc/letsencrypt/live/api.esamithi.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.esamithi.com/privkey.pem;
+
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $api_upstream http://api:3000;
+
+    client_max_body_size 50m;
+
+    # Tenant API (members, staff, uploads under /api/v1/uploads)
+    location /api/ {
+        proxy_pass $api_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+    }
+
+    # Samithi join-code resolution — the registry lives on the platform
+    # server (control plane), so proxy across. The app only calls this at
+    # setup/failover; day-to-day traffic goes straight to /api/ here.
+    location /directory/ {
+        proxy_pass http://212.227.103.150/directory/;
+        proxy_set_header Host $host;
+        proxy_read_timeout 15s;
+    }
+
+    # Privacy policy (Google Play listing requirement)
+    location = /privacy { return 301 /privacy/; }
+    location /privacy/ {
+        alias /srv/privacy/;
+        index index.html;
+    }
+
+    # Desktop auto-update feed (same content as the IP vhost)
+    location /updates/ {
+        alias /srv/updates/;
+        autoindex off;
+        add_header Access-Control-Allow-Origin *;
+        add_header Cache-Control "no-cache";
+    }
+
+    location = / { return 302 /privacy/; }
+}
