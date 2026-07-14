@@ -8,11 +8,13 @@ import { enterSamithi } from '../lib/enter'
 
 interface Row {
   id: number; slug: string; join_code: string; name_en: string; status: string
-  db_name: string; min_app_version: string | null; api_url: string
+  db_name: string; min_app_version: string | null; api_url: string; server_code: string
 }
 
+interface ServerRow { code: string; api_url: string; role: string; samithi_count: number }
+
 interface OnboardResult {
-  slug: string; join_code: string; name_en: string; db_name: string
+  slug: string; join_code: string; name_en: string; db_name: string; server_code?: string
   admin_username: string; admin_password: string
 }
 
@@ -66,10 +68,10 @@ export default function Samithis(): React.ReactElement {
         </div>
         <div className="table-wrap">
           <table className="tbl">
-            <thead><tr><th>Samithi</th><th>Join code</th><th>Database</th><th>Min app</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
+            <thead><tr><th>Samithi</th><th>Join code</th><th>Server</th><th>Database</th><th>Min app</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
             <tbody>
               {!rows ? (
-                Array.from({ length: 2 }).map((_, i) => <tr key={i}><td colSpan={6}><Skeleton h={22} /></td></tr>)
+                Array.from({ length: 2 }).map((_, i) => <tr key={i}><td colSpan={7}><Skeleton h={22} /></td></tr>)
               ) : rows.map((r) => (
                 <tr key={r.slug}>
                   <td onClick={() => nav(`/samithis/${r.slug}`)} style={{ cursor: 'pointer' }}>
@@ -77,6 +79,7 @@ export default function Samithis(): React.ReactElement {
                     <div className="t-mut">{r.slug}</div>
                   </td>
                   <td><span className="row"><span className="mono">{r.join_code}</span><CopyChip text={r.join_code} /></span></td>
+                  <td><span className="badge neutral">{r.server_code}</span></td>
                   <td className="t-mut mono">{r.db_name}</td>
                   <td className="t-mut">{r.min_app_version || '—'}</td>
                   <td><StatusBadge status={r.status} /></td>
@@ -144,6 +147,15 @@ function OnboardModal({ onClose, onDone, onError, existingSlugs }: {
   const [slugTouched, setSlugTouched] = useState(false)
   const [minApp, setMinApp] = useState('')
   const [saving, setSaving] = useState(false)
+  const [servers, setServers] = useState<ServerRow[]>([])
+  const [serverCode, setServerCode] = useState('')
+
+  useEffect(() => {
+    api<ServerRow[]>('/servers').then((rows) => {
+      setServers(rows)
+      if (rows.length > 0) setServerCode(rows[0].code)
+    }).catch(() => {})
+  }, [])
 
   // Auto-suggest a slug from the English name until the operator edits it
   const autoSlug = nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 20)
@@ -158,7 +170,10 @@ function OnboardModal({ onClose, onDone, onError, existingSlugs }: {
     try {
       const r = await api<OnboardResult>('/samithis', {
         method: 'POST',
-        body: JSON.stringify({ slug: effSlug, name_en: nameEn.trim(), name_si: nameSi.trim() || undefined, min_app_version: minApp.trim() || undefined })
+        body: JSON.stringify({
+          slug: effSlug, name_en: nameEn.trim(), name_si: nameSi.trim() || undefined,
+          min_app_version: minApp.trim() || undefined, server_code: serverCode || undefined
+        })
       })
       onDone(r)
     } catch (e) { onError((e as Error).message); setSaving(false) }
@@ -185,6 +200,13 @@ function OnboardModal({ onClose, onDone, onError, existingSlugs }: {
           {slugValid && slugTaken && <span className="t-mut" style={{ fontSize: 12, color: 'var(--danger)' }}>Slug already in use</span>}
           {slugValid && !slugTaken && <span className="t-mut" style={{ fontSize: 12 }}>Database: <span className="mono">esamithi_{effSlug}</span></span>}
         </div>
+        {servers.length > 1 && (
+          <div className="field"><label>Host server</label>
+            <select className="select" value={serverCode} onChange={(e) => setServerCode(e.target.value)}>
+              {servers.map((s) => <option key={s.code} value={s.code}>{s.code} — {s.api_url} ({s.samithi_count} samithis)</option>)}
+            </select>
+          </div>
+        )}
         <div className="field"><label>Minimum app version <span className="t-mut">— optional</span></label>
           <input className="input mono" value={minApp} onChange={(e) => setMinApp(e.target.value)} placeholder="e.g. 1.2.0" /></div>
         <p className="t-mut" style={{ fontSize: 12.5, margin: 0, lineHeight: 1.5 }}>

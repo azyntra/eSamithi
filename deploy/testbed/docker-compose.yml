@@ -55,7 +55,9 @@ services:
     environment:
       TENANTS_FILE: /etc/esamithi/tenants.json
     volumes:
-      - ./tenants.json:/etc/esamithi/tenants.json:ro
+      # Writable: the platform publishes registry updates through the API's
+      # /internal/server/registry endpoint (multi-server control plane)
+      - ./tenants.json:/etc/esamithi/tenants.json
       - /opt/server/uploads:/app/uploads
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/v1/health >/dev/null 2>&1 || exit 1"]

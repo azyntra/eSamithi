@@ -13,6 +13,7 @@ const auditRoutes = require('./routes/audit.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const impersonationRoutes = require('./routes/impersonation.routes');
 const reportsRoutes = require('./routes/reports.routes');
+const serversRoutes = require('./routes/servers.routes');
 const broadcastsRoutes = require('./routes/broadcasts.routes');
 const opsRoutes = require('./routes/ops.routes');
 
@@ -103,6 +104,7 @@ app.use('/pa/v1', requireAuth, auditMiddleware);
 app.use('/pa/v1/samithis', samithisRoutes);
 app.use('/pa/v1/dashboard', dashboardRoutes);
 app.use('/pa/v1/reports', reportsRoutes);
+app.use('/pa/v1/servers', serversRoutes);
 app.use('/pa/v1/broadcasts', broadcastsRoutes);
 app.use('/pa/v1/ops', opsRoutes);
 app.use('/pa/v1', impersonationRoutes);

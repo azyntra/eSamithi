@@ -11,16 +11,27 @@ const router = express.Router();
 
 const TTL_MIN = 60;
 
+// Each server keeps its own tenant JWT_SECRET (prod's predates the platform
+// and must stay valid for its live tokens). Pick the signing secret by the
+// target samithi's server: TENANT_JWT_SECRET_<CODE> (e.g. _PROD), falling
+// back to the single-server TENANT_JWT_SECRET.
+function tenantSecretFor(serverCode) {
+  const envKey = `TENANT_JWT_SECRET_${String(serverCode || '').toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
+  return process.env[envKey] || process.env.TENANT_JWT_SECRET;
+}
+
 // POST /pa/v1/samithis/:slug/impersonate → { token, api_url, slug, expires_at, sid }
 router.post('/samithis/:slug/impersonate', requireSuperadmin, async (req, res, next) => {
   try {
     const pool = getPool();
     const [[s]] = await pool.query(
-      `SELECT s.slug, s.status, v.api_url FROM samithis s JOIN servers v ON v.id = s.server_id WHERE s.slug = ?`,
+      `SELECT s.slug, s.status, v.api_url, v.code AS server_code FROM samithis s JOIN servers v ON v.id = s.server_id WHERE s.slug = ?`,
       [req.params.slug]
     );
     if (!s) return res.status(404).json({ error: 'Unknown samithi' });
     if (s.status !== 'active') return res.status(400).json({ error: 'Cannot enter a suspended samithi' });
+    const tenantSecret = tenantSecretFor(s.server_code);
+    if (!tenantSecret) return res.status(501).json({ error: `No tenant JWT secret configured for server '${s.server_code}'` });
 
     const sid = crypto.randomBytes(16).toString('hex');
     const expiresAt = new Date(Date.now() + TTL_MIN * 60 * 1000);
@@ -40,7 +51,7 @@ router.post('/samithis/:slug/impersonate', requireSuperadmin, async (req, res, n
         act: `sa:${req.admin.id}`,
         sid
       },
-      process.env.TENANT_JWT_SECRET,
+      tenantSecret,
       { expiresIn: `${TTL_MIN}m` }
     );
 

@@ -32,6 +32,7 @@ const eventsRoutes = require('./routes/events.routes');
 const purukaRoutes = require('./routes/puruka.routes');
 const purukaAdminRoutes = require('./routes/purukaAdmin.routes');
 const internalRoutes = require('./routes/internal.routes');
+const internalServerRoutes = require('./routes/internalServer.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -83,6 +84,11 @@ app.get('/api/v1/health', async (req, res) => {
 });
 
 // ── API Routes ───────────────────────────────────────────────
+// Server-scoped internal ops (platform → this server: DB provisioning,
+// registry publish) — deliberately BEFORE the tenant middleware since they
+// concern the whole server, not one samithi. internalAuth-gated.
+app.use('/api/v1/internal/server', internalServerRoutes);
+
 // Everything below is tenant-scoped (health and uploads above are not)
 app.use('/api/v1', tenantMiddleware);
 app.use('/api/v1/auth', authRoutes);
