@@ -124,6 +124,20 @@ async function ensureSchema() {
     \`value\` TEXT
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
+  // Broadcast history (FR-7.1): what was sent, to whom, by whom, and the
+  // per-samithi delivery result.
+  await pool.query(`CREATE TABLE IF NOT EXISTS broadcasts (
+    id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+    admin_id     INT          DEFAULT NULL,
+    title        VARCHAR(255) NOT NULL,
+    body         TEXT,
+    push         TINYINT      DEFAULT 0,
+    targets      JSON         DEFAULT NULL,
+    results      JSON         DEFAULT NULL,
+    created_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_broadcasts_created (created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
   // Latest counters per samithi (collector upserts; dashboard reads)
   await pool.query(`CREATE TABLE IF NOT EXISTS tenant_stats_current (
     samithi_slug            VARCHAR(30) PRIMARY KEY,

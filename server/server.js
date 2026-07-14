@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const { initPool, getPool, getTenants } = require('./db');
 const { tenantMiddleware } = require('./middleware/tenant');
+const API_VERSION = require('./package.json').version;
 
 // Route imports
 const authRoutes = require('./routes/auth.routes');
@@ -75,6 +76,7 @@ app.get('/api/v1/health', async (req, res) => {
   const degraded = Object.values(tenants).includes('error');
   res.status(degraded ? 503 : 200).json({
     status: degraded ? 'degraded' : 'ok',
+    api_version: API_VERSION,
     tenants,
     timestamp: new Date().toISOString()
   });

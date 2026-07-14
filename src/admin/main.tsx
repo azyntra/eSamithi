@@ -9,6 +9,9 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Samithis from './pages/Samithis'
 import SamithiDetail from './pages/SamithiDetail'
+import Reports from './pages/Reports'
+import Broadcasts from './pages/Broadcasts'
+import Operations from './pages/Operations'
 import Sessions from './pages/Sessions'
 import Audit from './pages/Audit'
 
@@ -27,6 +30,9 @@ function Gate(): React.ReactElement {
         <Route index element={<Dashboard />} />
         <Route path="samithis" element={<Samithis />} />
         <Route path="samithis/:slug" element={<SamithiDetail />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="broadcasts" element={<Broadcasts />} />
+        <Route path="operations" element={<Operations />} />
         <Route path="sessions" element={<Sessions />} />
         <Route path="audit" element={<Audit />} />
         <Route path="*" element={<Navigate to="/" replace />} />

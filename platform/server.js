@@ -12,6 +12,9 @@ const samithisRoutes = require('./routes/samithis.routes');
 const auditRoutes = require('./routes/audit.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const impersonationRoutes = require('./routes/impersonation.routes');
+const reportsRoutes = require('./routes/reports.routes');
+const broadcastsRoutes = require('./routes/broadcasts.routes');
+const opsRoutes = require('./routes/ops.routes');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -26,6 +29,19 @@ app.use((_req, res, next) => {
 app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'platform-api' }));
 
 // ── Public directory (unauthenticated subset) ─────────────────
+// Return the stricter (higher) of two semver strings; tolerates blanks.
+function maxVersion(a, b) {
+  if (!a) return b || null;
+  if (!b) return a || null;
+  const pa = String(a).split('.').map((n) => parseInt(n, 10) || 0);
+  const pb = String(b).split('.').map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] || 0) > (pb[i] || 0)) return a;
+    if ((pa[i] || 0) < (pb[i] || 0)) return b;
+  }
+  return a;
+}
+
 // GET /v1/resolve/:joinCode — same contract the standalone directory served;
 // the samithis table is now the single source of truth.
 app.get('/v1/resolve/:code', async (req, res, next) => {
@@ -38,6 +54,17 @@ app.get('/v1/resolve/:code', async (req, res, next) => {
       [code]
     );
     if (!row) return res.status(404).json({ error: 'Unknown samithi code' });
+
+    // Platform-wide controls (FR-7.2 maintenance banner, FR-8.5 global min app
+    // version). The effective minimum is the stricter of the samithi's own and
+    // the global floor; clients already gate on min_app_version.
+    const [settings] = await getPool().query(
+      "SELECT `key`, `value` FROM platform_settings WHERE `key` IN ('maintenance_active','maintenance_message','global_min_app_version')"
+    );
+    const ps = {};
+    for (const s of settings) ps[s.key] = s.value;
+    const minApp = maxVersion(row.min_app_version, ps.global_min_app_version);
+
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', 'no-store');
     res.json({
@@ -45,7 +72,10 @@ app.get('/v1/resolve/:code', async (req, res, next) => {
       name: row.name,
       api_url: row.api_url,
       status: row.status,
-      min_app_version: row.min_app_version || undefined
+      min_app_version: minApp || undefined,
+      maintenance: ps.maintenance_active === '1' && ps.maintenance_message
+        ? { message: ps.maintenance_message }
+        : undefined
     });
   } catch (err) { next(err); }
 });
@@ -72,6 +102,9 @@ app.use('/pa/v1/auth', authRoutes);
 app.use('/pa/v1', requireAuth, auditMiddleware);
 app.use('/pa/v1/samithis', samithisRoutes);
 app.use('/pa/v1/dashboard', dashboardRoutes);
+app.use('/pa/v1/reports', reportsRoutes);
+app.use('/pa/v1/broadcasts', broadcastsRoutes);
+app.use('/pa/v1/ops', opsRoutes);
 app.use('/pa/v1', impersonationRoutes);
 app.use('/pa/v1/audit', auditRoutes);
 app.get('/pa/v1/me', (req, res) => res.json(req.admin));

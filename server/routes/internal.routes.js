@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const { getPool } = require('../db');
 const { migrateTenant } = require('../migrations/runner');
+const { sendPushToAllMembers } = require('../lib/push');
 const { internalAuth } = require('../middleware/internal');
 
 // Staff passwords are sha256 (matches auth.routes.js / provision-tenant.js)
@@ -205,6 +206,30 @@ router.post('/provision', async (req, res, next) => {
       [hashPassword(password)]
     );
     res.json({ success: true, migrations_applied: applied });
+  } catch (err) { next(err); }
+});
+
+// POST /internal/broadcast — platform-originated announcement (FR-7.1). Creates
+// a general announcement in this tenant and (optionally) pushes it to members.
+// created_by is NULL: platform support authored it, not a tenant staff user.
+router.post('/broadcast', async (req, res, next) => {
+  try {
+    const { title, body, push } = req.body || {};
+    if (!title || !String(title).trim()) return res.status(400).json({ error: 'title required' });
+    const pool = getPool();
+    const [r] = await pool.query(
+      `INSERT INTO announcements (type, title, body, is_active, created_by)
+       VALUES ('general', ?, ?, 1, NULL)`,
+      [String(title).trim(), body ? String(body) : null]
+    );
+    let pushed = 0;
+    if (push) {
+      const [[{ n }]] = await pool.query('SELECT COUNT(*) AS n FROM member_push_tokens');
+      pushed = Number(n);
+      // Fire-and-forget: never fail the broadcast on a push hiccup
+      sendPushToAllMembers(pool, { title: String(title).trim(), body: body ? String(body).slice(0, 140) : '', data: { type: 'announcement' } });
+    }
+    res.json({ success: true, announcement_id: r.insertId, pushed });
   } catch (err) { next(err); }
 });
 

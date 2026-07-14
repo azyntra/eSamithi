@@ -1,11 +1,14 @@
 import React, { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Building2, KeyRound, ScrollText, Moon, Sun, LogOut } from 'lucide-react'
+import { LayoutDashboard, Building2, KeyRound, ScrollText, Moon, Sun, LogOut, BarChart3, Megaphone, Activity } from 'lucide-react'
 import { useAuth } from '../auth'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/samithis', label: 'Samithis', icon: Building2 },
+  { to: '/reports', label: 'Reports', icon: BarChart3 },
+  { to: '/broadcasts', label: 'Broadcasts', icon: Megaphone },
+  { to: '/operations', label: 'Operations', icon: Activity },
   { to: '/sessions', label: 'Support sessions', icon: KeyRound },
   { to: '/audit', label: 'Audit log', icon: ScrollText }
 ]
@@ -13,6 +16,9 @@ const NAV = [
 const TITLES: Record<string, { h: string; sub: string }> = {
   '/': { h: 'Fleet dashboard', sub: 'Platform-wide health and financials' },
   '/samithis': { h: 'Samithis', sub: 'Manage every society on the platform' },
+  '/reports': { h: 'Cross-samithi reports', sub: 'Compare and export fleet figures' },
+  '/broadcasts': { h: 'Broadcasts', sub: 'Announce to the whole fleet at once' },
+  '/operations': { h: 'Operations', sub: 'Health, releases, and platform controls' },
   '/sessions': { h: 'Support sessions', sub: 'Active impersonation sessions' },
   '/audit': { h: 'Audit log', sub: 'Every platform action, append-only' }
 }
