@@ -8,7 +8,7 @@ const TENANTS_FILE = process.env.TENANTS_FILE || '/etc/esamithi/tenants.json';
 // it by hand). The tenant API re-reads it within 30 s.
 async function syncTenantsFile() {
   const [rows] = await getPool().query(
-    'SELECT slug, name_en, db_name, db_user, db_password_env, status FROM samithis WHERE status != "archived"'
+    'SELECT slug, name_en, db_name, db_user, db_password_env, db_password, status FROM samithis WHERE status != "archived"'
   );
   const out = {};
   for (const r of rows) {
@@ -17,6 +17,7 @@ async function syncTenantsFile() {
       db: r.db_name,
       status: r.status,
       ...(r.db_user ? { db_user: r.db_user } : {}),
+      ...(r.db_password ? { db_password: r.db_password } : {}),
       ...(r.db_password_env ? { db_password_env: r.db_password_env } : {})
     };
   }

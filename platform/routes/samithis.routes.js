@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { getPool } = require('../db');
 const { requireSuperadmin } = require('../middleware/auth');
 const { syncTenantsFile } = require('../lib/sync');
+const { provisionSamithi, ProvisionError } = require('../lib/provision');
 
 const router = express.Router();
 
@@ -92,6 +93,27 @@ router.get('/', async (_req, res, next) => {
       ORDER BY s.slug`);
     res.json(rows);
   } catch (err) { next(err); }
+});
+
+// POST /pa/v1/samithis — onboard a new samithi (FR-3.1). Creates the tenant
+// database + MySQL user, registers it, runs migrations, seeds the admin, and
+// publishes to tenants.json — reachable from the apps with no SSH/restart.
+router.post('/', requireSuperadmin, async (req, res, next) => {
+  try {
+    const { slug, name_en, name_si, min_app_version, server_code } = req.body || {};
+    const result = await provisionSamithi({ slug, name_en, name_si, min_app_version, server_code });
+    res.locals.audit = {
+      action: 'samithi_onboard', samithi: result.slug,
+      after: { slug: result.slug, name_en: result.name_en, join_code: result.join_code, db_name: result.db_name }
+    };
+    res.json({ success: true, ...result });
+  } catch (err) {
+    if (err instanceof ProvisionError) {
+      res.locals.audit = { action: 'samithi_onboard_failed', samithi: req.body?.slug || null, after: { error: err.message } };
+      return res.status(err.status).json({ error: err.message });
+    }
+    next(err);
+  }
 });
 
 // PATCH /pa/v1/samithis/:slug — suspend / reactivate / regenerate_code, or

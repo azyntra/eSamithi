@@ -91,6 +91,17 @@ async function ensureSchema() {
     FOREIGN KEY (server_id) REFERENCES servers(id)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
+  // Onboarded tenants store their MySQL password inline (the wizard creates a
+  // per-tenant DB user); syncTenantsFile writes it into tenants.json so the
+  // tenant API connects without a restart. Idempotent add for existing DBs.
+  const [pwCol] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'samithis' AND COLUMN_NAME = 'db_password'`
+  );
+  if (pwCol.length === 0) {
+    await pool.query('ALTER TABLE samithis ADD COLUMN db_password VARCHAR(120) DEFAULT NULL AFTER db_password_env');
+  }
+
   // Append-only: the platform DB user must have no UPDATE/DELETE grant on
   // this table (enforced at provisioning; FR-9.2)
   await pool.query(`CREATE TABLE IF NOT EXISTS audit_log (

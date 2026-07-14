@@ -1,6 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const { getPool } = require('../db');
+const { migrateTenant } = require('../migrations/runner');
 const { internalAuth } = require('../middleware/internal');
 
 // Staff passwords are sha256 (matches auth.routes.js / provision-tenant.js)
@@ -183,6 +184,27 @@ router.delete('/users/:id', async (req, res, next) => {
     }
     await pool.query('DELETE FROM users WHERE id = ?', [id]);
     res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+// POST /internal/provision — build the schema on a freshly-created tenant DB
+// and seed its admin (super-admin onboard wizard, FR-3.1). The platform creates
+// the empty database + MySQL user and registers the tenant; this runs once the
+// tenant appears in tenants.json so getPool() connects with the inline creds.
+// Idempotent: migrations no-op if already applied; admin insert is guarded.
+router.post('/provision', async (req, res, next) => {
+  try {
+    const pool = getPool(); // req.tenant resolved by tenantMiddleware
+    const applied = await migrateTenant(pool, req.tenant);
+    const password = req.body && req.body.admin_password;
+    if (!password) return res.status(400).json({ error: 'admin_password required' });
+    await pool.query(
+      `INSERT INTO users (username, password, full_name, role, is_active)
+       VALUES ('admin', ?, 'Administrator', 'admin', 1)
+       ON DUPLICATE KEY UPDATE username = username`,
+      [hashPassword(password)]
+    );
+    res.json({ success: true, migrations_applied: applied });
   } catch (err) { next(err); }
 });
 

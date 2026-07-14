@@ -1,14 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogIn, Ban, CircleCheck, RefreshCcw, ChevronRight } from 'lucide-react'
+import { LogIn, Ban, CircleCheck, RefreshCcw, ChevronRight, Plus, Building2, PartyPopper } from 'lucide-react'
 import { api } from '../api'
 import { useAuth } from '../auth'
-import { Button, StatusBadge, Skeleton, CopyChip, useToast, useConfirm } from '../components/ui'
+import { Button, StatusBadge, Skeleton, CopyChip, useToast, useConfirm, Modal } from '../components/ui'
 import { enterSamithi } from '../lib/enter'
 
 interface Row {
   id: number; slug: string; join_code: string; name_en: string; status: string
   db_name: string; min_app_version: string | null; api_url: string
+}
+
+interface OnboardResult {
+  slug: string; join_code: string; name_en: string; db_name: string
+  admin_username: string; admin_password: string
 }
 
 export default function Samithis(): React.ReactElement {
@@ -18,6 +23,9 @@ export default function Samithis(): React.ReactElement {
   const { confirm, node } = useConfirm()
   const [rows, setRows] = useState<Row[] | null>(null)
   const [busy, setBusy] = useState('')
+  const [onboardOpen, setOnboardOpen] = useState(false)
+  const [result, setResult] = useState<OnboardResult | null>(null)
+  const canWrite = admin?.role === 'superadmin'
 
   const load = useCallback(async () => setRows(await api<Row[]>('/samithis')), [])
   useEffect(() => { load().catch((e) => toast('error', (e as Error).message)) }, [load, toast])
@@ -51,7 +59,11 @@ export default function Samithis(): React.ReactElement {
     <>
       {node}
       <div className="card">
-        <div className="card-head"><h3>All samithis</h3><span className="sub">{rows ? `${rows.length} total` : ''}</span></div>
+        <div className="card-head">
+          <h3 style={{ flex: 1 }}>All samithis</h3>
+          <span className="sub">{rows ? `${rows.length} total` : ''}</span>
+          {canWrite && <Button size="sm" onClick={() => setOnboardOpen(true)}><Plus size={14} /> Onboard samithi</Button>}
+        </div>
         <div className="table-wrap">
           <table className="tbl">
             <thead><tr><th>Samithi</th><th>Join code</th><th>Database</th><th>Min app</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
@@ -85,6 +97,100 @@ export default function Samithis(): React.ReactElement {
           </table>
         </div>
       </div>
+
+      {onboardOpen && (
+        <OnboardModal
+          onClose={() => setOnboardOpen(false)}
+          onDone={(r) => { setOnboardOpen(false); setResult(r); load() }}
+          onError={(m) => toast('error', m)}
+          existingSlugs={rows?.map((r) => r.slug) || []}
+        />
+      )}
+
+      {result && (
+        <Modal title="Samithi onboarded" icon={<PartyPopper size={18} />} onClose={() => setResult(null)}
+          footer={<Button onClick={() => setResult(null)}>Done</Button>}>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 14 }}>
+            <b>{result.name_en}</b> is live and reachable from the desktop &amp; mobile apps. Share the join code, and hand the admin credentials over securely — <b>the password is shown once</b>.
+          </p>
+          <div style={{ display: 'grid', gap: 10 }}>
+            <CredRow label="Join code" value={result.join_code} />
+            <CredRow label="Admin username" value={result.admin_username} />
+            <CredRow label="Temporary password" value={result.admin_password} />
+          </div>
+          <p className="t-mut" style={{ fontSize: 12.5, marginTop: 14 }}>Ask the samithi admin to sign in on the desktop app with the join code, then change this password.</p>
+        </Modal>
+      )}
     </>
+  )
+}
+
+function CredRow({ label, value }: { label: string; value: string }): React.ReactElement {
+  return (
+    <div className="row" style={{ gap: 8, padding: '10px 13px', background: 'var(--bg-hover)', borderRadius: 8, border: '1px solid var(--border)' }}>
+      <span className="t-mut" style={{ width: 140, fontSize: 12.5 }}>{label}</span>
+      <code className="mono" style={{ flex: 1, fontSize: 14 }}>{value}</code>
+      <CopyChip text={value} />
+    </div>
+  )
+}
+
+function OnboardModal({ onClose, onDone, onError, existingSlugs }: {
+  onClose: () => void; onDone: (r: OnboardResult) => void; onError: (m: string) => void; existingSlugs: string[]
+}): React.ReactElement {
+  const [nameEn, setNameEn] = useState('')
+  const [nameSi, setNameSi] = useState('')
+  const [slug, setSlug] = useState('')
+  const [slugTouched, setSlugTouched] = useState(false)
+  const [minApp, setMinApp] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Auto-suggest a slug from the English name until the operator edits it
+  const autoSlug = nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 20)
+  const effSlug = (slugTouched ? slug : autoSlug).trim()
+  const slugValid = /^[a-z0-9][a-z0-9_-]{1,19}$/.test(effSlug)
+  const slugTaken = existingSlugs.includes(effSlug)
+
+  const submit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault()
+    if (!nameEn.trim() || !slugValid || slugTaken) return
+    setSaving(true)
+    try {
+      const r = await api<OnboardResult>('/samithis', {
+        method: 'POST',
+        body: JSON.stringify({ slug: effSlug, name_en: nameEn.trim(), name_si: nameSi.trim() || undefined, min_app_version: minApp.trim() || undefined })
+      })
+      onDone(r)
+    } catch (e) { onError((e as Error).message); setSaving(false) }
+  }
+
+  return (
+    <Modal title="Onboard a new samithi" icon={<Building2 size={18} />} onClose={saving ? () => {} : onClose}
+      footer={<>
+        <Button variant="ghost" disabled={saving} onClick={onClose}>Cancel</Button>
+        <Button loading={saving} disabled={!nameEn.trim() || !slugValid || slugTaken}
+          onClick={() => (document.getElementById('onboard-form') as HTMLFormElement)?.requestSubmit()}>
+          {saving ? 'Provisioning…' : 'Create samithi'}
+        </Button>
+      </>}>
+      <form id="onboard-form" onSubmit={submit} style={{ display: 'grid', gap: 12 }}>
+        <div className="field"><label>Display name (English)</label>
+          <input className="input" value={nameEn} onChange={(e) => setNameEn(e.target.value)} autoFocus placeholder="e.g. Kandy Welfare Society" /></div>
+        <div className="field"><label>Display name (Sinhala) <span className="t-mut">— optional</span></label>
+          <input className="input" value={nameSi} onChange={(e) => setNameSi(e.target.value)} placeholder="මහනුවර සුභසාධක සමිතිය" /></div>
+        <div className="field"><label>Slug (URL / database identifier)</label>
+          <input className="input mono" value={effSlug} autoCapitalize="off" autoCorrect="off"
+            onChange={(e) => { setSlugTouched(true); setSlug(e.target.value.toLowerCase()) }} placeholder="kandy-welfare" />
+          {effSlug && !slugValid && <span className="t-mut" style={{ fontSize: 12, color: 'var(--danger)' }}>2–20 chars: lowercase letters/digits, - or _</span>}
+          {slugValid && slugTaken && <span className="t-mut" style={{ fontSize: 12, color: 'var(--danger)' }}>Slug already in use</span>}
+          {slugValid && !slugTaken && <span className="t-mut" style={{ fontSize: 12 }}>Database: <span className="mono">esamithi_{effSlug}</span></span>}
+        </div>
+        <div className="field"><label>Minimum app version <span className="t-mut">— optional</span></label>
+          <input className="input mono" value={minApp} onChange={(e) => setMinApp(e.target.value)} placeholder="e.g. 1.2.0" /></div>
+        <p className="t-mut" style={{ fontSize: 12.5, margin: 0, lineHeight: 1.5 }}>
+          This creates the database, runs all migrations, seeds an admin account, and publishes the samithi to the directory — no server access needed. Takes about a minute.
+        </p>
+      </form>
+    </Modal>
   )
 }

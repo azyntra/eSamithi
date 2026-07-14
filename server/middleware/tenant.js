@@ -1,4 +1,4 @@
-const { getTenants, tenantContext } = require('../db');
+const { getTenants, reloadTenants, tenantContext } = require('../db');
 
 // Resolves which samithi (tenant) a request belongs to:
 //   1. X-Samithi header — set by clients after the multi-samithi update
@@ -10,7 +10,9 @@ function tenantMiddleware(req, res, next) {
   if (!slug) {
     return res.status(400).json({ error: 'Samithi not specified' });
   }
-  const tenant = getTenants()[slug];
+  // Miss → force one re-read: catches a just-onboarded samithi before the TTL
+  let tenant = getTenants()[slug];
+  if (!tenant) tenant = reloadTenants()[slug];
   if (!tenant) {
     return res.status(403).json({ error: 'Unknown samithi' });
   }

@@ -16,10 +16,28 @@ let tenantsLoadedAt = 0;
 const TENANTS_TTL_MS = 30 * 1000;
 const pools = new Map(); // slug → Pool
 
+let lastForcedReload = 0;
+
 function loadTenants() {
   const file = process.env.TENANTS_FILE || path.join(__dirname, 'tenants.json');
   tenants = JSON.parse(fs.readFileSync(file, 'utf-8'));
   tenantsLoadedAt = Date.now();
+  return tenants;
+}
+
+// Force a re-read outside the 30 s TTL — used when a slug lookup misses so a
+// freshly onboarded samithi (platform just wrote tenants.json) resolves within
+// seconds instead of waiting out the TTL. Rate-limited to once / 2 s so a flood
+// of bogus slugs can't turn into a file-read storm.
+function reloadTenants() {
+  if (Date.now() - lastForcedReload < 2000) return tenants || {};
+  lastForcedReload = Date.now();
+  try {
+    loadTenants();
+  } catch (err) {
+    if (!tenants) throw err;
+    console.error('[tenants] forced reload failed, keeping previous registry:', err.message);
+  }
   return tenants;
 }
 
@@ -46,9 +64,15 @@ function createPool(tenant) {
     // Shared app credential unless the tenant declares its own MySQL user
     // (per-tenant users arrive with the Docker migration)
     user: tenant.db_user || process.env.DB_USER || 'esamithi_user',
-    password: tenant.db_password_env
-      ? process.env[tenant.db_password_env] || ''
-      : process.env.DB_PASSWORD || '',
+    // Onboarded tenants carry their MySQL password inline in the registry so a
+    // new samithi works with no API restart (env-var indirection would need
+    // the container recreated to see the new var). Pre-existing tenants keep
+    // using db_password_env; the shared DB_PASSWORD is the final fallback.
+    password: tenant.db_password
+      ? tenant.db_password
+      : tenant.db_password_env
+        ? process.env[tenant.db_password_env] || ''
+        : process.env.DB_PASSWORD || '',
     database: tenant.db,
     waitForConnections: true,
     connectionLimit: parseInt(process.env.DB_POOL_LIMIT || '5'),
@@ -94,4 +118,4 @@ function getPool(slug) {
   return pool;
 }
 
-module.exports = { initPool, getPool, getTenants, tenantContext };
+module.exports = { initPool, getPool, getTenants, reloadTenants, tenantContext };
