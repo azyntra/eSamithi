@@ -71,12 +71,27 @@
     </div>
 
     <div class="card">
+      <div class="row" style="margin-bottom:14px">
+        <h2 style="margin:0">Fleet dashboard</h2>
+        <button class="ghost right" onclick="refreshFleet(this)">Refresh now</button>
+      </div>
+      <div id="tiles" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px"></div>
+    </div>
+
+    <div class="card">
       <div class="row" style="margin-bottom:10px">
         <h2 style="margin:0">Samithis</h2>
-        <button class="ghost right" onclick="loadSamithis()">Refresh</button>
+        <button class="ghost right" onclick="loadDashboard()">Refresh</button>
       </div>
       <table id="samithis"><thead><tr>
-        <th>Samithi</th><th>Join code</th><th>Database</th><th>Status</th><th></th>
+        <th>Samithi</th><th>Members</th><th>Outstanding loans</th><th>Last activity</th><th>Status</th><th></th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="card" id="sessionsCard" style="display:none">
+      <h2>Active support sessions</h2>
+      <table id="sessions"><thead><tr>
+        <th>Samithi</th><th>Operator</th><th>Started</th><th>Ends</th><th></th>
       </tr></thead><tbody></tbody></table>
     </div>
 
@@ -164,24 +179,90 @@ async function doLogout() {
 function showPanel() {
   login.style.display = 'none'; panel.style.display = 'block';
   who.textContent = me ? `${me.name} · ${me.email} · ${me.role}` : '';
-  loadSamithis(); loadAudit();
+  // The workspace exit revokes via this refresh token (same origin)
+  if (refresh) sessionStorage.setItem('esamithi.pa.refresh', refresh);
+  loadDashboard(); loadAudit(); loadSessions();
 }
 
-async function loadSamithis() {
-  const rows = await api('/samithis');
-  document.querySelector('#samithis tbody').innerHTML = rows.map(s => `
+const rs = c => 'Rs. ' + (c / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+async function loadDashboard() {
+  const d = await api('/dashboard');
+  const t = d.totals, s = d.samithis;
+  const tiles = [
+    ['Samithis', `${s.active}/${s.total}`, s.suspended ? `${s.suspended} suspended` : 'all active'],
+    ['Members', t.members.toLocaleString(), `${t.enrolled} app-enrolled`],
+    ['Staff users', t.staff, ''],
+    ['Wallet balances', rs(t.wallets_cents), 'across fleet'],
+    ['Active loans', t.loans_active, rs(t.loans_outstanding_cents) + ' owed'],
+    ['Fixed deposits', t.fds_count, rs(t.fds_value_cents)],
+    ['Pending requests', t.pending_requests, '']
+  ];
+  tiles_el().innerHTML = tiles.map(([label, big, sub]) => `
+    <div style="background:#0d1220;border:1px solid var(--line);border-radius:10px;padding:14px">
+      <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">${esc(label)}</div>
+      <div style="font-size:22px;font-weight:800;margin:4px 0">${esc(big)}</div>
+      <div class="muted" style="font-size:12px">${esc(sub)}</div>
+    </div>`).join('');
+
+  document.querySelector('#samithis tbody').innerHTML = d.at_a_glance.map(s => `
     <tr>
-      <td><b>${esc(s.name_en)}</b><br><span class="muted">${esc(s.slug)}</span></td>
-      <td><code>${esc(s.join_code)}</code></td>
-      <td class="muted">${esc(s.db_name)}</td>
+      <td><b>${esc(s.name_en)}</b><br><span class="muted">${esc(s.slug)} · ${esc(s.join_code)}</span></td>
+      <td>${s.members_total ?? '—'}${s.reachable === 0 ? ' <span class="muted">(unreachable)</span>' : ''}</td>
+      <td>${s.loans_outstanding_cents != null ? rs(s.loans_outstanding_cents) : '—'}</td>
+      <td class="${s.stale ? '' : 'muted'}" ${s.stale ? 'style="color:var(--warn)"' : ''}>${esc((s.last_txn_at || '—').slice(0, 10))}</td>
       <td><span class="pill ${esc(s.status)}">${esc(s.status)}</span></td>
       <td class="row">
+        ${s.status === 'active' ? `<button onclick="enter('${esc(s.slug)}')">Enter samithi</button>` : ''}
         ${s.status === 'active'
           ? `<button class="danger" onclick="act('${esc(s.slug)}','suspend')">Suspend</button>`
           : `<button class="ok" onclick="act('${esc(s.slug)}','reactivate')">Reactivate</button>`}
         <button class="ghost" onclick="act('${esc(s.slug)}','regenerate_code')">New code</button>
       </td>
     </tr>`).join('');
+}
+function tiles_el() { return document.getElementById('tiles'); }
+
+async function refreshFleet(btn) {
+  btn.disabled = true; btn.textContent = 'Refreshing…';
+  try { await api('/dashboard/refresh', { method: 'POST' }); await loadDashboard(); }
+  catch (e) { alert(e.message); }
+  btn.disabled = false; btn.textContent = 'Refresh now';
+}
+
+// Enter Samithi: mint an impersonation token and hand off to the workspace
+async function enter(slug) {
+  if (!confirm(`Enter ${slug} as Super Admin? Your actions there are recorded in the samithi's records and the platform audit log.`)) return;
+  try {
+    const d = await api('/samithis/' + slug + '/impersonate', { method: 'POST' });
+    const session = { token: d.token, apiUrl: d.api_url, slug: d.slug, name: (await sName(slug)),
+                      sid: d.sid, expiresAt: d.expires_at, actorEmail: me.email };
+    const payload = btoa(unescape(encodeURIComponent(JSON.stringify(session))));
+    window.location.href = '/workspace/workspace.html#s=' + encodeURIComponent(payload);
+  } catch (e) { alert(e.message); }
+}
+async function sName(slug) {
+  const rows = await api('/samithis');
+  const s = rows.find(x => x.slug === slug);
+  return s ? s.name_en : slug;
+}
+
+async function loadSessions() {
+  const rows = await api('/impersonations');
+  const card = document.getElementById('sessionsCard');
+  card.style.display = rows.length ? 'block' : 'none';
+  document.querySelector('#sessions tbody').innerHTML = rows.map(s => `
+    <tr>
+      <td>${esc(s.samithi_slug)}</td>
+      <td>${esc(s.admin_email)}</td>
+      <td class="muted">${esc((s.created_at || '').replace('T', ' ').slice(0, 19))}</td>
+      <td class="muted">${esc((s.expires_at || '').replace('T', ' ').slice(11, 19))}</td>
+      <td><button class="danger" onclick="revoke('${esc(s.sid)}')">Revoke</button></td>
+    </tr>`).join('');
+}
+async function revoke(sid) {
+  try { await api('/impersonations/' + sid, { method: 'DELETE' }); } catch (e) { alert(e.message); }
+  loadSessions(); loadAudit();
 }
 
 async function act(slug, action) {
@@ -190,7 +271,7 @@ async function act(slug, action) {
   if (warn[action] && !confirm(warn[action])) return;
   try { await api('/samithis/' + slug, { method: 'PATCH', body: JSON.stringify({ action }) }); }
   catch (e) { alert(e.message); }
-  loadSamithis(); loadAudit();
+  loadDashboard(); loadAudit();
 }
 
 async function loadAudit() {

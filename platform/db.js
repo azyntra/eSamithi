@@ -112,6 +112,36 @@ async function ensureSchema() {
     \`key\` VARCHAR(60) PRIMARY KEY,
     \`value\` TEXT
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  // Latest counters per samithi (collector upserts; dashboard reads)
+  await pool.query(`CREATE TABLE IF NOT EXISTS tenant_stats_current (
+    samithi_slug            VARCHAR(30) PRIMARY KEY,
+    captured_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    reachable               TINYINT DEFAULT 1,
+    members_total           INT DEFAULT 0,
+    members_active          INT DEFAULT 0,
+    members_enrolled        INT DEFAULT 0,
+    staff_users             INT DEFAULT 0,
+    wallets_total_cents     BIGINT DEFAULT 0,
+    loans_active            INT DEFAULT 0,
+    loans_outstanding_cents BIGINT DEFAULT 0,
+    fds_count               INT DEFAULT 0,
+    fds_value_cents         BIGINT DEFAULT 0,
+    pending_requests        INT DEFAULT 0,
+    last_txn_at             DATE DEFAULT NULL,
+    migration_version       VARCHAR(80) DEFAULT NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  // Impersonation sessions (kill-switch + audit linkage via sid)
+  await pool.query(`CREATE TABLE IF NOT EXISTS impersonation_sessions (
+    sid          VARCHAR(40) PRIMARY KEY,
+    admin_id     INT NOT NULL,
+    samithi_slug VARCHAR(30) NOT NULL,
+    expires_at   TIMESTAMP NOT NULL,
+    revoked_at   TIMESTAMP NULL DEFAULT NULL,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES super_admins(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 }
 
 // First boot on a machine that already runs tenants: import the existing

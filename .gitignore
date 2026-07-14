@@ -29,3 +29,6 @@ scratch.js
 *.apk
 *.aab
 *.ipa
+
+# web workspace build output
+dist-web/

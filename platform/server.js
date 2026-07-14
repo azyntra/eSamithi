@@ -3,11 +3,15 @@
 // audit log, and the public directory (absorbed per the panel doc §4.1).
 require('dotenv').config();
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const { initDb, getPool } = require('./db');
 const { requireAuth, auditMiddleware } = require('./middleware/auth');
+const { startCollector } = require('./lib/collector');
 const authRoutes = require('./routes/auth.routes');
 const samithisRoutes = require('./routes/samithis.routes');
 const auditRoutes = require('./routes/audit.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
+const impersonationRoutes = require('./routes/impersonation.routes');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -46,10 +50,29 @@ app.get('/v1/resolve/:code', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── Internal (tenant API → platform): impersonation revocation check ──
+// Signed with the shared INTERNAL_SECRET; never reachable by clients.
+app.get('/internal/impersonation/:sid', async (req, res) => {
+  try {
+    const header = req.headers.authorization || '';
+    const decoded = jwt.verify(header.replace('Bearer ', ''), process.env.INTERNAL_SECRET || '');
+    if (decoded.typ !== 'internal') throw new Error('bad typ');
+  } catch {
+    return res.status(401).json({ error: 'internal auth' });
+  }
+  const [[row]] = await getPool().query(
+    'SELECT 1 AS ok FROM impersonation_sessions WHERE sid = ? AND revoked_at IS NULL AND expires_at > NOW()',
+    [req.params.sid]
+  );
+  res.json({ active: Boolean(row) });
+});
+
 // ── Platform API (authenticated) ──────────────────────────────
 app.use('/pa/v1/auth', authRoutes);
 app.use('/pa/v1', requireAuth, auditMiddleware);
 app.use('/pa/v1/samithis', samithisRoutes);
+app.use('/pa/v1/dashboard', dashboardRoutes);
+app.use('/pa/v1', impersonationRoutes);
 app.use('/pa/v1/audit', auditRoutes);
 app.get('/pa/v1/me', (req, res) => res.json(req.admin));
 
@@ -62,6 +85,7 @@ app.use((err, _req, res, _next) => {
   try {
     await initDb();
     console.log('✓ platform DB ready');
+    startCollector();
     app.listen(PORT, '0.0.0.0', () => console.log(`✓ platform-api on :${PORT}`));
   } catch (err) {
     console.error('✗ platform-api failed to start:', err.message);

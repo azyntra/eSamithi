@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
+const { isImpersonationActive } = require('../lib/impersonation');
+const { logSupportAction } = require('../lib/supportActions');
 
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Authentication required' });
@@ -16,6 +18,24 @@ function authMiddleware(req, res, next) {
     if (req.tenant && sam !== req.tenant) {
       return res.status(403).json({ error: 'Token does not belong to this samithi' });
     }
+
+    // Impersonation token (super-admin "Enter Samithi"): carries act:'sa:<id>'
+    // + sid. Honour the platform revocation list, and record every write in
+    // the tenant DB so its own staff can see support activity (FR-5.4).
+    if (decoded.act) {
+      const live = await isImpersonationActive(decoded.sid);
+      if (!live) return res.status(401).json({ error: 'Support session ended' });
+      req.impersonation = { actor: decoded.act, sid: decoded.sid };
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        res.on('finish', () => {
+          logSupportAction(req.tenant, {
+            actor: decoded.act, sid: decoded.sid,
+            method: req.method, path: req.originalUrl, status: res.statusCode
+          }).catch(() => {});
+        });
+      }
+    }
+
     req.user = decoded;
     // Viewer accounts are read-only everywhere; hiding buttons client-side
     // is not enforcement
