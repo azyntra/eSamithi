@@ -23,8 +23,19 @@ server {
     }
 
     location /directory/ {
-        proxy_pass http://directory:8080/;
+        proxy_pass http://platform:4000/;
         proxy_set_header Host $host;
+    }
+
+    location /pa/ {
+        proxy_pass http://platform:4000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /admin/ {
+        alias /srv/admin/;
+        index index.html;
     }
 
     location /updates/ {

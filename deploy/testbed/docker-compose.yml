@@ -12,26 +12,39 @@ services:
     volumes:
       - ./nginx:/etc/nginx/conf.d:ro
       - ./updates:/srv/updates:ro
+      - ./admin:/srv/admin:ro
       - ./certbot-www:/var/www/certbot:ro
       - certs:/etc/letsencrypt:ro
     depends_on:
       api:
         condition: service_healthy
-      directory:
+      platform:
         condition: service_healthy
     restart: unless-stopped
 
-  directory:
+  # Control plane (super-admin panel doc §4.1): super-admin auth, samithi
+  # registry, audit log — and the public directory, absorbed from the old
+  # standalone service. Writes tenants.json; the API re-reads it within 30 s.
+  platform:
     build:
-      context: /opt/directory
+      context: /opt/platform
+    env_file: .env
+    environment:
+      PORT: 4000 # the shared .env carries the tenant API's PORT=3000
+      TENANTS_FILE: /etc/esamithi/tenants.json
+      DIRECTORY_FILE: /etc/esamithi/directory.json
     volumes:
-      - ./directory.json:/app/directory.json:ro
+      - ./tenants.json:/etc/esamithi/tenants.json
+      - ./directory.json:/etc/esamithi/directory.json:ro
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 15s
+    depends_on:
+      mysql:
+        condition: service_healthy
     restart: unless-stopped
 
   api:

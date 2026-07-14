@@ -3,9 +3,9 @@ name: API
 on:
   push:
     branches: [main]
-    paths: ['server/**', '.github/workflows/api.yml']
+    paths: ['server/**', 'platform/**', '.github/workflows/api.yml']
   pull_request:
-    paths: ['server/**', '.github/workflows/api.yml']
+    paths: ['server/**', 'platform/**', '.github/workflows/api.yml']
 
 jobs:
   test:
@@ -69,18 +69,21 @@ jobs:
           printf '%s\n' "${{ secrets.TESTBED_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-      - name: Push server code
+      - name: Push server + platform code
         run: |
           tar -C server --exclude node_modules --exclude uploads --exclude .env -cf - . \
             | ssh -o StrictHostKeyChecking=accept-new root@212.227.103.150 'tar -C /opt/server -xf -'
+          tar -C platform --exclude node_modules --exclude .env -cf - . \
+            | ssh -o StrictHostKeyChecking=accept-new root@212.227.103.150 'mkdir -p /opt/platform && tar -C /opt/platform -xf -'
 
-      - name: Rebuild API, migrate all tenants, health check
+      - name: Rebuild containers, migrate all tenants, health check
         run: |
           ssh -o StrictHostKeyChecking=accept-new root@212.227.103.150 '
             set -e
             cd /opt/esamithi
-            docker compose up -d --build api
+            docker compose up -d --build api platform
             for i in $(seq 1 30); do curl -sf http://localhost/api/v1/health >/dev/null && break; sleep 2; done
             docker compose exec -T api node migrate.js
             curl -sf "http://localhost/api/v1/health?deep=1"
+            curl -sf http://localhost/directory/health
           '
