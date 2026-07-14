@@ -39,8 +39,17 @@ function endSession(): void {
 }
 
 export function installShim(session: WorkspaceSession): void {
+  // Avoid mixed content: if the console is served over HTTPS but the samithi's
+  // registry api_url is plain HTTP (same single-server setup), call the API
+  // same-origin over HTTPS instead. The X-Samithi header still routes to the
+  // right tenant, so this reaches the same API container.
+  const apiBase =
+    window.location.protocol === 'https:' && session.apiUrl.startsWith('http://')
+      ? `${window.location.origin}/api/v1`
+      : session.apiUrl
+
   async function req(method: string, path: string, body?: unknown, params?: Record<string, unknown>): Promise<any> {
-    let url = session.apiUrl + path
+    let url = apiBase + path
     if (params) {
       const q = new URLSearchParams()
       for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null) q.append(k, String(v))
