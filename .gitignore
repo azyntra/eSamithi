@@ -38,3 +38,4 @@ dist-admin/
 
 # local Claude settings
 .claude/
+mobile/fcm-service-account.json
