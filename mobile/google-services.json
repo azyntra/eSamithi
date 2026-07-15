@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "197300638372",
+    "project_id": "esamithi-27ba4",
+    "storage_bucket": "esamithi-27ba4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:197300638372:android:d4ba56e1e12d67c2ea8c31",
+        "android_client_info": {
+          "package_name": "lk.esamithi.member"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZY3mhIn3jirFU1cjwgL-gRPd-JwaEYNg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

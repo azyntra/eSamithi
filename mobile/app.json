@@ -14,12 +14,13 @@
     "scheme": "esamithi",
     "userInterfaceStyle": "automatic",
     "extra": {
-      "apiEnv": "testbed",
+      "apiEnv": "prod",
       "apiUrls": {
         "prod": "https://api.esamithi.com/api/v1",
         "testbed": "http://212.227.103.150/api/v1"
       },
       "samithis": {
+        "prod": "samithi01",
         "testbed": "test01"
       },
       "directoryUrl": "https://api.esamithi.com/directory",
@@ -39,6 +40,7 @@
     },
     "android": {
       "package": "lk.esamithi.member",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#1E6FD0",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
