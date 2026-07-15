@@ -41,3 +41,4 @@ dist-admin/
 mobile/fcm-service-account.json
 *.aab
 *firebase-adminsdk*.json
+*.jks
