@@ -15,5 +15,7 @@ export async function enterSamithi(slug: string, name: string, actorEmail: strin
   // Keep the panel refresh token reachable so the workspace "Exit" can revoke
   void getAccessToken()
   const payload = btoa(unescape(encodeURIComponent(JSON.stringify(session))))
-  window.location.href = '/workspace/workspace.html#s=' + encodeURIComponent(payload)
+  // ?v= cache-buster: guarantees a fresh workspace.html (a heuristically
+  // cached copy would pin the user to an old bundle)
+  window.location.href = `/workspace/workspace.html?v=${Date.now()}#s=${encodeURIComponent(payload)}`
 }

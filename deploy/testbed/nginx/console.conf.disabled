@@ -26,16 +26,29 @@ server {
 
     location = / { return 302 /admin/; }
 
+    # Hashed build assets: cache forever. HTML entry points: always
+    # revalidate — a cached stale HTML pins users to old (buggy) bundles.
+    location /admin/assets/ {
+        alias /srv/admin/assets/;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+    location /workspace/assets/ {
+        alias /srv/workspace/assets/;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
     # Operator console SPA (hash-routed)
     location /admin/ {
         alias /srv/admin/;
         try_files $uri $uri/ /admin/index.html;
+        add_header Cache-Control "no-cache";
     }
 
     # Impersonation support workspace (desktop staff UI in the browser)
     location /workspace/ {
         alias /srv/workspace/;
         try_files $uri $uri/ /workspace/workspace.html;
+        add_header Cache-Control "no-cache";
     }
 
     # Platform operator API
