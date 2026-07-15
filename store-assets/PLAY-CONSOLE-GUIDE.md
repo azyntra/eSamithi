@@ -177,15 +177,14 @@ Provide "All or some functionality is restricted" → add instructions:
 ```
 eSamithi serves members of registered welfare societies. Reviewer test access:
 
-1. Open the app → enter samithi code: <DEMO-CODE>
-2. Tap "I'm a member" → NIC: <DEMO-NIC> , Date of birth: <DEMO-DOB>
-3. Set any 4-digit PIN when prompted (or use PIN <DEMO-PIN> if asked to log in)
+1. Open the app → enter samithi code: DEM-9361
+2. Log in as a member → NIC: 901234567V , PIN: 7391
+   (if asked to enrol instead: NIC 901234567V, date of birth 1990-01-15,
+    then choose any PIN)
 
 This demo society contains synthetic data only. Language can be switched to
 English from the More tab if it opens in Sinhala.
 ```
-(I will create the demo samithi + demo member and fill the placeholders when the
-platform side is live.)
 
 ## 11. Release
 
