@@ -15,7 +15,12 @@ function bootstrapSession(): WorkspaceSession | null {
   const m = hash.match(/[#&]s=([^&]+)/)
   if (m) {
     try {
-      const decoded = JSON.parse(decodeURIComponent(escape(atob(m[1])))) as WorkspaceSession
+      // enter.ts percent-encodes the base64 (+ / = would otherwise be mangled
+      // in the fragment) — decode that layer BEFORE atob, else any payload
+      // containing %2B/%2F/%3D throws and the session silently drops.
+      let b64 = m[1]
+      try { b64 = decodeURIComponent(b64) } catch { /* raw base64 from older links */ }
+      const decoded = JSON.parse(decodeURIComponent(escape(atob(b64)))) as WorkspaceSession
       sessionStorage.setItem('esamithi.workspace', JSON.stringify(decoded))
       history.replaceState(null, '', window.location.pathname)
       return decoded

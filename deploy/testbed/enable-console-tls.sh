@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 DOMAIN=console.esamithi.com
-EMAIL="${CERTBOT_EMAIL:-aztrawave@gmail.com}"
+EMAIL="${CERTBOT_EMAIL:-azyntra@gmail.com}"
 
 echo "── DNS check"
 RESOLVED=$(getent hosts "$DOMAIN" | awk '{print $1}' | head -1 || true)

@@ -58,7 +58,7 @@ WHAT YOU CAN DO
 FOR SOCIETIES
 Your society's office uses the eSamithi desktop application to manage members, finances
 and communication. The mobile app is free for all enrolled members. Interested in
-bringing your society onto eSamithi? Contact us at aztrawave@gmail.com.
+bringing your society onto eSamithi? Contact us at azyntra@gmail.com.
 
 PRIVACY
 Your data belongs to your society. No ads, no analytics, no selling of data — see our
@@ -104,7 +104,7 @@ https://api.esamithi.com/privacy
 ## 4. Store settings
 
 - Category: **App → Finance** · Tags: your choice (e.g. "Financial management")
-- Contact email: `aztrawave@gmail.com` (public) · Website: `https://esamithi.com`
+- Contact email: `azyntra@gmail.com` (public) · Website: `https://esamithi.com`
 
 ## 5. Privacy policy (Policy → App content)
 
