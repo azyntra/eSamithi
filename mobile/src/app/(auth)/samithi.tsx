@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -21,6 +21,16 @@ export default function SamithiCode(): React.ReactElement {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [found, setFound] = useState<SamithiProfile | null>(null)
+  const [selected, setSelected] = useState<SamithiProfile | null>(null)
+
+  // Navigate from an effect, AFTER the pending-profile context value has
+  // committed. Calling router.replace in the same tick as the provider
+  // setState raced the root re-render and the navigation was dropped on
+  // release builds (Continue did nothing). Effect-driven navigation is the
+  // pattern every other redirect in this app already uses.
+  useEffect(() => {
+    if (selected) router.replace('/(auth)')
+  }, [selected, router])
 
   const submit = async (): Promise<void> => {
     setError('')
@@ -40,9 +50,11 @@ export default function SamithiCode(): React.ReactElement {
     }
   }
 
-  const useProfile = (profile: SamithiProfile): void => {
+  // Not "useProfile": a use-prefixed name makes the React Compiler treat
+  // callback invocations of it as rule-of-hooks violations.
+  const selectProfile = (profile: SamithiProfile): void => {
     setPendingProfile(profile)
-    router.replace('/(auth)')
+    setSelected(profile)
   }
 
   return (
@@ -65,7 +77,7 @@ export default function SamithiCode(): React.ReactElement {
               </View>
             </Card>
             <View style={{ height: 16 }} />
-            <Button label={t('mob.samithiContinue')} onPress={() => useProfile(found)} />
+            <Button label={t('mob.samithiContinue')} onPress={() => selectProfile(found)} />
             <View style={{ height: 10 }} />
             <Button
               label={t('mob.samithiChange')}
@@ -96,7 +108,7 @@ export default function SamithiCode(): React.ReactElement {
                     <Pressable
                       key={profile.slug}
                       accessibilityRole="button"
-                      onPress={() => useProfile(profile)}
+                      onPress={() => selectProfile(profile)}
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
