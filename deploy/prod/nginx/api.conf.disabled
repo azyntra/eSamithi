@@ -53,6 +53,14 @@ server {
         index index.html;
     }
 
+    # Child safety standards (Play CSAE declaration). Served out of the
+    # privacy mount so no compose change is needed — clean URL via alias.
+    location = /child-safety { return 301 /child-safety/; }
+    location /child-safety/ {
+        alias /srv/privacy/child-safety/;
+        index index.html;
+    }
+
     # Desktop auto-update feed (same content as the IP vhost)
     location /updates/ {
         alias /srv/updates/;
