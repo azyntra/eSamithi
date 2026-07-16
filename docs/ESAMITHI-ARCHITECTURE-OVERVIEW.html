@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>eSamithi — Architecture Overview</title>
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans Sinhala", sans-serif; color: #1F2937; }
+  .page { width: 297mm; height: 210mm; overflow: hidden; page-break-after: always; position: relative; background: #fff; padding: 9mm 10mm 8mm; }
+  .page:last-child { page-break-after: avoid; }
+
+  /* ---------- shared ---------- */
+  h1 { font-size: 30px; letter-spacing: -0.5px; }
+  .pagetitle { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; }
+  .pagetitle h2 { font-size: 22px; color: #0B1F3B; }
+  .pagetitle .sub { font-size: 13px; color: #6B7280; }
+  .footer { position: absolute; bottom: 5mm; left: 10mm; right: 10mm; display: flex; justify-content: space-between; font-size: 10px; color: #9CA3AF; }
+  .canvas { position: relative; margin-top: 8px; }
+  .box { position: absolute; border-radius: 12px; border: 1.5px solid #D3DCE8; background: #fff; }
+  .box .bt { font-weight: 700; font-size: 13px; color: #0B1F3B; }
+  .box .bd { font-size: 11px; color: #4B5563; line-height: 1.45; }
+  .lbl { position: absolute; font-size: 10px; font-weight: 600; color: #1E4FA8; background: #FFFFFFEE; border: 1px solid #C7D7F2; border-radius: 999px; padding: 2px 8px; white-space: nowrap; z-index: 5; }
+  svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+  .wire { stroke: #7EA6E8; stroke-width: 2.2; fill: none; }
+  .wire.dashed { stroke-dasharray: 6 5; stroke: #9AA9C4; }
+  .estile { background: linear-gradient(135deg, #3b82f6, #1E64D4); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .chip { display: inline-block; background: #EFF6FF; border: 1px solid #C7D7F2; color: #1E4FA8; border-radius: 999px; padding: 4px 12px; font-size: 11.5px; font-weight: 600; margin: 3px 4px 3px 0; }
+  ul.tight { list-style: none; }
+  ul.tight li { font-size: 11px; color: #374151; line-height: 1.5; padding-left: 14px; position: relative; }
+  ul.tight li::before { content: "•"; color: #3b82f6; position: absolute; left: 2px; }
+
+  /* ---------- cover ---------- */
+  .hero { background: linear-gradient(135deg, #0B1F3B 0%, #123A75 60%, #1E64D4 130%); border-radius: 16px; color: #fff; padding: 26px 30px; display: flex; align-items: center; gap: 24px; }
+  .hero .estile { width: 84px; height: 84px; border-radius: 20px; font-size: 40px; flex: none; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+  .hero h1 { color: #fff; }
+  .hero p { color: #C9D8F0; font-size: 13.5px; margin-top: 6px; max-width: 720px; line-height: 1.55; }
+  .hero .meta { color: #8FB0E4; font-size: 11px; margin-top: 8px; }
+  .threecol { display: flex; gap: 14px; margin-top: 16px; }
+  .persona { flex: 1; border: 1.5px solid #D3DCE8; border-radius: 14px; padding: 14px 16px; background: #F8FAFD; }
+  .persona .em { font-size: 26px; }
+  .persona h3 { font-size: 14.5px; color: #0B1F3B; margin: 6px 0 4px; }
+  .persona p { font-size: 11.5px; color: #4B5563; line-height: 1.5; }
+  .facts { margin-top: 16px; border: 1.5px solid #D3DCE8; border-radius: 14px; padding: 12px 16px 10px; }
+  .facts h3 { font-size: 13px; color: #0B1F3B; margin-bottom: 6px; }
+
+  /* ---------- deployment internals ---------- */
+  .srv { background: #F8FAFD; }
+  .srv .head { border-radius: 10px 10px 0 0; padding: 8px 14px; color: #fff; font-weight: 700; font-size: 13.5px; }
+  .srv .head small { display: block; font-weight: 500; font-size: 10px; opacity: .85; }
+  .inner { position: absolute; border: 1.3px solid #C7D7F2; border-radius: 10px; background: #fff; padding: 8px 10px; z-index: 3; }
+  .inner .bt { font-size: 11.5px; }
+  .inner .bd { font-size: 10px; }
+  .dbtag { display: inline-block; font-size: 9.5px; background: #EFF6FF; border: 1px solid #C7D7F2; border-radius: 6px; padding: 2px 6px; margin: 2px 2px 0 0; color: #1E4FA8; font-weight: 600; }
+
+  /* ---------- architecture bands ---------- */
+  .band { position: absolute; left: 0; border-radius: 14px; padding: 10px 14px; }
+  .band h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ---------- flows ---------- */
+  .flow { border: 1.5px solid #D3DCE8; border-radius: 14px; padding: 14px 18px 16px; margin-top: 14px; }
+  .flow h3 { font-size: 15px; color: #0B1F3B; margin-bottom: 12px; }
+  .steps { display: flex; align-items: stretch; gap: 0; }
+  .step { flex: 1; background: #F8FAFD; border: 1.3px solid #C7D7F2; border-radius: 12px; padding: 10px 12px; position: relative; }
+  .step .n { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg,#3b82f6,#1E64D4); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+  .step .em { position: absolute; top: 8px; right: 10px; font-size: 18px; }
+  .step p { font-size: 11px; color: #374151; line-height: 1.45; }
+  .step b { color: #0B1F3B; }
+  .arrowcell { display: flex; align-items: center; justify-content: center; width: 34px; flex: none; color: #7EA6E8; font-size: 20px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- ================= PAGE 1 — COVER ================= -->
+<div class="page">
+  <div class="hero">
+    <div class="estile">eS</div>
+    <div>
+      <h1>eSamithi — How the System Works</h1>
+      <p>eSamithi is a digital platform for Sri Lankan community welfare societies (මරණාධාර හා සුභසාධක සමිති).
+         It keeps each society's member register, contributions, loans and notices in one safe place —
+         and puts them in every member's pocket. This document explains, in plain language,
+         where everything runs and how the pieces fit together.</p>
+      <div class="meta">Architecture overview · Version 1.3.0 · July 2026 · Azyntra Technologies</div>
+    </div>
+  </div>
+
+  <div class="threecol">
+    <div class="persona">
+      <div class="em">📱</div>
+      <h3>Members use the mobile app</h3>
+      <p>Free on Google Play. A member sees their own contributions, loans and deposits, reads society
+         notices with instant notifications, shows a digital membership card with a QR code, and trades
+         within the society on <b>Puruka</b> — in Sinhala or English.</p>
+    </div>
+    <div class="persona">
+      <div class="em">💻</div>
+      <h3>The society office uses the desktop app</h3>
+      <p>Officers manage the member register, record payments and loans, prepare reports and letters,
+         and publish notices — exactly the books the society already keeps, minus the paperwork.</p>
+    </div>
+    <div class="persona">
+      <div class="em">🖥️</div>
+      <h3>The operator uses the admin console</h3>
+      <p>The platform team brings new societies on board in minutes, watches the health of every server,
+         and can assist a society's office when asked — with every support action recorded in an audit log.</p>
+    </div>
+  </div>
+
+  <div class="facts">
+    <h3>The system at a glance</h3>
+    <span class="chip">🔒 Everything encrypted (HTTPS)</span>
+    <span class="chip">🗄️ Each society gets its own locked database</span>
+    <span class="chip">☁️ 2 cloud servers — one for daily service, one as the control room</span>
+    <span class="chip">▶️ Published on Google Play (v1.3.0)</span>
+    <span class="chip">🔔 Real push notifications</span>
+    <span class="chip">🌐 Full Sinhala + English</span>
+    <span class="chip">📝 Audited operator access</span>
+    <span class="chip">🚫 No ads · no data selling · no trackers</span>
+  </div>
+
+  <div class="footer"><span>eSamithi · Architecture overview</span><span>Page 1 of 4</span></div>
+</div>
+
+<!-- ================= PAGE 2 — DEPLOYMENT ================= -->
+<div class="page">
+  <div class="pagetitle">
+    <h2>Where everything runs</h2>
+    <span class="sub">the deployment view — people, devices, and the two cloud servers</span>
+  </div>
+
+  <div class="canvas" style="width:1040px; height:600px;">
+    <svg class="wires" viewBox="0 0 1040 600">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#7EA6E8"/>
+        </marker>
+        <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#9AA9C4"/>
+        </marker>
+      </defs>
+      <!-- phone -> production api (through the corridor between the two middle cards) -->
+      <path class="wire" d="M215 115 H 495" marker-end="url(#ah)"/>
+      <!-- phone -> control plane (join code) -->
+      <path class="wire" d="M215 130 H 240 V 345 H 495" marker-end="url(#ah)"/>
+      <!-- google play -> phone -->
+      <path class="wire" d="M285 40 H 240 V 62 H 220" marker-end="url(#ah)"/>
+      <!-- production -> push service -->
+      <path class="wire" d="M495 180 H 460" marker-end="url(#ah)"/>
+      <!-- push service -> phone -->
+      <path class="wire" d="M285 180 H 260 V 105 H 220" marker-end="url(#ah)"/>
+      <!-- desktop -> production -->
+      <path class="wire" d="M215 285 H 470 V 220 H 495" marker-end="url(#ah)"/>
+      <!-- operator -> control plane -->
+      <path class="wire" d="M215 490 H 495" marker-end="url(#ah)"/>
+      <!-- control plane <-> production internal -->
+      <path class="wire dashed" d="M540 315 V 268" marker-end="url(#ahg)" marker-start="url(#ahg)"/>
+    </svg>
+
+    <!-- labels on wires -->
+    <div class="lbl" style="left:295px; top:103px;">log in &amp; view records 🔒</div>
+    <div class="lbl" style="left:290px; top:330px;">find society by join code</div>
+    <div class="lbl" style="left:246px; top:22px;">install &amp; updates</div>
+    <div class="lbl" style="left:250px; top:250px;">manage members &amp; finances 🔒</div>
+    <div class="lbl" style="left:270px; top:475px;">operator console — 2-step sign-in 🔒</div>
+    <div class="lbl" style="left:560px; top:280px;">🔗 secure internal link — onboarding · health checks · audited support access</div>
+
+    <!-- LEFT: people -->
+    <div class="box" style="left:0; top:30px; width:215px; height:130px; padding:12px 14px; z-index:2;">
+      <div style="font-size:22px;">📱</div>
+      <div class="bt">Society member</div>
+      <div class="bd">eSamithi app on an Android phone, installed from Google Play</div>
+    </div>
+    <div class="box" style="left:0; top:235px; width:215px; height:120px; padding:12px 14px; z-index:2;">
+      <div style="font-size:22px;">💻</div>
+      <div class="bt">Society office</div>
+      <div class="bd">eSamithi desktop app on the office computer</div>
+    </div>
+    <div class="box" style="left:0; top:440px; width:215px; height:120px; padding:12px 14px; z-index:2;">
+      <div style="font-size:22px;">🖥️</div>
+      <div class="bt">Platform operator</div>
+      <div class="bd">Web browser → admin console at console.esamithi.com</div>
+    </div>
+
+    <!-- MIDDLE: internet services -->
+    <div class="box" style="left:285px; top:10px; width:175px; height:88px; padding:10px 12px; background:#F0FDF4; border-color:#BBE3C8; z-index:2;">
+      <div style="font-size:18px;">▶️</div>
+      <div class="bt">Google Play Store</div>
+      <div class="bd">Delivers the app and its updates to members' phones</div>
+    </div>
+    <div class="box" style="left:285px; top:132px; width:175px; height:96px; padding:10px 12px; background:#FFF7ED; border-color:#F1D9B8; z-index:2;">
+      <div style="font-size:18px;">🔔</div>
+      <div class="bt">Notification delivery</div>
+      <div class="bd">Expo + Google Firebase carry society notices to phones as push notifications</div>
+    </div>
+    <div class="box" style="left:285px; top:520px; width:175px; height:70px; padding:10px 12px; background:#F9FAFB; z-index:2;">
+      <div class="bt" style="font-size:11px;">Legend</div>
+      <div class="bd" style="font-size:9.5px;">→ information flow · 🔒 encrypted<br>- - - internal link between our servers</div>
+    </div>
+
+    <!-- RIGHT: production server -->
+    <div class="box srv" style="left:495px; top:10px; width:545px; height:258px; z-index:2;">
+      <div class="head" style="background:linear-gradient(135deg,#1E64D4,#3b82f6);">☁️ Production server — the daily service
+        <small>api.esamithi.com · Oracle Cloud · this is what the apps talk to every day</small>
+      </div>
+    </div>
+    <div class="inner" style="left:510px; top:70px; width:120px; height:120px;">
+      <div style="font-size:15px;">🚪</div>
+      <div class="bt">Front door</div>
+      <div class="bd">Checks and routes every request (nginx). Only encrypted traffic enters.</div>
+    </div>
+    <div class="inner" style="left:645px; top:70px; width:180px; height:120px;">
+      <div style="font-size:15px;">⚙️</div>
+      <div class="bt">Samithi service</div>
+      <div class="bd">The engine: member sign-in, contributions, loans, notices, Puruka, photos. Sends notices out as notifications.</div>
+    </div>
+    <div class="inner" style="left:840px; top:70px; width:185px; height:120px;">
+      <div style="font-size:15px;">🗄️</div>
+      <div class="bt">Databases</div>
+      <div class="bd">One locked database per society:</div>
+      <span class="dbtag">Maranadhara Samithi</span>
+      <span class="dbtag">Demo society</span>
+      <span class="dbtag">+ future societies…</span>
+    </div>
+    <div class="bd" style="position:absolute; left:510px; top:206px; width:520px; font-size:10px; color:#6B7280; z-index:3;">
+      Also serves: the public privacy-policy and child-safety pages, and desktop app updates. Daily backups; the previous
+      system is kept switched off on the same machine as an extra safety net.
+    </div>
+
+    <!-- RIGHT: control plane server -->
+    <div class="box srv" style="left:495px; top:315px; width:545px; height:275px; z-index:2;">
+      <div class="head" style="background:linear-gradient(135deg,#0B1F3B,#123A75);">🎛️ Control-plane server — the control room
+        <small>console.esamithi.com · manages the whole fleet, plus a testbed for safe trials</small>
+      </div>
+    </div>
+    <div class="inner" style="left:510px; top:378px; width:120px; height:118px;">
+      <div style="font-size:15px;">🚪</div>
+      <div class="bt">Front door</div>
+      <div class="bd">Same role: checks and routes every request.</div>
+    </div>
+    <div class="inner" style="left:645px; top:378px; width:180px; height:118px;">
+      <div style="font-size:15px;">🧭</div>
+      <div class="bt">Platform service</div>
+      <div class="bd">Admin console, society <b>directory</b> (join-code lookup), automated onboarding, health monitoring, audited support access.</div>
+    </div>
+    <div class="inner" style="left:840px; top:378px; width:185px; height:118px;">
+      <div style="font-size:15px;">🗄️</div>
+      <div class="bt">Databases</div>
+      <div class="bd">Platform records (operators, society registry, health history) + testbed society databases.</div>
+    </div>
+    <div class="bd" style="position:absolute; left:510px; top:508px; width:520px; font-size:10px; color:#6B7280; z-index:3;">
+      The testbed here is a full copy of the samithi service where new features are proven before they reach the
+      production server. New societies can be placed on either server — the control room manages both the same way.
+    </div>
+  </div>
+
+  <div class="footer"><span>eSamithi · Architecture overview</span><span>Page 2 of 4</span></div>
+</div>
+
+<!-- ================= PAGE 3 — SOFTWARE ARCHITECTURE ================= -->
+<div class="page">
+  <div class="pagetitle">
+    <h2>What the software is made of</h2>
+    <span class="sub">the software architecture view — three layers, plus protections built into every layer</span>
+  </div>
+
+  <div class="canvas" style="width:1040px; height:600px;">
+    <svg class="wires" viewBox="0 0 1040 600">
+      <defs>
+        <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#7EA6E8"/>
+        </marker>
+      </defs>
+      <path class="wire" d="M140 188 V 228" marker-end="url(#ah2)"/>
+      <path class="wire" d="M400 188 V 228" marker-end="url(#ah2)"/>
+      <path class="wire" d="M660 188 V 228" marker-end="url(#ah2)"/>
+      <path class="wire" d="M260 402 V 442" marker-end="url(#ah2)"/>
+      <path class="wire" d="M600 402 V 442" marker-end="url(#ah2)"/>
+    </svg>
+
+    <!-- Band 1: Apps -->
+    <div class="band" style="top:0; width:790px; height:188px; background:#EFF6FF;">
+      <h3 style="color:#1E4FA8;">The apps — what people see</h3>
+      <div class="box" style="left:14px; top:34px; width:245px; height:140px; padding:10px 14px;">
+        <div class="bt">📱 Member mobile app <span style="font-weight:500;color:#6B7280;">(Android)</span></div>
+        <ul class="tight" style="margin-top:5px;">
+          <li>Contributions, loans &amp; deposits</li>
+          <li>Notices with push notifications</li>
+          <li>Digital membership card + QR</li>
+          <li>Puruka — society marketplace</li>
+          <li>Requests to the office</li>
+        </ul>
+      </div>
+      <div class="box" style="left:273px; top:34px; width:245px; height:140px; padding:10px 14px;">
+        <div class="bt">💻 Office desktop app</div>
+        <ul class="tight" style="margin-top:5px;">
+          <li>Member register &amp; enrolment</li>
+          <li>Payments, loans, deposits, funds</li>
+          <li>Meetings, letters &amp; reports</li>
+          <li>Publish notices &amp; broadcasts</li>
+          <li>Works offline-friendly at the office</li>
+        </ul>
+      </div>
+      <div class="box" style="left:532px; top:34px; width:245px; height:140px; padding:10px 14px;">
+        <div class="bt">🖥️ Operator console <span style="font-weight:500;color:#6B7280;">(web)</span></div>
+        <ul class="tight" style="margin-top:5px;">
+          <li>Fleet dashboard — all societies</li>
+          <li>Onboarding wizard (minutes, not days)</li>
+          <li>Health, reports &amp; announcements</li>
+          <li>Support workspace (with consent, audited)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Band 2: Services -->
+    <div class="band" style="top:228px; width:790px; height:174px; background:#F0F7F1;">
+      <h3 style="color:#1B7A3D;">The services — the engines behind the apps</h3>
+      <div class="box" style="left:14px; top:34px; width:375px; height:126px; padding:10px 14px;">
+        <div class="bt">⚙️ Samithi service <span style="font-weight:500;color:#6B7280;">(one on each server)</span></div>
+        <div class="bd" style="margin-top:4px;">Everything a society needs day to day: secure sign-in for members
+          and staff, all record-keeping, notice publishing and notification sending, Puruka listings, photo storage.
+          Each request is served strictly from that society's own database — societies never see each other.</div>
+      </div>
+      <div class="box" style="left:403px; top:34px; width:375px; height:126px; padding:10px 14px;">
+        <div class="bt">🧭 Platform service <span style="font-weight:500;color:#6B7280;">(control room only)</span></div>
+        <div class="bd" style="margin-top:4px;">Runs the fleet: the society <b>directory</b> that turns a join code into
+          the right server, fully automated onboarding of new societies (database created, keys issued, registry updated),
+          health monitoring of every server, and operator sign-in protected by two-step verification.</div>
+      </div>
+    </div>
+
+    <!-- Band 3: Data -->
+    <div class="band" style="top:442px; width:790px; height:158px; background:#FDF6EC;">
+      <h3 style="color:#B45309;">The data — one locked room per society</h3>
+      <div class="box" style="left:14px; top:34px; width:470px; height:110px; padding:10px 14px;">
+        <div class="bt">🗄️ Society databases (MySQL)</div>
+        <div class="bd" style="margin-top:4px;">Every society's records live in a <b>separate database with its own key</b> —
+          like separate locked filing rooms in the same building. A fault or mistake in one society can never
+          touch another's records.</div>
+        <div style="margin-top:6px;">
+          <span class="dbtag">🔐 Maranadhara Samithi</span>
+          <span class="dbtag">🔐 Demo society</span>
+          <span class="dbtag">🔐 Society C…</span>
+        </div>
+      </div>
+      <div class="box" style="left:498px; top:34px; width:280px; height:110px; padding:10px 14px;">
+        <div class="bt">📇 Platform records &amp; registry</div>
+        <div class="bd" style="margin-top:4px;">The master list of societies and servers, operator accounts,
+          health history, and the audit log. Each server also keeps a small "address book" of the societies it hosts.</div>
+      </div>
+    </div>
+
+    <!-- Right sidebar -->
+    <div class="box" style="left:806px; top:0; width:234px; height:600px; padding:14px 16px; background:#0B1F3B; border-color:#0B1F3B;">
+      <div class="bt" style="color:#fff; font-size:14px;">Built into every layer</div>
+      <div class="bd" style="color:#C9D8F0; margin-top:10px;">
+        <p style="margin-bottom:10px;">🔒 <b style="color:#fff;">Encryption everywhere.</b> All traffic uses HTTPS. PINs are stored scrambled — no one can read them, not even us.</p>
+        <p style="margin-bottom:10px;">🧱 <b style="color:#fff;">Isolation.</b> One database per society, with its own credentials and keys.</p>
+        <p style="margin-bottom:10px;">📝 <b style="color:#fff;">Accountability.</b> Operator support access requires two-step sign-in and lands in a permanent audit log the society can see.</p>
+        <p style="margin-bottom:10px;">🔄 <b style="color:#fff;">Always up to date.</b> App improvements arrive automatically — over-the-air for the mobile app, an update feed for the desktop.</p>
+        <p style="margin-bottom:10px;">🌐 <b style="color:#fff;">Two languages.</b> Sinhala and English through every screen.</p>
+        <p>🛟 <b style="color:#fff;">Safety nets.</b> Daily backups, health monitoring, and a documented way back for every change.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer"><span>eSamithi · Architecture overview</span><span>Page 3 of 4</span></div>
+</div>
+
+<!-- ================= PAGE 4 — FLOWS ================= -->
+<div class="page">
+  <div class="pagetitle">
+    <h2>Two everyday journeys</h2>
+    <span class="sub">how the pieces work together, step by step</span>
+  </div>
+
+  <div class="flow">
+    <h3>🙋 A member joins their society</h3>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div class="em">🎟️</div>
+        <p>The society office gives the member the society's <b>join code</b> — e.g. <b>SAM-4217</b>.</p></div>
+      <div class="arrowcell">→</div>
+      <div class="step"><div class="n">2</div><div class="em">🧭</div>
+        <p>The member types the code into the app. The <b>directory</b> finds the society and points the app to the right server.</p></div>
+      <div class="arrowcell">→</div>
+      <div class="step"><div class="n">3</div><div class="em">🪪</div>
+        <p>The member proves who they are with their <b>NIC number and date of birth</b>, matched against the society's own register.</p></div>
+      <div class="arrowcell">→</div>
+      <div class="step"><div class="n">4</div><div class="em">🔑</div>
+        <p>They choose a <b>PIN</b> (and can enable fingerprint unlock). Nothing to remember but four digits.</p></div>
+      <div class="arrowcell">→</div>
+      <div class="step"><div class="n">5</div><div class="em">✅</div>
+        <p>Done — their contributions, loans and <b>membership card with QR code</b> are in their pocket.</p></div>
+    </div>
+  </div>
+
+  <div class="flow">
+    <h3>📣 A notice reaches every member</h3>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div class="em">💻</div>
+        <p>An officer publishes a notice — a meeting, an event, or a funeral announcement — from the <b>desktop app</b>.</p></div>
+      <div class="arrowcell">→</div>
+      <div class="step"><div class="n">2</div><div class="em">⚙️</div>
+        <p>The <b>samithi service</b> saves it in the society's database and prepares a notification for every enrolled phone.</p></div>
+      <div class="arrowcell">→</div>
+      <div class="step"><div class="n">3</div><div class="em">☁️</div>
+        <p><b>Expo + Google Firebase</b> carry the notification across the internet to each member's phone.</p></div>
+      <div class="arrowcell">→</div>
+      <div class="step"><div class="n">4</div><div class="em">🔔</div>
+        <p>Phones light up within seconds — even if the app is closed.</p></div>
+      <div class="arrowcell">→</div>
+      <div class="step"><div class="n">5</div><div class="em">📱</div>
+        <p>The member taps it and reads the full notice in the app, in Sinhala or English.</p></div>
+    </div>
+  </div>
+
+  <div class="facts" style="margin-top:14px;">
+    <h3>Why it is built this way</h3>
+    <ul class="tight" style="columns:2; column-gap:30px;">
+      <li><b>Trust:</b> societies handle members' life savings and bereavement funds — isolation and encryption are non-negotiable.</li>
+      <li><b>Growth without surgery:</b> a new society is onboarded by the console in minutes; new servers join the fleet the same way.</li>
+      <li><b>Safe change:</b> every feature is proven on the testbed before it touches the production server real societies rely on.</li>
+      <li><b>Simple for people:</b> members need only a join code, their NIC and a PIN — no email, no passwords, no forms.</li>
+    </ul>
+  </div>
+
+  <div class="footer"><span>eSamithi · Architecture overview · Azyntra Technologies · July 2026</span><span>Page 4 of 4</span></div>
+</div>
+
+</body>
+</html>
