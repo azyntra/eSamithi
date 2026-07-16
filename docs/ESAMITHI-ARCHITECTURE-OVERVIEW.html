@@ -53,6 +53,17 @@
   .inner .bd { font-size: 10px; }
   .dbtag { display: inline-block; font-size: 9.5px; background: #EFF6FF; border: 1px solid #C7D7F2; border-radius: 6px; padding: 2px 6px; margin: 2px 2px 0 0; color: #1E4FA8; font-weight: 600; }
 
+  /* ---------- detailed deployment map ---------- */
+  .mchip { display: inline-block; font-size: 8.5px; background: #EFF6FF; border: 1px solid #C7D7F2; color: #1E4FA8; border-radius: 5px; padding: 1.5px 5px; margin: 1.5px 2px 0 0; font-weight: 600; }
+  .mchip.g { background: #F0FDF4; border-color: #BBE3C8; color: #1B7A3D; }
+  .mchip.o { background: #FFF7ED; border-color: #F1D9B8; color: #B45309; }
+  .mchip.r { background: #FEF2F2; border-color: #F3C7C7; color: #B42318; }
+  .routes { font-family: ui-monospace, Menlo, monospace; font-size: 8.5px; color: #374151; line-height: 1.6; }
+  .mini { font-size: 9px; color: #4B5563; line-height: 1.5; }
+  .cbox { position: absolute; border: 1.3px solid #C7D7F2; border-radius: 9px; background: #fff; padding: 6px 9px; z-index: 3; }
+  .cbox .bt { font-size: 10.5px; }
+  .cbox .tag { float: right; font-size: 8px; font-weight: 700; color: #6B7280; background: #F3F4F6; border-radius: 4px; padding: 1px 5px; margin-top: 1px; }
+
   /* ---------- architecture bands ---------- */
   .band { position: absolute; left: 0; border-radius: 14px; padding: 10px 14px; }
   .band h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
@@ -119,7 +130,7 @@
     <span class="chip">🚫 No ads · no data selling · no trackers</span>
   </div>
 
-  <div class="footer"><span>eSamithi · Architecture overview</span><span>Page 1 of 4</span></div>
+  <div class="footer"><span>eSamithi · Architecture overview</span><span>Page 1 of 5</span></div>
 </div>
 
 <!-- ================= PAGE 2 — DEPLOYMENT ================= -->
@@ -254,10 +265,185 @@
     </div>
   </div>
 
-  <div class="footer"><span>eSamithi · Architecture overview</span><span>Page 2 of 4</span></div>
+  <div class="footer"><span>eSamithi · Architecture overview</span><span>Page 2 of 5</span></div>
 </div>
 
-<!-- ================= PAGE 3 — SOFTWARE ARCHITECTURE ================= -->
+<!-- ================= PAGE 3 — COMPLETE DEPLOYMENT MAP ================= -->
+<div class="page" style="padding:6mm 6mm 7mm;">
+  <div class="pagetitle" style="margin-bottom:2px;">
+    <h2>The complete deployment map</h2>
+    <span class="sub">every server, container, module and scheduled job — as running on 16 July 2026</span>
+  </div>
+
+  <div class="canvas" style="width:1080px; height:712px; margin-top:4px;">
+    <svg class="wires" viewBox="0 0 1080 712">
+      <defs>
+        <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#7EA6E8"/>
+        </marker>
+        <marker id="ah3g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#9AA9C4"/>
+        </marker>
+      </defs>
+      <!-- clients down into servers -->
+      <path class="wire" d="M96 72 V 86" marker-end="url(#ah3)"/>
+      <path class="wire" d="M298 72 V 86" marker-end="url(#ah3)"/>
+      <path class="wire" d="M500 72 L 500 79 L 640 79 L 640 86" marker-end="url(#ah3)"/>
+      <path class="wire" d="M702 72 V 86" marker-end="url(#ah3)"/>
+      <!-- prod nginx /directory/ proxy to platform -->
+      <path class="wire dashed" d="M508 178 H 570" marker-end="url(#ah3g)"/>
+      <!-- platform -> prod api internal control link -->
+      <path class="wire dashed" d="M572 300 H 510" marker-end="url(#ah3g)"/>
+      <!-- prod api -> push delivery -->
+      <path class="wire" d="M300 584 L 300 592 L 600 592 L 600 598" marker-end="url(#ah3)"/>
+    </svg>
+
+    <div class="lbl" style="left:519px; top:158px; font-size:8.5px; padding:1px 6px;">/directory/</div>
+    <div class="lbl" style="left:513px; top:306px; font-size:8.5px; padding:1px 6px;">control 🔒</div>
+    <div class="lbl" style="left:330px; top:583px; font-size:8.5px; padding:1px 6px;">notices out</div>
+
+    <!-- ===== clients row ===== -->
+    <div class="cbox" style="left:0; top:0; width:192px; height:72px;">
+      <div class="bt">📱 Member's phone</div>
+      <div class="mini">eSamithi app v1.3.0 — Google Play (versionCode 4) or sideloaded APK</div>
+    </div>
+    <div class="cbox" style="left:202px; top:0; width:192px; height:72px;">
+      <div class="bt">💻 Office desktop app</div>
+      <div class="mini">Electron · eSamithi Setup 1.2.1 · auto-updates from /updates/ feed</div>
+    </div>
+    <div class="cbox" style="left:404px; top:0; width:192px; height:72px;">
+      <div class="bt">🖥️ Operator browser</div>
+      <div class="mini">console.esamithi.com/admin — super-admin panel + support workspace</div>
+    </div>
+    <div class="cbox" style="left:606px; top:0; width:192px; height:72px;">
+      <div class="bt">🕵️ Google Play reviewer</div>
+      <div class="mini">Demo society join code DEM-9361 (synthetic data, on testbed)</div>
+    </div>
+    <div class="cbox" style="left:812px; top:0; width:268px; height:72px; background:#F9FAFB;">
+      <div class="bt">🌐 DNS — esamithi.com</div>
+      <div class="routes">api&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ 141.147.75.132 (prod)<br>console&nbsp;→ 212.227.103.150 (testbed)</div>
+    </div>
+
+    <!-- ===== PROD SERVER ===== -->
+    <div class="box srv" style="left:0; top:88px; width:520px; height:496px; z-index:2;">
+      <div class="head" style="background:linear-gradient(135deg,#1E64D4,#3b82f6); padding:6px 14px; font-size:12.5px;">☁️ PRODUCTION — 141.147.75.132 · api.esamithi.com
+        <small>Oracle Cloud VM (Ubuntu) · Docker stack at /opt/esamithi-stack — serves the live client</small>
+      </div>
+    </div>
+
+    <div class="cbox" style="left:12px; top:140px; width:496px; height:84px;">
+      <div class="bt">🚪 nginx 1.27 <span class="tag">container · ports 80 + 443 (TLS)</span></div>
+      <div class="routes">/api/ → api:3000 &nbsp;·&nbsp; /directory/ → proxied to control plane<br>
+      /privacy/ · /child-safety/ → static pages (Google Play requirements)<br>
+      /updates/ → desktop installer + APK feed (/opt/esamithi-updates)</div>
+    </div>
+
+    <div class="cbox" style="left:12px; top:232px; width:496px; height:158px;">
+      <div class="bt">⚙️ api — tenant service <span class="tag">container · Node.js/Express · :3000 internal</span></div>
+      <div style="margin-top:4px;">
+        <span class="mchip">tenant middleware — X-Samithi-Slug · DEFAULT_TENANT=samithi01</span>
+        <span class="mchip">JWT auth — member PIN + staff logins</span>
+        <span class="mchip">members &amp; enrolment (NIC + DOB)</span>
+        <span class="mchip">contributions · loans · deposits · funds</span>
+        <span class="mchip">notices &amp; broadcasts</span>
+        <span class="mchip">push sender → Expo</span>
+        <span class="mchip">Puruka marketplace</span>
+        <span class="mchip">member requests</span>
+        <span class="mchip">photo uploads (/app/uploads)</span>
+        <span class="mchip">schema migrations (auto on start)</span>
+        <span class="mchip o">internal/server API 🔒 provision-db · registry (control plane only)</span>
+      </div>
+    </div>
+
+    <div class="cbox" style="left:12px; top:398px; width:496px; height:74px;">
+      <div class="bt">🗄️ mysql 8.4 <span class="tag">container · GTID + binlog · internal only</span></div>
+      <div style="margin-top:3px;">
+        <span class="mchip g">esamithi → samithi01 · Maranadhara Samithi (live client)</span>
+        <span class="mchip">tenants.json — registry file, bind-mounted, written by control plane</span>
+      </div>
+    </div>
+
+    <div class="cbox" style="left:12px; top:480px; width:496px; height:92px; background:#F9FAFB;">
+      <div class="bt" style="font-size:10px;">🖥️ On the host (outside Docker)</div>
+      <div class="mini" style="margin-top:2px;">
+        ⏰ certbot renew cron — 02:41 &amp; 14:41 daily, restarts nginx after renewal<br>
+        🛟 LEGACY kept for rollback: pm2 esamithi-api (stopped) · host MySQL (pre-cutover copy, still running) · host nginx (disabled) · /opt/esamithi (old code)<br>
+        <span style="color:#B45309;">⚠ nightly off-site backup cron — planned (pre-cutover snapshot exists on testbed)</span>
+      </div>
+    </div>
+
+    <!-- ===== TESTBED / CONTROL-PLANE SERVER ===== -->
+    <div class="box srv" style="left:560px; top:88px; width:520px; height:496px; z-index:2;">
+      <div class="head" style="background:linear-gradient(135deg,#0B1F3B,#123A75); padding:6px 14px; font-size:12.5px;">🎛️ TESTBED + CONTROL PLANE — 212.227.103.150 · console.esamithi.com
+        <small>IONOS VM · Docker stack at /opt/esamithi — manages the fleet + safe-trial samithis</small>
+      </div>
+    </div>
+
+    <div class="cbox" style="left:572px; top:140px; width:496px; height:74px;">
+      <div class="bt">🚪 nginx 1.27 <span class="tag">container · ports 80 + 443 (TLS)</span></div>
+      <div class="routes">/api/ → api:3000 &nbsp;·&nbsp; /pa/ → platform:4000 &nbsp;·&nbsp; /directory/ → platform:4000<br>
+      /admin/ → operator console SPA &nbsp;·&nbsp; /workspace/ → support workspace SPA &nbsp;·&nbsp; /updates/</div>
+    </div>
+
+    <div class="cbox" style="left:572px; top:222px; width:496px; height:124px;">
+      <div class="bt">🧭 platform — control plane <span class="tag">container · Node.js · :4000 internal</span></div>
+      <div style="margin-top:4px;">
+        <span class="mchip">super-admin auth + TOTP 2FA</span>
+        <span class="mchip">samithi lifecycle — onboard · suspend · reactivate · delete</span>
+        <span class="mchip">servers registry (multi-server fleet)</span>
+        <span class="mchip">provisioning → provision-db on target server</span>
+        <span class="mchip">registry sync → pushes tenants.json to each server</span>
+        <span class="mchip">impersonation — per-server JWT secrets, audited</span>
+        <span class="mchip">directory resolve (join codes)</span>
+        <span class="mchip">health collector (sweeps all servers)</span>
+        <span class="mchip">reports · comms · ops</span>
+      </div>
+    </div>
+
+    <div class="cbox" style="left:572px; top:354px; width:496px; height:52px;">
+      <div class="bt">⚙️ api — tenant service <span class="tag">container · same build as prod · :3000</span></div>
+      <div class="mini">Serves the testbed samithis below — new features are proven here first</div>
+    </div>
+
+    <div class="cbox" style="left:572px; top:414px; width:496px; height:98px;">
+      <div class="bt">🗄️ mysql 8.4 <span class="tag">container · GTID + binlog · internal only</span></div>
+      <div style="margin-top:3px;">
+        <span class="mchip o">esamithi_platform — operators · registry · audit log · health history</span>
+        <span class="mchip">esamithi → test01 (test samithi)</span>
+        <span class="mchip g">esamithi_demo → demo · DEM-9361 (Play reviewers)</span>
+        <span class="mchip">esamithi_demo02</span>
+        <span class="mchip">esamithi_test-001</span>
+        <span class="mchip r">esamithi_fgergerg (scratch — can be deleted)</span>
+      </div>
+    </div>
+
+    <div class="cbox" style="left:572px; top:520px; width:496px; height:52px; background:#F9FAFB;">
+      <div class="mini">📈 uptime-kuma :3001 — monitoring UI &nbsp;·&nbsp; ⏰ nightly backup 01:30 → /opt/backups &nbsp;·&nbsp; ⏰ certbot renew 03:23 &amp; 15:23 &nbsp;·&nbsp; <span style="color:#6B7280;">n8n :5678 (separate tool, not part of eSamithi)</span></div>
+    </div>
+
+    <!-- ===== external services row ===== -->
+    <div class="cbox" style="left:0; top:598px; width:270px; height:100px; background:#F0FDF4; border-color:#BBE3C8;">
+      <div class="bt">▶️ Google Play + EAS Build</div>
+      <div class="mini">Signed AAB v1.3.0 (versionCode 4), built by Expo EAS. Play App Signing uses our exported key — sideloaded installs update in place. Tracks: internal → closed → production.</div>
+    </div>
+    <div class="cbox" style="left:280px; top:598px; width:250px; height:100px; background:#F0FDF4; border-color:#BBE3C8;">
+      <div class="bt">🔄 EAS Update (OTA)</div>
+      <div class="mini">Channel <b>prod</b>. JavaScript fixes reach installed apps over the air on next restart — no new APK/AAB needed (used for the v1.3.0 navigation fix).</div>
+    </div>
+    <div class="cbox" style="left:540px; top:598px; width:260px; height:100px; background:#FFF7ED; border-color:#F1D9B8;">
+      <div class="bt">🔔 Expo Push + Firebase FCM v1</div>
+      <div class="mini">api sends notices → Expo push service → Firebase Cloud Messaging → member phones. FCM service-account key stored in EAS credentials.</div>
+    </div>
+    <div class="cbox" style="left:810px; top:598px; width:270px; height:100px; background:#F9FAFB;">
+      <div class="bt">🔐 Let's Encrypt</div>
+      <div class="mini">TLS certificates for api.esamithi.com and console.esamithi.com, renewed automatically by the cron jobs on each server. All client traffic is HTTPS.</div>
+    </div>
+  </div>
+
+  <div class="footer"><span>eSamithi · Architecture overview</span><span>Page 3 of 5</span></div>
+</div>
+
+<!-- ================= PAGE 4 — SOFTWARE ARCHITECTURE ================= -->
 <div class="page">
   <div class="pagetitle">
     <h2>What the software is made of</h2>
@@ -364,7 +550,7 @@
     </div>
   </div>
 
-  <div class="footer"><span>eSamithi · Architecture overview</span><span>Page 3 of 4</span></div>
+  <div class="footer"><span>eSamithi · Architecture overview</span><span>Page 4 of 5</span></div>
 </div>
 
 <!-- ================= PAGE 4 — FLOWS ================= -->
@@ -424,7 +610,7 @@
     </ul>
   </div>
 
-  <div class="footer"><span>eSamithi · Architecture overview · Azyntra Technologies · July 2026</span><span>Page 4 of 4</span></div>
+  <div class="footer"><span>eSamithi · Architecture overview · Azyntra Technologies · July 2026</span><span>Page 5 of 5</span></div>
 </div>
 
 </body>
