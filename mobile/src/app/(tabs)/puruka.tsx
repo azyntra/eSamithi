@@ -4,7 +4,7 @@ import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../i18n'
-import { elevation, radius, spacing, usePalette, useThemeMode } from '../../theme'
+import { radius, spacing, usePalette, useThemeMode } from '../../theme'
 import { useType } from '../../typography'
 import { photoUrl } from '../../api/client'
 import {
@@ -49,9 +49,9 @@ function PostTile({ post, onPress }: { post: PurukaPost; onPress: () => void }):
         borderRadius: radius.lg,
         overflow: 'hidden',
         marginBottom: spacing.md,
-        ...(scheme === 'dark'
-          ? { borderWidth: 1, borderColor: p.border }
-          : { shadowColor: p.shadow, ...elevation.sm })
+        // Hairline in both schemes — Android elevation smudges large radii
+        borderWidth: 1,
+        borderColor: p.border
       }}
     >
       <View style={{ height: 130, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>

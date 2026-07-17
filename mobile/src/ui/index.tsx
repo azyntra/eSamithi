@@ -67,6 +67,10 @@ export function LogoTile({ size = 64 }: { size?: number }): React.ReactElement {
   )
 }
 
+// iOS-only soft card shadow: the elevation presets minus the `elevation`
+// key, so Android renders a clean hairline with no shadow smudge.
+const { elevation: _cardElevationDropped, ...cardShadowIos } = elevation.sm
+
 // ---- Layout --------------------------------------------------------------
 
 export function Screen({
@@ -111,11 +115,12 @@ export function Card({
     borderRadius: radius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
-    // Soft elevation carries the edge in light mode; dark keeps a hairline
-    // (shadows disappear on dark backgrounds)
-    ...(scheme === 'dark'
-      ? { borderWidth: 1, borderColor: p.border }
-      : { shadowColor: p.shadow, ...elevation.sm })
+    // Hairline border in BOTH schemes; light adds an iOS-only soft shadow.
+    // Android `elevation` is deliberately absent — its baked-in shadow
+    // smudges around large corner radii on real devices.
+    borderWidth: 1,
+    borderColor: p.border,
+    ...(scheme === 'dark' ? null : { shadowColor: p.shadow, ...cardShadowIos })
   }
   if (onPress) {
     return (
@@ -287,7 +292,7 @@ export function Segmented<T extends string>({
               paddingVertical: spacing.sm,
               borderRadius: radius.md - 4,
               backgroundColor: selected ? (scheme === 'dark' ? p.surfaceElevated : p.surface) : 'transparent',
-              ...(selected && scheme !== 'dark' ? { shadowColor: p.shadow, ...elevation.sm } : null)
+              ...(selected && scheme !== 'dark' ? { shadowColor: p.shadow, ...cardShadowIos } : null)
             }}
           >
             <Text style={{ color: selected ? p.text : p.textMuted, fontFamily: ty.family.bold, fontSize: 14, lineHeight: ty.lh(14) }}>
