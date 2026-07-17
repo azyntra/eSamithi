@@ -5,6 +5,8 @@ import { usePalette } from '../../theme'
 import { useType } from '../../typography'
 import { useAuth } from '../../auth/AuthContext'
 import { getNotifications, registerPushToken } from '../../lib/push'
+import { useAnnouncements } from '../../api/hooks'
+import { useNoticesSeen } from '../../lib/noticesSeen'
 import { TabBar } from '../../ui/TabBar'
 
 export default function TabsLayout(): React.ReactElement {
@@ -13,6 +15,13 @@ export default function TabsLayout(): React.ReactElement {
   const ty = useType()
   const router = useRouter()
   const { activeProfile } = useAuth()
+
+  // Unread badge: announcements above the per-samithi seen watermark.
+  // The query is shared with Home/Notices via React Query, so this adds no
+  // extra network traffic.
+  const notices = useAnnouncements()
+  const { seenId } = useNoticesSeen()
+  const unread = seenId === null || !notices.data ? 0 : notices.data.filter((n) => n.id > seenId).length
 
   useEffect(() => {
     // Signed-in shell mounted (or samithi switched): register this device for
@@ -43,7 +52,10 @@ export default function TabsLayout(): React.ReactElement {
       <Tabs.Screen name="puruka" options={{ title: t('mob.tabPuruka') }} />
       <Tabs.Screen name="contributions" options={{ title: t('mob.tabContributions') }} />
       <Tabs.Screen name="loans" options={{ title: t('mob.tabLoans') }} />
-      <Tabs.Screen name="notices" options={{ title: t('mob.tabNotices') }} />
+      <Tabs.Screen
+        name="notices"
+        options={{ title: t('mob.tabNotices'), tabBarBadge: unread > 0 ? (unread > 9 ? '9+' : String(unread)) : undefined }}
+      />
       <Tabs.Screen name="more" options={{ title: t('mob.tabMore') }} />
     </Tabs>
   )

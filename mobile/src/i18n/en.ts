@@ -915,6 +915,7 @@ export const en = {
   'mob.pkReportFake': 'Not genuine',
   'mob.pkReportSold': 'Already sold',
   'mob.pkReportBad': 'Inappropriate',
+  'mob.filterAll': 'All',
   'mob.pkSaved': 'Listing updated.',
   'mob.pkReportThanks': 'Thank you — the office will review it.',
   'mob.pkMyPosts': 'My Puruka Posts',

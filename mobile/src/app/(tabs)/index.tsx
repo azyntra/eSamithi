@@ -189,8 +189,39 @@ export default function Home(): React.ReactElement {
         </View>
       </Section>
 
+      {/* Quick actions — the things members ask the office about most */}
+      <Section index={5}>
+        <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs, marginBottom: spacing.sm }}>
+          {([
+            { href: '/card', icon: 'id-card-outline', label: t('mob.memberCard') },
+            { href: '/dues', icon: 'alert-circle-outline', label: t('mob.duesTitle') },
+            { href: '/requests', icon: 'document-text-outline', label: t('mob.requests') },
+            { href: '/help', icon: 'help-circle-outline', label: t('mob.help') }
+          ] as const).map((qa) => (
+            <ScalePressable
+              key={qa.href}
+              accessibilityRole="button"
+              haptic="selection"
+              scaleTo={0.95}
+              onPress={() => router.push(qa.href)}
+              style={{ flex: 1, alignItems: 'center', gap: spacing.xs + 2, paddingVertical: spacing.sm }}
+            >
+              <View style={{ width: 46, height: 46, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name={qa.icon} size={21} color={p.primary} />
+              </View>
+              <Text
+                numberOfLines={2}
+                style={{ color: p.textMuted, fontSize: 11, fontFamily: ty.family.semibold, textAlign: 'center', lineHeight: ty.lh(11) }}
+              >
+                {qa.label}
+              </Text>
+            </ScalePressable>
+          ))}
+        </View>
+      </Section>
+
       {recent.length > 0 && (
-        <Section index={5}>
+        <Section index={6}>
           <SectionHeader>{t('mob.recentActivity')}</SectionHeader>
           <Card style={{ paddingVertical: spacing.xs }}>
             {recent.map((row, i) => (

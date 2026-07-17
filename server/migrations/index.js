@@ -223,6 +223,26 @@ async function staffUserLifecycle(pool) {
   }
 }
 
+// 010 — client error reports: the mobile app posts JS crashes here so closed
+// testers' problems are visible without waiting for a complaint. No third
+// party SDK (privacy policy promises no trackers); rows are pruned by the
+// route itself after 30 days.
+async function clientErrors(pool) {
+  await pool.query(`CREATE TABLE IF NOT EXISTS client_errors (
+    id          INT PRIMARY KEY AUTO_INCREMENT,
+    member_id   INT          NULL DEFAULT NULL,
+    platform    VARCHAR(20)  DEFAULT NULL,
+    app_version VARCHAR(40)  DEFAULT NULL,
+    update_id   VARCHAR(80)  DEFAULT NULL,
+    is_fatal    TINYINT      DEFAULT 0,
+    message     VARCHAR(500) NOT NULL,
+    stack       TEXT,
+    context     VARCHAR(200) DEFAULT NULL,
+    created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_client_errors_created (created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+}
+
 module.exports = [
   { id: '000_base_schema', up: baseSchema },
   { id: '004_loan_payment_wallet', up: loanPaymentWallet },
@@ -230,5 +250,6 @@ module.exports = [
   { id: '006_announcements_requests_push', up: announcementsRequestsPush },
   { id: '007_attendance', up: attendance },
   { id: '008_puruka', up: puruka },
-  { id: '009_staff_user_lifecycle', up: staffUserLifecycle }
+  { id: '009_staff_user_lifecycle', up: staffUserLifecycle },
+  { id: '010_client_errors', up: clientErrors }
 ];

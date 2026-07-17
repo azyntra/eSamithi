@@ -9,9 +9,11 @@ import { useT } from '../../i18n'
 import { elevation, radius, spacing, usePalette } from '../../theme'
 import { useType } from '../../typography'
 import { photoUrl } from '../../api/client'
+import { formatDate } from '../../lib/date'
 import { useDeletePurukaPost, usePurukaPost, useReportPurukaPost, useUpdatePurukaPost } from '../../api/hooks'
 import { categoryIcon } from '../(tabs)/puruka'
-import { Badge, BrandGradient, Button, Card, ErrorView, Money, Row, Screen, SectionHeader, SkeletonCards, StaleBanner, useToast } from '../../ui'
+import { Badge, BrandGradient, Button, Card, ErrorView, Money, Row, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner, useToast } from '../../ui'
+import { PhotoViewer } from '../../ui/PhotoViewer'
 
 // "0771234567" → "94771234567" for wa.me; leaves already-international numbers alone
 function whatsappNumber(phone: string): string {
@@ -34,6 +36,7 @@ export default function PurukaPostDetail(): React.ReactElement {
   const report = useReportPurukaPost()
   const toast = useToast()
   const [activePhoto, setActivePhoto] = useState(0)
+  const [viewerOpen, setViewerOpen] = useState(false)
 
   if (post.isPending) return <Screen><SkeletonCards cards={2} /></Screen>
   if (post.isError && !post.data) {
@@ -102,14 +105,20 @@ export default function PurukaPostDetail(): React.ReactElement {
               setActivePhoto(Math.round(e.nativeEvent.contentOffset.x / (pageWidth + 10)))
             }
           >
-            {item.photos.map((photo) => (
-              <Image
+            {item.photos.map((photo, i) => (
+              <ScalePressable
                 key={photo}
-                source={{ uri: photoUrl(photo) }}
-                style={{ width: pageWidth, height: 250, borderRadius: radius.lg, marginRight: 10, backgroundColor: p.surfaceAlt }}
-                contentFit="cover"
-                transition={180}
-              />
+                accessibilityRole="imagebutton"
+                scaleTo={0.99}
+                onPress={() => { setActivePhoto(i); setViewerOpen(true) }}
+              >
+                <Image
+                  source={{ uri: photoUrl(photo) }}
+                  style={{ width: pageWidth, height: 250, borderRadius: radius.lg, marginRight: 10, backgroundColor: p.surfaceAlt }}
+                  contentFit="cover"
+                  transition={180}
+                />
+              </ScalePressable>
             ))}
           </ScrollView>
           {item.photos.length > 1 && (
@@ -152,9 +161,9 @@ export default function PurukaPostDetail(): React.ReactElement {
       <Card style={{ paddingVertical: 6 }}>
         <Row label={t('mob.pkCategory')} value={catLabel} icon={categoryIcon(item.category_code)} />
         {!!item.location && <Row label={t('mob.pkLocation')} value={item.location} icon="location-outline" />}
-        <Row label={t('mob.pkPosted')} value={String(item.created_at).split('T')[0]} icon="time-outline" />
+        <Row label={t('mob.pkPosted')} value={formatDate(item.created_at)} icon="time-outline" />
         {item.is_owner && !!item.expires_at && item.status === 'Active' && (
-          <Row label={t('mob.pkExpires')} value={String(item.expires_at).split('T')[0]} icon="hourglass-outline" />
+          <Row label={t('mob.pkExpires')} value={formatDate(item.expires_at)} icon="hourglass-outline" />
         )}
       </Card>
 
@@ -211,6 +220,13 @@ export default function PurukaPostDetail(): React.ReactElement {
         </>
       )}
     </Screen>
+
+    <PhotoViewer
+      photos={item.photos.map((ph) => photoUrl(ph))}
+      initialIndex={activePhoto}
+      visible={viewerOpen}
+      onClose={() => setViewerOpen(false)}
+    />
 
     {/* Sticky contact bar — call/WhatsApp always within thumb reach */}
     {showContactBar && (

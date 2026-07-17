@@ -6,11 +6,13 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nProvider, useT } from '../i18n'
 import { AuthProvider, useAuth } from '../auth/AuthContext'
+import { NoticesSeenProvider } from '../lib/noticesSeen'
 import { ThemeProvider, usePalette, useThemeMode } from '../theme'
 import { useType } from '../typography'
 import { LoadingView } from '../ui'
 import { ToastProvider } from '../ui/toast'
 import '../lib/queryFocus' // wires app-foreground → React Query refetch
+import '../lib/errorReporter' // global JS crash reports → /client-errors
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,9 +92,11 @@ export default function RootLayout(): React.ReactElement {
         <ThemeProvider>
           <I18nProvider>
             <AuthProvider>
-              <ToastProvider>
-                <RootNavigator />
-              </ToastProvider>
+              <NoticesSeenProvider>
+                <ToastProvider>
+                  <RootNavigator />
+                </ToastProvider>
+              </NoticesSeenProvider>
             </AuthProvider>
           </I18nProvider>
         </ThemeProvider>

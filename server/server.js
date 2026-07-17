@@ -31,6 +31,7 @@ const memberRequestsRoutes = require('./routes/memberRequests.routes');
 const eventsRoutes = require('./routes/events.routes');
 const purukaRoutes = require('./routes/puruka.routes');
 const purukaAdminRoutes = require('./routes/purukaAdmin.routes');
+const clientErrorsRoutes = require('./routes/clientErrors.routes');
 const internalRoutes = require('./routes/internal.routes');
 const internalServerRoutes = require('./routes/internalServer.routes');
 
@@ -112,6 +113,7 @@ app.use('/api/v1/member-requests', memberRequestsRoutes);
 app.use('/api/v1/events', eventsRoutes);
 app.use('/api/v1/puruka', purukaRoutes);
 app.use('/api/v1/puruka-admin', purukaAdminRoutes);
+app.use('/api/v1/client-errors', clientErrorsRoutes);
 app.use('/api/v1/internal', internalRoutes);
 
 // ── Global Error Handler ─────────────────────────────────────

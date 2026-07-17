@@ -77,6 +77,27 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
                 />
               ) : null}
               <Ionicons name={focused ? icons.active : icons.idle} size={21} color={focused ? p.primary : p.textMuted} />
+              {options.tabBarBadge != null ? (
+                <Animated.View
+                  entering={ZoomIn.springify().damping(14)}
+                  style={{
+                    position: 'absolute',
+                    top: -2,
+                    right: 6,
+                    minWidth: 16,
+                    height: 16,
+                    borderRadius: radius.pill,
+                    backgroundColor: p.danger,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingHorizontal: 4
+                  }}
+                >
+                  <Text style={{ color: '#ffffff', fontSize: 9.5, fontFamily: ty.family.bold }}>
+                    {String(options.tabBarBadge)}
+                  </Text>
+                </Animated.View>
+              ) : null}
             </View>
             <Text
               numberOfLines={1}

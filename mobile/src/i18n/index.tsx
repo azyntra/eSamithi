@@ -2,6 +2,8 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import * as SecureStore from 'expo-secure-store'
 import { en, type TranslationKey } from './en'
 import { si } from './si'
+import { MONTHS_LONG, MONTHS_SHORT } from './months'
+import { setDateLang } from '../lib/date'
 
 // RN port of the desktop i18n (src/renderer/src/i18n): same dictionaries,
 // same si→en fallback and {var} interpolation; localStorage swapped for
@@ -10,15 +12,7 @@ export type Lang = 'en' | 'si'
 
 const STORAGE_KEY = 'esamithi.lang'
 
-const MONTHS_LONG: Record<Lang, string[]> = {
-  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-  si: ['ජනවාරි', 'පෙබරවාරි', 'මාර්තු', 'අප්‍රේල්', 'මැයි', 'ජූනි', 'ජූලි', 'අගෝස්තු', 'සැප්තැම්බර්', 'ඔක්තෝබර්', 'නොවැම්බර්', 'දෙසැම්බර්']
-}
-
-const MONTHS_SHORT: Record<Lang, string[]> = {
-  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-  si: ['ජන', 'පෙබ', 'මාර්', 'අප්‍රේ', 'මැයි', 'ජූනි', 'ජූලි', 'අගෝ', 'සැප්', 'ඔක්', 'නොවැ', 'දෙසැ']
-}
+export { MONTHS_LONG, MONTHS_SHORT } from './months'
 
 interface I18nContextValue {
   lang: Lang
@@ -52,6 +46,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }): React
       .then((stored) => { if (stored === 'en' || stored === 'si') setLangState(stored) })
       .catch(() => {})
   }, [])
+
+  // Keep the module-level date formatter in the UI language (lib/date.ts)
+  useEffect(() => {
+    setDateLang(lang)
+  }, [lang])
 
   const setLang = useCallback((next: Lang): void => {
     setLangState(next)
