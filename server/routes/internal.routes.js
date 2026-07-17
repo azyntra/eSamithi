@@ -24,14 +24,23 @@ router.get('/stats', async (_req, res, next) => {
     const members = await q(`SELECT
       COUNT(*) AS total,
       SUM(CASE WHEN is_active = 1 OR is_active IS NULL THEN 1 ELSE 0 END) AS active,
-      SUM(CASE WHEN pin_hash IS NOT NULL THEN 1 ELSE 0 END) AS enrolled
+      SUM(CASE WHEN pin_hash IS NOT NULL THEN 1 ELSE 0 END) AS enrolled,
+      SUM(CASE WHEN pin_locked_until IS NOT NULL AND pin_locked_until > NOW() THEN 1 ELSE 0 END) AS locked_pins
       FROM members`);
     const staff = await q('SELECT COUNT(*) AS n FROM users');
+    const push = await q('SELECT COUNT(*) AS n FROM member_push_tokens');
     const wallets = await q("SELECT IFNULL(SUM(balance),0) AS cents FROM wallets WHERE is_active = 1");
-    const loans = await q(`SELECT COUNT(*) AS n, IFNULL(SUM(principal_owed + interest_owed + fines_owed),0) AS cents
+    const loans = await q(`SELECT COUNT(*) AS n,
+      SUM(CASE WHEN status = 'Overdue' THEN 1 ELSE 0 END) AS overdue,
+      IFNULL(SUM(principal_owed + interest_owed + fines_owed),0) AS cents
       FROM loans WHERE status IN ('Active','Overdue')`);
     const fds = await q("SELECT COUNT(*) AS n, IFNULL(SUM(principal),0) AS cents FROM fixed_deposits WHERE status = 'Active'");
     const pending = await q("SELECT COUNT(*) AS n FROM member_requests WHERE status = 'Pending'");
+    // Current calendar month cashflow — feeds the console's fleet trend charts
+    const monthIncome = await q(`SELECT IFNULL(SUM(amount),0) AS cents FROM income_ledger
+      WHERE status = 'Active' AND date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')`);
+    const monthExpense = await q(`SELECT IFNULL(SUM(amount),0) AS cents FROM expense_ledger
+      WHERE status = 'Active' AND date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')`);
     const lastTxn = await q(`SELECT GREATEST(
         IFNULL((SELECT MAX(date) FROM income_ledger), '1970-01-01'),
         IFNULL((SELECT MAX(date) FROM expense_ledger), '1970-01-01')
@@ -49,6 +58,11 @@ router.get('/stats', async (_req, res, next) => {
       fds_count: Number(fds.n),
       fds_value_cents: Number(fds.cents),
       pending_requests: Number(pending.n),
+      loans_overdue: Number(loans.overdue),
+      push_tokens: Number(push.n),
+      locked_pins: Number(members.locked_pins),
+      month_income_cents: Number(monthIncome.cents),
+      month_expense_cents: Number(monthExpense.cents),
       last_txn_at: lastTxn.d && String(lastTxn.d).startsWith('1970') ? null : lastTxn.d,
       migration_version: migration.v
     });

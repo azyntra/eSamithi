@@ -29,6 +29,22 @@ async function initDb() {
   await seedFromTenantsFile();
 }
 
+// Idempotent ALTER: adds any column that isn't there yet. There are no
+// migration files — the schema is reconciled at every boot.
+async function addColumns(table, columns) {
+  const [existing] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?`,
+    [table]
+  );
+  const have = new Set(existing.map((r) => r.COLUMN_NAME));
+  for (const [name, definition] of Object.entries(columns)) {
+    if (have.has(name)) continue;
+    await pool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${name}\` ${definition}`);
+    console.log(`✓ schema: ${table}.${name} added`);
+  }
+}
+
 async function ensureSchema() {
   await pool.query(`CREATE TABLE IF NOT EXISTS super_admins (
     id            INT PRIMARY KEY AUTO_INCREMENT,
@@ -155,6 +171,48 @@ async function ensureSchema() {
     pending_requests        INT DEFAULT 0,
     last_txn_at             DATE DEFAULT NULL,
     migration_version       VARCHAR(80) DEFAULT NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  // Counters added after the table shipped. A tenant API that predates them
+  // simply omits the fields and the collector stores 0 (see lib/collector.js).
+  await addColumns('tenant_stats_current', {
+    loans_overdue: 'INT DEFAULT 0',
+    push_tokens: 'INT DEFAULT 0',
+    locked_pins: 'INT DEFAULT 0',
+    month_income_cents: 'BIGINT DEFAULT 0',
+    month_expense_cents: 'BIGINT DEFAULT 0'
+  });
+
+  // Daily snapshot per samithi — the collector upserts one row per day, so the
+  // table grows by (samithis × days) and the console can chart real trends.
+  //
+  // platform_app holds SELECT/INSERT/CREATE database-wide but UPDATE and DELETE
+  // are granted per table (that's what keeps audit_log append-only). A new table
+  // that gets upserted therefore needs its own grant, or every sweep fails with
+  // "UPDATE command denied":
+  //   GRANT UPDATE, DELETE ON esamithi_platform.tenant_stats_history TO 'platform_app'@'%';
+  await pool.query(`CREATE TABLE IF NOT EXISTS tenant_stats_history (
+    samithi_slug            VARCHAR(30) NOT NULL,
+    snapshot_date           DATE NOT NULL,
+    captured_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    reachable               TINYINT DEFAULT 1,
+    members_total           INT DEFAULT 0,
+    members_active          INT DEFAULT 0,
+    members_enrolled        INT DEFAULT 0,
+    staff_users             INT DEFAULT 0,
+    wallets_total_cents     BIGINT DEFAULT 0,
+    loans_active            INT DEFAULT 0,
+    loans_overdue           INT DEFAULT 0,
+    loans_outstanding_cents BIGINT DEFAULT 0,
+    fds_count               INT DEFAULT 0,
+    fds_value_cents         BIGINT DEFAULT 0,
+    pending_requests        INT DEFAULT 0,
+    push_tokens             INT DEFAULT 0,
+    locked_pins             INT DEFAULT 0,
+    month_income_cents      BIGINT DEFAULT 0,
+    month_expense_cents     BIGINT DEFAULT 0,
+    PRIMARY KEY (samithi_slug, snapshot_date),
+    KEY idx_tsh_date (snapshot_date)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
   // Impersonation sessions (kill-switch + audit linkage via sid)

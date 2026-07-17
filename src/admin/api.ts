@@ -95,3 +95,49 @@ export function fmtDate(iso: string | null | undefined): string {
   if (!iso) return '—'
   return String(iso).replace('T', ' ').slice(0, 16)
 }
+
+export const pct = (part: number, whole: number): number => (whole > 0 ? Math.round((part / whole) * 100) : 0)
+
+// Compact money for chart axes, where "Rs. 1,234,567.00" would never fit.
+export function rsShort(cents: number): string {
+  const v = cents / 100
+  const a = Math.abs(v)
+  if (a >= 1e6) return `Rs. ${(v / 1e6).toFixed(1)}M`
+  if (a >= 1e3) return `Rs. ${Math.round(v / 1e3)}K`
+  return `Rs. ${Math.round(v)}`
+}
+
+export interface Delta { pct: number; dir: 'up' | 'down' | 'flat' }
+
+// Change against a baseline. Returns null when there's no baseline to compare
+// with — the tiles hide the badge rather than imply a change from zero.
+export function delta(current: number, previous: number | null | undefined): Delta | null {
+  if (previous == null || !Number.isFinite(previous) || previous === 0) return null
+  const diff = current - previous
+  const p = Math.round((diff / Math.abs(previous)) * 100)
+  if (p === 0) return { pct: 0, dir: 'flat' }
+  return { pct: Math.abs(p), dir: diff > 0 ? 'up' : 'down' }
+}
+
+// Excel opens UTF-8 CSV as mojibake unless it sees a BOM — Sinhala society
+// names depend on it.
+export function downloadCsv(filename: string, headers: string[], rows: (string | number | null)[][]): void {
+  const esc = (v: string | number | null): string => {
+    const s = String(v ?? '')
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+  }
+  const body = [headers.join(','), ...rows.map((r) => r.map(esc).join(','))].join('\n')
+  const blob = new Blob(['﻿' + body], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${filename}-${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+// Hands off to the browser's print dialog ("Save as PDF"). The @media print
+// rules in styles.css strip the shell and reveal the letterhead.
+export function exportPdf(): void {
+  window.print()
+}

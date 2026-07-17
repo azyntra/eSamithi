@@ -1,5 +1,6 @@
 const express = require('express');
 const { getPool } = require('../db');
+const { TREND_METRICS, sumOf, numeric } = require('../lib/metrics');
 
 // Cross-samithi reporting (super-admin FR-6). Reads the cached per-tenant
 // snapshots (collector, hourly) so reports load fast without fanning out live.
@@ -62,6 +63,50 @@ router.get('/inactivity', async (req, res, next) => {
         AND (c.last_txn_at IS NULL OR c.last_txn_at < DATE_SUB(CURDATE(), INTERVAL ? DAY))
       ORDER BY c.last_txn_at IS NULL DESC, c.last_txn_at ASC`, [days]);
     res.json({ days, rows });
+  } catch (err) { next(err); }
+});
+
+// GET /pa/v1/reports/trends?days=N[&slug=] — daily series, fleet-wide or for a
+// single samithi. Empty until the collector has logged more than one day.
+router.get('/trends', async (req, res, next) => {
+  try {
+    const days = Math.max(7, Math.min(365, parseInt(req.query.days, 10) || 90));
+    const slug = req.query.slug ? String(req.query.slug) : null;
+    const params = [days];
+    let where = 'snapshot_date >= CURDATE() - INTERVAL ? DAY';
+    if (slug) { where += ' AND samithi_slug = ?'; params.push(slug); }
+
+    const [series] = await getPool().query(`
+      SELECT DATE_FORMAT(snapshot_date, '%Y-%m-%d') AS date, ${sumOf(TREND_METRICS)}
+      FROM tenant_stats_history WHERE ${where}
+      GROUP BY snapshot_date ORDER BY snapshot_date`, params);
+    res.json({ days, slug, series: series.map((r) => numeric(r, ['date'])) });
+  } catch (err) { next(err); }
+});
+
+// GET /pa/v1/reports/adoption — how well each samithi has taken up the mobile
+// app: enrolment reach, push reach, and members currently locked out.
+router.get('/adoption', async (_req, res, next) => {
+  try {
+    const [rows] = await getPool().query(`
+      SELECT s.slug, s.name_en, s.status, c.reachable, c.captured_at,
+             IFNULL(c.members_total,0)    AS members_total,
+             IFNULL(c.members_active,0)   AS members_active,
+             IFNULL(c.members_enrolled,0) AS members_enrolled,
+             IFNULL(c.push_tokens,0)      AS push_tokens,
+             IFNULL(c.locked_pins,0)      AS locked_pins
+      FROM samithis s LEFT JOIN tenant_stats_current c ON c.samithi_slug = s.slug
+      WHERE s.status != 'archived'
+      ORDER BY s.name_en`);
+
+    const cols = ['members_total', 'members_active', 'members_enrolled', 'push_tokens', 'locked_pins'];
+    const totals = rows.reduce((a, r) => {
+      for (const c of cols) a[c] += Number(r[c]);
+      return a;
+    }, Object.fromEntries(cols.map((c) => [c, 0])));
+
+    const [[{ captured_at }]] = await getPool().query('SELECT MAX(captured_at) AS captured_at FROM tenant_stats_current');
+    res.json({ rows: rows.map((r) => numeric(r, ['slug', 'name_en', 'status', 'captured_at'])), totals, as_of: captured_at });
   } catch (err) { next(err); }
 });
 

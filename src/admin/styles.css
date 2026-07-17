@@ -10,6 +10,10 @@
   --warning: #D97706; --warning-light: #FEF3C7; --warning-text: #92400E;
   --accent-purple: #8B5CF6;
   --border: #E5E7EB; --border-focus: #1E64D4;
+  /* Chart palette — recharts reads these straight off the element as
+     fill/stroke, so light and dark swap without touching the components. */
+  --chart-1: #1E64D4; --chart-2: #16A34A; --chart-3: #8B5CF6; --chart-4: #D97706; --chart-5: #0EA5E9;
+  --chart-grid: #EEF1F5; --chart-tick: #9CA3AF; --chart-cursor: rgba(30,100,212,.07);
   color-scheme: light;
   --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
   --shadow-md: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -2px rgba(0,0,0,.05);
@@ -26,6 +30,8 @@
   --success: #22C55E; --success-light: rgba(34,197,94,.12);
   --warning: #FBBF24; --warning-light: rgba(251,191,36,.12); --warning-text: #FCD34D;
   --border: #2A3547; --border-focus: #4C8DF6;
+  --chart-1: #4C8DF6; --chart-2: #22C55E; --chart-3: #A78BFA; --chart-4: #FBBF24; --chart-5: #38BDF8;
+  --chart-grid: #263043; --chart-tick: #6B7280; --chart-cursor: rgba(76,141,246,.12);
   --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
   --shadow-md: 0 4px 6px -1px rgba(0,0,0,.45), 0 2px 4px -2px rgba(0,0,0,.4);
   --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.5), 0 4px 6px -4px rgba(0,0,0,.45);
@@ -169,3 +175,84 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .spin { animation: spin 0.8s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
 .kv { display: grid; grid-template-columns: minmax(120px, auto) 1fr; gap: 6px 16px; font-size: 13px; }
 .kv dt { color: var(--text-muted); } .kv dd { color: var(--text-primary); font-weight: 500; }
+
+/* ── KPI groups ────────────────────────────────────────────── */
+.group { margin-bottom: 20px; }
+.group-label {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; font-weight: 700;
+  color: var(--text-muted); margin-bottom: 9px;
+}
+.tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; min-height: 18px; }
+.tile-delta { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; font-weight: 700; }
+.tile-delta.up { color: var(--success); } .tile-delta.down { color: var(--danger); }
+.tile-delta.flat { color: var(--text-muted); }
+.tile-spark { width: 62px; height: 22px; flex-shrink: 0; opacity: .9; }
+
+/* ── Attention strip ───────────────────────────────────────── */
+.attn { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 18px; }
+.attn-chip {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 100px;
+  font-size: 12.5px; font-weight: 600; border: 1px solid transparent; background: var(--bg-card);
+  transition: filter .12s;
+}
+.attn-chip:hover { filter: brightness(.97); }
+.attn-chip.warn { background: var(--warning-light); color: var(--warning-text); border-color: transparent; }
+.attn-chip.danger { background: var(--danger-light); color: var(--danger); }
+.attn-chip.neutral { background: var(--bg-hover); color: var(--text-secondary); }
+
+/* ── Segmented control ─────────────────────────────────────── */
+.seg { display: inline-flex; background: var(--bg-hover); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg-btn {
+  border: 0; background: transparent; color: var(--text-secondary); font-size: 12.5px; font-weight: 600;
+  padding: 5px 11px; border-radius: 6px; transition: background .12s, color .12s;
+}
+.seg-btn:hover { color: var(--text-primary); }
+.seg-btn.on { background: var(--bg-card); color: var(--primary); box-shadow: var(--shadow-sm); }
+
+/* ── Tabs ──────────────────────────────────────────────────── */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+.tab {
+  border: 0; background: transparent; padding: 10px 15px; font-size: 13.5px; font-weight: 600;
+  color: var(--text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px;
+  display: inline-flex; align-items: center; gap: 7px; transition: color .12s, border-color .12s;
+}
+.tab:hover { color: var(--text-primary); }
+.tab.on { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* ── Sortable table headers ────────────────────────────────── */
+.tbl th.sortable { cursor: pointer; user-select: none; }
+.tbl th.sortable:hover { color: var(--text-secondary); }
+.tbl th.sortable .sort-ind { opacity: .45; margin-left: 4px; display: inline-block; vertical-align: middle; }
+.tbl th.sortable.on { color: var(--primary); } .tbl th.sortable.on .sort-ind { opacity: 1; }
+
+/* ── Chart card ────────────────────────────────────────────── */
+.chart-body { padding: 16px 12px 8px 4px; }
+.recharts-surface { overflow: visible; }
+.search-box { position: relative; display: inline-flex; align-items: center; }
+.search-box svg { position: absolute; left: 10px; color: var(--text-muted); pointer-events: none; }
+.search-box .input { padding-left: 32px; width: 220px; }
+
+/* ── Print / PDF export ────────────────────────────────────────
+   "Export PDF" is the browser's own Save-as-PDF: it renders Sinhala society
+   names with the system shaper, which a JS PDF library would not. */
+.print-only { display: none; }
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+  /* .seg: an interactive toggle is meaningless on paper — the letterhead
+     already names what was exported. */
+  .sidebar, .topbar, .no-print, .toasts, .seg { display: none !important; }
+  .main { margin-left: 0 !important; }
+  .content { padding: 0 !important; max-width: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .print-only { display: block; margin-bottom: 14px; }
+  .print-head { border-bottom: 2px solid #000; padding-bottom: 8px; }
+  .print-head h1 { font-size: 16pt; font-weight: 800; }
+  .print-head .meta { font-size: 9pt; color: #333; margin-top: 2px; }
+  .card { border: 1px solid #999 !important; box-shadow: none !important; break-inside: avoid; page-break-inside: avoid; margin-bottom: 12px; }
+  .tbl th, .tbl td { border-bottom: 1px solid #999 !important; color: #000 !important; padding: 6px 8px; }
+  .tbl th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .tile { border: 1px solid #999 !important; box-shadow: none !important; break-inside: avoid; }
+  .t-mut, .t-strong { color: #000 !important; }
+  .badge { border: 1px solid #999; color: #000 !important; background: transparent !important; }
+  .chart-body, .recharts-wrapper { break-inside: avoid; page-break-inside: avoid; }
+}
