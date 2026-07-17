@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Alert, Pressable, Switch, Text, View } from 'react-native'
+import { Alert, Switch, Text, View } from 'react-native'
 import { useRouter, type Href } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import Constants from 'expo-constants'
@@ -7,12 +7,20 @@ import * as SecureStore from 'expo-secure-store'
 import * as LocalAuthentication from 'expo-local-authentication'
 import { BIOMETRIC_KEY, useAuth } from '../../auth/AuthContext'
 import { useT } from '../../i18n'
-import { usePalette, useThemeMode, type ThemeMode } from '../../theme'
-import { Card, LangToggle, Screen, SectionHeader, Segmented } from '../../ui'
+import { radius, spacing, usePalette, useThemeMode, type ThemeMode } from '../../theme'
+import { useType } from '../../typography'
+import { Card, LangToggle, LogoTile, ScalePressable, Screen, SectionHeader, Segmented } from '../../ui'
+
+interface NavItem {
+  href: Href
+  icon: keyof typeof Ionicons.glyphMap
+  label: string
+}
 
 export default function More(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
   const { signOut, profiles, activeProfile, switchProfile, addSamithi } = useAuth()
   const { mode, setMode } = useThemeMode()
@@ -44,11 +52,14 @@ export default function More(): React.ReactElement {
     SecureStore.setItemAsync(BIOMETRIC_KEY, next ? '1' : '0').catch(() => {})
   }
 
-  const items: Array<{ href: Href; icon: keyof typeof Ionicons.glyphMap; label: string }> = [
+  // Grouped destinations: my things / my society
+  const personal: NavItem[] = [
     { href: '/card', icon: 'id-card-outline', label: t('mob.memberCard') },
-    { href: '/puruka-mine', icon: 'pricetags-outline', label: t('mob.pkMyPosts') },
-    { href: '/requests', icon: 'document-text-outline', label: t('mob.requests') },
     { href: '/profile', icon: 'person-outline', label: t('mob.myProfile') },
+    { href: '/puruka-mine', icon: 'pricetags-outline', label: t('mob.pkMyPosts') },
+    { href: '/requests', icon: 'document-text-outline', label: t('mob.requests') }
+  ]
+  const societyItems: NavItem[] = [
     { href: '/benefits', icon: 'gift-outline', label: t('mob.benefits') },
     { href: '/payouts', icon: 'wallet-outline', label: t('mob.payouts') },
     { href: '/guarantees', icon: 'people-outline', label: t('mob.guarantees') },
@@ -56,6 +67,28 @@ export default function More(): React.ReactElement {
     { href: '/society', icon: 'information-circle-outline', label: t('mob.societyInfo') },
     { href: '/help', icon: 'help-circle-outline', label: t('mob.help') }
   ]
+
+  const navRow = (item: NavItem, i: number): React.ReactElement => (
+    <ScalePressable
+      key={item.label}
+      onPress={() => router.push(item.href)}
+      accessibilityRole="button"
+      scaleTo={0.98}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: spacing.md,
+        borderTopWidth: i === 0 ? 0 : 1,
+        borderTopColor: p.border
+      }}
+    >
+      <View style={{ width: 34, height: 34, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md }}>
+        <Ionicons name={item.icon} size={17} color={p.primary} />
+      </View>
+      <Text style={{ color: p.text, fontSize: 15.5, fontFamily: ty.family.semibold, lineHeight: ty.lh(15.5), flex: 1 }}>{item.label}</Text>
+      <Ionicons name="chevron-forward" size={18} color={p.textMuted} />
+    </ScalePressable>
+  )
 
   const confirmLogout = (): void => {
     Alert.alert(t('sidebar.signOutConfirmTitle'), t('sidebar.signOutConfirmMsg'), [
@@ -66,37 +99,20 @@ export default function More(): React.ReactElement {
 
   return (
     <Screen>
-      <Card style={{ paddingVertical: 4 }}>
-        {items.map((item, i) => (
-          <Pressable
-            key={item.label}
-            onPress={() => router.push(item.href)}
-            accessibilityRole="button"
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 15,
-              borderTopWidth: i === 0 ? 0 : 1,
-              borderTopColor: p.border
-            }}
-          >
-            <Ionicons name={item.icon} size={22} color={p.primary} style={{ marginRight: 14 }} />
-            <Text style={{ color: p.text, fontSize: 16, fontWeight: '600', flex: 1 }}>{item.label}</Text>
-            <Ionicons name="chevron-forward" size={18} color={p.textMuted} />
-          </Pressable>
-        ))}
-      </Card>
+      <Card style={{ paddingVertical: spacing.xs }}>{personal.map(navRow)}</Card>
+      <Card style={{ paddingVertical: spacing.xs }}>{societyItems.map(navRow)}</Card>
 
       {/* Multi-samithi switcher (plan §2.6) — silent when the other
           samithi's session is alive, otherwise its login screen */}
       <SectionHeader>{t('mob.samithiSection')}</SectionHeader>
-      <Card style={{ paddingVertical: 4 }}>
+      <Card style={{ paddingVertical: spacing.xs }}>
         {profiles.map((profile, i) => {
           const isActive = profile.slug === activeProfile?.slug
           return (
-            <Pressable
+            <ScalePressable
               key={profile.slug}
               accessibilityRole="button"
+              haptic="selection"
               disabled={switching || isActive}
               onPress={async () => {
                 setSwitching(true)
@@ -105,7 +121,7 @@ export default function More(): React.ReactElement {
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                paddingVertical: 14,
+                paddingVertical: spacing.lg - 2,
                 borderTopWidth: i === 0 ? 0 : 1,
                 borderTopColor: p.border,
                 opacity: switching ? 0.5 : 1
@@ -115,31 +131,31 @@ export default function More(): React.ReactElement {
                 name={isActive ? 'radio-button-on' : 'radio-button-off'}
                 size={20}
                 color={isActive ? p.primary : p.textMuted}
-                style={{ marginRight: 12 }}
+                style={{ marginRight: spacing.md }}
               />
-              <Text style={{ color: p.text, fontSize: 15, fontWeight: '600', flex: 1 }}>
+              <Text style={{ color: p.text, fontSize: 15, fontFamily: ty.family.semibold, lineHeight: ty.lh(15), flex: 1 }}>
                 {profile.name || profile.code || profile.slug}
               </Text>
               {isActive && (
-                <Text style={{ color: p.primary, fontSize: 12, fontWeight: '700' }}>{t('mob.samithiActive')}</Text>
+                <Text style={{ color: p.primary, fontSize: 12, fontFamily: ty.family.bold, lineHeight: ty.lh(12) }}>{t('mob.samithiActive')}</Text>
               )}
-            </Pressable>
+            </ScalePressable>
           )
         })}
-        <Pressable
+        <ScalePressable
           accessibilityRole="button"
           onPress={addSamithi}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 14,
+            paddingVertical: spacing.lg - 2,
             borderTopWidth: profiles.length === 0 ? 0 : 1,
             borderTopColor: p.border
           }}
         >
-          <Ionicons name="add-circle-outline" size={20} color={p.primary} style={{ marginRight: 12 }} />
-          <Text style={{ color: p.primary, fontSize: 15, fontWeight: '600' }}>{t('mob.samithiAdd')}</Text>
-        </Pressable>
+          <Ionicons name="add-circle-outline" size={20} color={p.primary} style={{ marginRight: spacing.md }} />
+          <Text style={{ color: p.primary, fontSize: 15, fontFamily: ty.family.semibold, lineHeight: ty.lh(15) }}>{t('mob.samithiAdd')}</Text>
+        </ScalePressable>
       </Card>
 
       <SectionHeader>{t('mob.theme')}</SectionHeader>
@@ -159,27 +175,30 @@ export default function More(): React.ReactElement {
       {bioAvailable && (
         <>
           <SectionHeader>{t('mob.biometric')}</SectionHeader>
-          <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <Ionicons name="finger-print-outline" size={22} color={p.primary} />
-            <Text style={{ color: p.textMuted, fontSize: 13, flex: 1, lineHeight: 18 }}>{t('mob.biometricHint')}</Text>
+            <Text style={{ color: p.textMuted, fontSize: 13, fontFamily: ty.family.regular, flex: 1, lineHeight: ty.lh(13) }}>{t('mob.biometricHint')}</Text>
             <Switch value={bioEnabled} onValueChange={toggleBiometric} trackColor={{ true: p.primary }} />
           </Card>
         </>
       )}
 
-      <View style={{ height: 16 }} />
-      <Pressable
+      <View style={{ height: spacing.lg }} />
+      <ScalePressable
         onPress={confirmLogout}
         accessibilityRole="button"
-        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14 }}
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.lg - 2 }}
       >
-        <Ionicons name="log-out-outline" size={20} color={p.danger} style={{ marginRight: 8 }} />
-        <Text style={{ color: p.danger, fontSize: 16, fontWeight: '700' }}>{t('sidebar.signOut')}</Text>
-      </Pressable>
+        <Ionicons name="log-out-outline" size={20} color={p.danger} style={{ marginRight: spacing.sm }} />
+        <Text style={{ color: p.danger, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{t('sidebar.signOut')}</Text>
+      </ScalePressable>
 
-      <Text style={{ color: p.textMuted, fontSize: 12, textAlign: 'center', marginTop: 8 }}>
-        {t('mob.version', { v: Constants.expoConfig?.version ?? '1.0.0' })}
-      </Text>
+      <View style={{ alignItems: 'center', marginTop: spacing.lg, gap: spacing.sm }}>
+        <LogoTile size={34} />
+        <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular }}>
+          {t('mob.version', { v: Constants.expoConfig?.version ?? '1.0.0' })}
+        </Text>
+      </View>
     </Screen>
   )
 }

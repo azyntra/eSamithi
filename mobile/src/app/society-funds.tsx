@@ -2,16 +2,18 @@ import React from 'react'
 import { Text, View } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../i18n'
-import { usePalette } from '../theme'
+import { elevation, radius, usePalette } from '../theme'
+import { interFamily, useType } from '../typography'
 import { useSocietyFunds, useSocietyInfo, type SocietyFundFD } from '../api/hooks'
 import { formatDate } from '../lib/date'
-import { Card, EmptyText, ErrorView, Money, Screen, SectionHeader, SkeletonCards, StaleBanner, Subtitle } from '../ui'
+import { BrandGradient, Card, EmptyText, ErrorView, Money, Screen, SectionHeader, SkeletonCards, StaleBanner, Subtitle } from '../ui'
 
 // Society financial transparency for members: headline funds + a cash/FD
 // breakdown with the fixed deposits itemised. Read-only.
 export default function SocietyFunds(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const funds = useSocietyFunds()
   const society = useSocietyInfo()
 
@@ -70,24 +72,29 @@ export default function SocietyFunds(): React.ReactElement {
       {funds.isError && <StaleBanner />}
       <Subtitle>{t('mob.fundsIntro', { society: society.data?.society_name ?? 'Maranadhara Samithi' })}</Subtitle>
 
-      {/* Headline: total society funds */}
+      {/* Headline: total society funds — brand-gradient hero */}
       <View
         style={{
-          backgroundColor: p.primaryDark,
-          borderRadius: 18,
+          borderRadius: radius.lg,
           padding: 22,
           marginBottom: 16,
-          shadowColor: '#000',
-          shadowOpacity: 0.2,
-          shadowRadius: 10,
-          shadowOffset: { width: 0, height: 5 },
-          elevation: 6
+          overflow: 'hidden',
+          backgroundColor: p.navy,
+          shadowColor: p.navy,
+          ...elevation.md
         }}
       >
-        <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase' }}>
+        <BrandGradient />
+        <Text
+          pointerEvents="none"
+          style={{ position: 'absolute', right: -4, top: -22, fontSize: 100, fontFamily: interFamily.extrabold, color: 'rgba(255,255,255,0.08)' }}
+        >
+          eS
+        </Text>
+        <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, fontFamily: ty.family.bold, lineHeight: ty.lh(12.5), letterSpacing: 0.8, textTransform: 'uppercase' }}>
           {t('mob.fundsTotal')}
         </Text>
-        <Text style={{ color: '#fff', fontSize: 34, fontWeight: '800', marginTop: 6, fontVariant: ['tabular-nums'] }}>
+        <Text style={{ color: '#fff', fontSize: 34, fontFamily: interFamily.extrabold, marginTop: 6, fontVariant: ['tabular-nums'] }}>
           Rs. {(d.total_funds / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </Text>
       </View>

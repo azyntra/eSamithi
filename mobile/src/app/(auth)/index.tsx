@@ -1,16 +1,19 @@
 import React, { useEffect } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useAuth } from '../../auth/AuthContext'
 import { useT } from '../../i18n'
-import { usePalette } from '../../theme'
-import { Button, LangToggle } from '../../ui'
+import { spacing, radius, usePalette } from '../../theme'
+import { interFamily, useType } from '../../typography'
+import { Button, LangToggle, LogoTile, ScalePressable } from '../../ui'
 
 export default function Welcome(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { pendingProfile } = useAuth()
@@ -24,39 +27,62 @@ export default function Welcome(): React.ReactElement {
   if (!pendingProfile) return <View style={{ flex: 1, backgroundColor: p.bg }} />
 
   return (
-    <View style={{ flex: 1, backgroundColor: p.bg, padding: 24, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
+    <View style={{ flex: 1, backgroundColor: p.bg, padding: spacing.xxl, paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xxl }}>
       <View style={{ alignItems: 'flex-end' }}>
         <LangToggle />
       </View>
+
       <View style={{ flex: 1, justifyContent: 'center' }}>
-        <Text style={{ fontSize: 40, fontWeight: '800', color: p.primary, marginBottom: 8 }}>eSamithi</Text>
-        <Text style={{ fontSize: 26, fontWeight: '700', color: p.text, marginBottom: 10 }}>{t('mob.welcomeTitle')}</Text>
-        <Text style={{ fontSize: 16, lineHeight: 24, color: p.textMuted }}>{t('mob.welcomeSubtitle')}</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push('/(auth)/samithi')}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            alignSelf: 'flex-start',
-            gap: 6,
-            marginTop: 18,
-            paddingVertical: 6,
-            paddingHorizontal: 12,
-            borderRadius: 100,
-            backgroundColor: p.surfaceAlt
-          }}
-        >
-          <Ionicons name="people-circle-outline" size={16} color={p.primary} />
-          <Text style={{ color: p.text, fontSize: 13, fontWeight: '600' }}>
-            {pendingProfile.name || pendingProfile.code || pendingProfile.slug}
+        <Animated.View entering={FadeInDown.duration(500).springify().damping(18)} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginBottom: spacing.xxl }}>
+          <LogoTile size={64} />
+          <Text style={{ fontSize: 34, fontFamily: interFamily.extrabold, color: p.text }}>
+            e<Text style={{ color: p.primary }}>Samithi</Text>
           </Text>
-          <Text style={{ color: p.primary, fontSize: 13, fontWeight: '700' }}>· {t('mob.samithiChange')}</Text>
-        </Pressable>
+        </Animated.View>
+
+        <Animated.Text
+          entering={FadeInDown.delay(80).duration(500).springify().damping(18)}
+          style={{ fontSize: 26, fontFamily: ty.family.extrabold, lineHeight: ty.lh(26), color: p.text, marginBottom: spacing.md - 2 }}
+        >
+          {t('mob.welcomeTitle')}
+        </Animated.Text>
+        <Animated.Text
+          entering={FadeInDown.delay(160).duration(500).springify().damping(18)}
+          style={{ fontSize: 16, fontFamily: ty.family.regular, lineHeight: ty.lh(16), color: p.textMuted }}
+        >
+          {t('mob.welcomeSubtitle')}
+        </Animated.Text>
+
+        <Animated.View entering={FadeInDown.delay(240).duration(500).springify().damping(18)} style={{ alignSelf: 'flex-start' }}>
+          <ScalePressable
+            accessibilityRole="button"
+            haptic="selection"
+            onPress={() => router.push('/(auth)/samithi')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              marginTop: spacing.xl - 2,
+              paddingVertical: spacing.sm,
+              paddingHorizontal: spacing.md + 2,
+              borderRadius: radius.pill,
+              backgroundColor: p.primarySoft
+            }}
+          >
+            <Ionicons name="people-circle-outline" size={16} color={p.primary} />
+            <Text style={{ color: p.text, fontSize: 13, fontFamily: ty.family.semibold, lineHeight: ty.lh(13) }}>
+              {pendingProfile.name || pendingProfile.code || pendingProfile.slug}
+            </Text>
+            <Text style={{ color: p.primary, fontSize: 13, fontFamily: ty.family.bold, lineHeight: ty.lh(13) }}>· {t('mob.samithiChange')}</Text>
+          </ScalePressable>
+        </Animated.View>
       </View>
-      <Button label={t('mob.getStarted')} onPress={() => router.push('/(auth)/verify')} />
-      <View style={{ height: 10 }} />
-      <Button label={t('mob.alreadyEnrolled')} variant="secondary" onPress={() => router.push('/(auth)/login')} />
+
+      <Animated.View entering={FadeInUp.delay(320).duration(500).springify().damping(18)}>
+        <Button label={t('mob.getStarted')} onPress={() => router.push('/(auth)/verify')} />
+        <View style={{ height: spacing.sm + 2 }} />
+        <Button label={t('mob.alreadyEnrolled')} variant="secondary" onPress={() => router.push('/(auth)/login')} />
+      </Animated.View>
     </View>
   )
 }

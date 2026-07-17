@@ -15,7 +15,7 @@ import {
   useUpdatePurukaPost
 } from '../api/hooks'
 import { categoryIcon } from './(tabs)/puruka'
-import { Button, Input, Screen, SectionHeader } from '../ui'
+import { Button, Input, Screen, SectionHeader, useToast } from '../ui'
 
 const MAX_PHOTOS = 3
 
@@ -31,6 +31,7 @@ export default function PurukaNewPost(): React.ReactElement {
   const { t, lang } = useT()
   const p = usePalette()
   const router = useRouter()
+  const toast = useToast()
   const params = useLocalSearchParams<{ id?: string }>()
   const editId = params.id ? Number(params.id) : null
 
@@ -118,7 +119,7 @@ export default function PurukaNewPost(): React.ReactElement {
           id: editId,
           data: { title: title.trim(), category_id: categoryId, description, price: priceCents, negotiable, phone, location }
         },
-        { onSuccess: () => router.back(), onError }
+        { onSuccess: () => { toast.show('success', t('mob.pkSaved')); router.back() }, onError }
       )
     } else {
       create.mutate(
@@ -134,7 +135,7 @@ export default function PurukaNewPost(): React.ReactElement {
         },
         {
           onSuccess: () => {
-            Alert.alert('', t('mob.pkPosted2'))
+            toast.show('success', t('mob.pkPosted2'))
             router.back()
           },
           onError

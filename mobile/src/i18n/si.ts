@@ -919,6 +919,7 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'mob.pkReportFake': 'සැබෑ නොවේ',
   'mob.pkReportSold': 'දැනටමත් විකිණී ඇත',
   'mob.pkReportBad': 'නුසුදුසුයි',
+  'mob.pkSaved': 'දැන්වීම යාවත්කාලීන කළා.',
   'mob.pkReportThanks': 'ස්තූතියි — කාර්යාලය එය සමාලෝචනය කරනු ඇත.',
   'mob.pkMyPosts': 'මගේ පුරුක පළ කිරීම්',
   'mob.pkNewPost': 'නව පුරුක පළ කිරීමක්',

@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
-import { Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../i18n'
-import { usePalette, type Palette } from '../../theme'
+import { elevation, radius, spacing, usePalette, useThemeMode } from '../../theme'
+import { useType } from '../../typography'
 import { photoUrl } from '../../api/client'
 import {
   usePurukaCategories,
@@ -11,9 +13,7 @@ import {
   type PurukaFilters,
   type PurukaPost
 } from '../../api/hooks'
-import { Badge, Button, EmptyState, ErrorView, Money, Screen, Segmented, SkeletonCards, StaleBanner } from '../../ui'
-
-type TFunc = ReturnType<typeof useT>['t']
+import { Badge, BrandGradient, Button, EmptyState, ErrorView, Money, ScalePressable, Screen, Segmented, SkeletonCards, StaleBanner } from '../../ui'
 
 // Category code → icon; admin-added categories fall back to the tag icon
 const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -32,23 +32,37 @@ export function categoryIcon(code: string): keyof typeof Ionicons.glyphMap {
   return CATEGORY_ICONS[code] ?? 'pricetag-outline'
 }
 
-function PostTile({ post, lang, p, t, onPress }: {
-  post: PurukaPost
-  lang: 'en' | 'si'
-  p: Palette
-  t: TFunc
-  onPress: () => void
-}): React.ReactElement {
+function PostTile({ post, onPress }: { post: PurukaPost; onPress: () => void }): React.ReactElement {
+  const { t, lang } = useT()
+  const p = usePalette()
+  const ty = useType()
+  const { scheme } = useThemeMode()
   const catLabel = lang === 'si' ? post.category_si : post.category_en
   return (
-    <Pressable
+    <ScalePressable
       onPress={onPress}
       accessibilityRole="button"
-      style={{ width: '48%', backgroundColor: p.surface, borderColor: p.border, borderWidth: 1, borderRadius: 14, overflow: 'hidden', marginBottom: 12 }}
+      scaleTo={0.97}
+      style={{
+        width: '48%',
+        backgroundColor: scheme === 'dark' ? p.surface : p.surfaceElevated,
+        borderRadius: radius.lg,
+        overflow: 'hidden',
+        marginBottom: spacing.md,
+        ...(scheme === 'dark'
+          ? { borderWidth: 1, borderColor: p.border }
+          : { shadowColor: p.shadow, ...elevation.sm })
+      }}
     >
       <View style={{ height: 130, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
         {post.photos.length > 0 ? (
-          <Image source={{ uri: photoUrl(post.photos[0]) }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+          <Image
+            source={{ uri: photoUrl(post.photos[0]) }}
+            style={{ width: '100%', height: '100%' }}
+            contentFit="cover"
+            transition={180}
+            recyclingKey={String(post.id)}
+          />
         ) : (
           <Ionicons name={categoryIcon(post.category_code)} size={40} color={p.border} />
         )}
@@ -58,29 +72,30 @@ function PostTile({ post, lang, p, t, onPress }: {
           </View>
         )}
       </View>
-      <View style={{ padding: 10 }}>
-        <Text style={{ color: p.text, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>{post.title}</Text>
+      <View style={{ padding: spacing.md - 2 }}>
+        <Text style={{ color: p.text, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }} numberOfLines={1}>{post.title}</Text>
         <View style={{ marginTop: 3 }}>
           {post.price !== null
-            ? <Money cents={post.price} size={14} bold color={p.primary} />
-            : <Text style={{ color: p.primary, fontSize: 13, fontWeight: '700' }}>{t('mob.pkNegotiable')}</Text>}
+            ? <Money cents={post.price} size={14.5} bold color={p.primary} />
+            : <Text style={{ color: p.primary, fontSize: 13, fontFamily: ty.family.bold, lineHeight: ty.lh(13) }}>{t('mob.pkNegotiable')}</Text>}
         </View>
-        <Text style={{ color: p.textMuted, fontSize: 12, marginTop: 3 }} numberOfLines={1}>
+        <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(12), marginTop: 3 }} numberOfLines={1}>
           {catLabel}{post.location ? ` · ${post.location}` : ''}
         </Text>
         {!!post.seller_name && (
-          <Text style={{ color: p.textMuted, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
+          <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(12), marginTop: 2 }} numberOfLines={1}>
             {post.seller_name}
           </Text>
         )}
       </View>
-    </Pressable>
+    </ScalePressable>
   )
 }
 
 export default function Puruka(): React.ReactElement {
   const { t, lang } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
 
   const categories = usePurukaCategories()
@@ -115,16 +130,16 @@ export default function Puruka(): React.ReactElement {
       {feed.isError && feed.data && <StaleBanner />}
 
       {/* Community tagline */}
-      <Text style={{ color: p.textMuted, fontSize: 13, fontWeight: '600', marginBottom: 10 }}>
+      <Text style={{ color: p.textMuted, fontSize: 13, fontFamily: ty.family.semibold, lineHeight: ty.lh(13), marginBottom: spacing.md - 2 }}>
         {t('mob.pkTagline')}
       </Text>
 
       {/* Search + filters toggle + new post */}
-      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: p.surface, borderColor: p.border, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12 }}>
+      <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md }}>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: p.surface, borderColor: p.border, borderWidth: 1.5, borderRadius: radius.md, paddingHorizontal: spacing.md }}>
           <Ionicons name="search-outline" size={18} color={p.textMuted} />
           <TextInput
-            style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 8, fontSize: 15, color: p.text }}
+            style={{ flex: 1, paddingVertical: spacing.md, paddingHorizontal: spacing.sm, fontSize: 15, fontFamily: ty.family.regular, color: p.text }}
             placeholder={t('mob.pkSearch')}
             placeholderTextColor={p.textMuted}
             value={searchInput}
@@ -141,25 +156,28 @@ export default function Puruka(): React.ReactElement {
             </Pressable>
           )}
         </View>
-        <Pressable
+        <ScalePressable
           onPress={() => setShowFilters((v) => !v)}
           accessibilityRole="button"
-          style={{ backgroundColor: showFilters ? p.primary : p.surface, borderColor: showFilters ? p.primary : p.border, borderWidth: 1, borderRadius: 12, width: 46, alignItems: 'center', justifyContent: 'center' }}
+          haptic="selection"
+          style={{ backgroundColor: showFilters ? p.primary : p.surface, borderColor: showFilters ? p.primary : p.border, borderWidth: 1.5, borderRadius: radius.md, width: 46, alignItems: 'center', justifyContent: 'center' }}
         >
           <Ionicons name="options-outline" size={20} color={showFilters ? p.onPrimary : p.textMuted} />
-        </Pressable>
-        <Pressable
+        </ScalePressable>
+        <ScalePressable
           onPress={() => router.push('/puruka-new')}
           accessibilityRole="button"
-          style={{ backgroundColor: p.primary, borderRadius: 12, width: 46, alignItems: 'center', justifyContent: 'center' }}
+          haptic="impact"
+          style={{ borderRadius: radius.md, width: 46, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
         >
+          <BrandGradient rounded={radius.md} />
           <Ionicons name="add" size={26} color={p.onPrimary} />
-        </Pressable>
+        </ScalePressable>
       </View>
 
       {/* Extra filters: availability, price range, location */}
       {showFilters && (
-        <View style={{ backgroundColor: p.surface, borderColor: p.border, borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 12, gap: 10 }}>
+        <View style={{ backgroundColor: p.surface, borderColor: p.border, borderWidth: 1, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, gap: spacing.md - 2 }}>
           <Segmented<PurukaFilters['avail']>
             options={[
               { value: 'all', label: t('mob.pkAll') },
@@ -169,9 +187,9 @@ export default function Puruka(): React.ReactElement {
             value={avail}
             onChange={setAvail}
           />
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+          <View style={{ flexDirection: 'row', gap: spacing.sm }}>
             <TextInput
-              style={{ flex: 1, backgroundColor: p.bg, borderColor: p.border, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, fontSize: 14, color: p.text }}
+              style={{ flex: 1, backgroundColor: p.bg, borderColor: p.border, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: spacing.md - 2, paddingVertical: spacing.sm + 1, fontSize: 14, fontFamily: ty.family.regular, color: p.text }}
               placeholder={t('mob.pkMinPrice')}
               placeholderTextColor={p.textMuted}
               keyboardType="decimal-pad"
@@ -179,7 +197,7 @@ export default function Puruka(): React.ReactElement {
               onChangeText={setMinStr}
             />
             <TextInput
-              style={{ flex: 1, backgroundColor: p.bg, borderColor: p.border, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, fontSize: 14, color: p.text }}
+              style={{ flex: 1, backgroundColor: p.bg, borderColor: p.border, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: spacing.md - 2, paddingVertical: spacing.sm + 1, fontSize: 14, fontFamily: ty.family.regular, color: p.text }}
               placeholder={t('mob.pkMaxPrice')}
               placeholderTextColor={p.textMuted}
               keyboardType="decimal-pad"
@@ -188,7 +206,7 @@ export default function Puruka(): React.ReactElement {
             />
           </View>
           <TextInput
-            style={{ backgroundColor: p.bg, borderColor: p.border, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, fontSize: 14, color: p.text }}
+            style={{ backgroundColor: p.bg, borderColor: p.border, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: spacing.md - 2, paddingVertical: spacing.sm + 1, fontSize: 14, fontFamily: ty.family.regular, color: p.text }}
             placeholder={t('mob.pkLocationFilter')}
             placeholderTextColor={p.textMuted}
             value={location}
@@ -198,28 +216,32 @@ export default function Puruka(): React.ReactElement {
       )}
 
       {/* Category chips (from the server — admin-manageable) */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }} contentContainerStyle={{ gap: 8 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: spacing.lg - 2 }} contentContainerStyle={{ gap: spacing.sm }}>
         {[{ id: 'all' as const, label: t('mob.pkAll'), code: '' },
           ...(categories.data ?? []).map((c) => ({ id: c.id, label: lang === 'si' ? c.label_si : c.label_en, code: c.code }))
-        ].map((chip) => (
-          <Pressable
-            key={String(chip.id)}
-            onPress={() => setCategory(chip.id)}
-            accessibilityRole="button"
-            style={{
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderRadius: 18,
-              backgroundColor: category === chip.id ? p.primary : p.surface,
-              borderWidth: 1,
-              borderColor: category === chip.id ? p.primary : p.border
-            }}
-          >
-            <Text style={{ color: category === chip.id ? p.onPrimary : p.textMuted, fontSize: 13, fontWeight: '700' }}>
-              {chip.label}
-            </Text>
-          </Pressable>
-        ))}
+        ].map((chip) => {
+          const selected = category === chip.id
+          return (
+            <ScalePressable
+              key={String(chip.id)}
+              onPress={() => setCategory(chip.id)}
+              accessibilityRole="button"
+              accessibilityState={selected ? { selected: true } : {}}
+              haptic="selection"
+              scaleTo={0.94}
+              style={{
+                paddingHorizontal: spacing.lg - 2,
+                paddingVertical: spacing.sm,
+                borderRadius: radius.pill,
+                backgroundColor: selected ? p.primary : p.primarySoft
+              }}
+            >
+              <Text style={{ color: selected ? p.onPrimary : p.primary, fontSize: 13, fontFamily: ty.family.bold, lineHeight: ty.lh(13) }}>
+                {chip.label}
+              </Text>
+            </ScalePressable>
+          )
+        })}
       </ScrollView>
 
       {feed.isPending ? (
@@ -235,9 +257,6 @@ export default function Puruka(): React.ReactElement {
               <PostTile
                 key={post.id}
                 post={post}
-                lang={lang}
-                p={p}
-                t={t}
                 onPress={() => router.push({ pathname: '/puruka/[id]', params: { id: String(post.id) } })}
               />
             ))}

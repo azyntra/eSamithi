@@ -1,13 +1,17 @@
 import React, { useState } from 'react'
-import { Alert, Dimensions, Image, Linking, type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, Text, View } from 'react-native'
+import { Alert, Dimensions, Linking, type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, Text, View } from 'react-native'
+import { Image } from 'expo-image'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Animated, { LinearTransition } from 'react-native-reanimated'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../i18n'
-import { usePalette } from '../../theme'
+import { elevation, radius, spacing, usePalette } from '../../theme'
+import { useType } from '../../typography'
 import { photoUrl } from '../../api/client'
 import { useDeletePurukaPost, usePurukaPost, useReportPurukaPost, useUpdatePurukaPost } from '../../api/hooks'
 import { categoryIcon } from '../(tabs)/puruka'
-import { Badge, Button, Card, ErrorView, Money, Row, Screen, SectionHeader, SkeletonCards, StaleBanner } from '../../ui'
+import { Badge, BrandGradient, Button, Card, ErrorView, Money, Row, Screen, SectionHeader, SkeletonCards, StaleBanner, useToast } from '../../ui'
 
 // "0771234567" → "94771234567" for wa.me; leaves already-international numbers alone
 function whatsappNumber(phone: string): string {
@@ -18,6 +22,8 @@ function whatsappNumber(phone: string): string {
 export default function PurukaPostDetail(): React.ReactElement {
   const { t, lang } = useT()
   const p = usePalette()
+  const ty = useType()
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const params = useLocalSearchParams<{ id: string }>()
   const id = Number(params.id)
@@ -26,6 +32,7 @@ export default function PurukaPostDetail(): React.ReactElement {
   const update = useUpdatePurukaPost()
   const del = useDeletePurukaPost()
   const report = useReportPurukaPost()
+  const toast = useToast()
   const [activePhoto, setActivePhoto] = useState(0)
 
   if (post.isPending) return <Screen><SkeletonCards cards={2} /></Screen>
@@ -41,6 +48,8 @@ export default function PurukaPostDetail(): React.ReactElement {
   const catLabel = lang === 'si' ? item.category_si : item.category_en
   const pageWidth = Dimensions.get('window').width - 32
   const phone = item.phone || ''
+  // Sticky contact bar shows for other members' active posts with a phone
+  const showContactBar = !item.is_owner && !!phone && item.status === 'Active'
 
   const statusBadge = (): React.ReactElement | null => {
     if (item.status === 'Sold') return <Badge text={t('mob.pkSold')} color="#fff" bg={p.danger} />
@@ -62,7 +71,7 @@ export default function PurukaPostDetail(): React.ReactElement {
 
   const askReport = (): void => {
     const send = (reason: string): void =>
-      report.mutate({ id, reason }, { onSuccess: () => Alert.alert('', t('mob.pkReportThanks')) })
+      report.mutate({ id, reason }, { onSuccess: () => toast.show('success', t('mob.pkReportThanks')) })
     Alert.alert(t('mob.pkReport'), t('mob.pkReportWhy'), [
       { text: t('mob.pkReportFake'), onPress: () => send('Not genuine') },
       { text: t('mob.pkReportSold'), onPress: () => send('Already sold') },
@@ -71,13 +80,18 @@ export default function PurukaPostDetail(): React.ReactElement {
     ])
   }
 
+  const ownerAction = (action: 'sold' | 'available' | 'renew' | 'deactivate'): void => {
+    update.mutate({ id, data: { action } }, { onSuccess: () => toast.show('success', t('mob.pkSaved')) })
+  }
+
   return (
+    <View style={{ flex: 1, backgroundColor: p.bg }}>
     <Screen refreshing={post.isRefetching} onRefresh={() => post.refetch()}>
       {post.isError && <StaleBanner />}
 
       {/* Photos — horizontal pager with page-indicator dots */}
       {item.photos.length > 0 ? (
-        <View style={{ marginBottom: 14 }}>
+        <View style={{ marginBottom: spacing.lg - 2 }}>
           <ScrollView
             horizontal
             pagingEnabled
@@ -92,16 +106,18 @@ export default function PurukaPostDetail(): React.ReactElement {
               <Image
                 key={photo}
                 source={{ uri: photoUrl(photo) }}
-                style={{ width: pageWidth, height: 250, borderRadius: 14, marginRight: 10, backgroundColor: p.surfaceAlt }}
-                resizeMode="cover"
+                style={{ width: pageWidth, height: 250, borderRadius: radius.lg, marginRight: 10, backgroundColor: p.surfaceAlt }}
+                contentFit="cover"
+                transition={180}
               />
             ))}
           </ScrollView>
           {item.photos.length > 1 && (
-            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 7, marginTop: 10 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 7, marginTop: spacing.md - 2 }}>
               {item.photos.map((photo, i) => (
-                <View
+                <Animated.View
                   key={photo}
+                  layout={LinearTransition.springify().damping(18)}
                   style={{
                     width: i === activePhoto ? 20 : 7,
                     height: 7,
@@ -114,46 +130,47 @@ export default function PurukaPostDetail(): React.ReactElement {
           )}
         </View>
       ) : (
-        <View style={{ height: 160, borderRadius: 14, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+        <View style={{ height: 160, borderRadius: radius.lg, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg - 2 }}>
           <Ionicons name={categoryIcon(item.category_code)} size={54} color={p.border} />
         </View>
       )}
 
       {/* Title + status + price */}
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 4 }}>
-        <Text style={{ color: p.text, fontSize: 22, fontWeight: '800', flex: 1 }}>{item.title}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md - 2, marginBottom: spacing.xs }}>
+        <Text style={{ color: p.text, fontSize: 22, fontFamily: ty.family.extrabold, lineHeight: ty.lh(22), flex: 1 }}>{item.title}</Text>
         {statusBadge()}
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md }}>
         {item.price !== null && <Money cents={item.price} size={20} bold color={p.primary} />}
-        {item.negotiable === 1 && <Badge text={t('mob.pkNegotiable')} color={p.primary} bg={p.surfaceAlt} />}
+        {item.negotiable === 1 && <Badge text={t('mob.pkNegotiable')} color={p.primary} bg={p.primarySoft} />}
       </View>
 
       {!!item.description && (
-        <Text style={{ color: p.text, fontSize: 15, lineHeight: 22, marginBottom: 14 }}>{item.description}</Text>
+        <Text style={{ color: p.text, fontSize: 15, fontFamily: ty.family.regular, lineHeight: ty.lh(15), marginBottom: spacing.lg - 2 }}>{item.description}</Text>
       )}
 
       <Card style={{ paddingVertical: 6 }}>
-        <Row label={t('mob.pkCategory')} value={catLabel} />
-        {!!item.location && <Row label={t('mob.pkLocation')} value={item.location} />}
-        <Row label={t('mob.pkPosted')} value={String(item.created_at).split('T')[0]} />
+        <Row label={t('mob.pkCategory')} value={catLabel} icon={categoryIcon(item.category_code)} />
+        {!!item.location && <Row label={t('mob.pkLocation')} value={item.location} icon="location-outline" />}
+        <Row label={t('mob.pkPosted')} value={String(item.created_at).split('T')[0]} icon="time-outline" />
         {item.is_owner && !!item.expires_at && item.status === 'Active' && (
-          <Row label={t('mob.pkExpires')} value={String(item.expires_at).split('T')[0]} />
+          <Row label={t('mob.pkExpires')} value={String(item.expires_at).split('T')[0]} icon="hourglass-outline" />
         )}
       </Card>
 
       {/* Poster identity — the trust anchor of Puruka */}
       <SectionHeader>{t('mob.pkSeller')}</SectionHeader>
-      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: p.primary, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: p.onPrimary, fontSize: 18, fontWeight: '800' }}>
+      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+        <View style={{ width: 44, height: 44, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <BrandGradient rounded={radius.pill} />
+          <Text style={{ color: p.onPrimary, fontSize: 18, fontFamily: ty.family.extrabold }}>
             {(item.seller_name || '?').charAt(0).toUpperCase()}
           </Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: p.text, fontSize: 16, fontWeight: '700' }}>{item.seller_name}</Text>
+          <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{item.seller_name}</Text>
           {!!item.seller_since && (
-            <Text style={{ color: p.textMuted, fontSize: 13, marginTop: 2 }}>
+            <Text style={{ color: p.textMuted, fontSize: 13, fontFamily: ty.family.regular, lineHeight: ty.lh(13), marginTop: 2 }}>
               {t('mob.pkMemberSince', { year: String(item.seller_since).slice(0, 4) })}
             </Text>
           )}
@@ -163,25 +180,13 @@ export default function PurukaPostDetail(): React.ReactElement {
       {item.is_owner ? (
         <>
           {item.status === 'Active' && (
-            <Button
-              label={t('mob.pkMarkSold')}
-              onPress={() => update.mutate({ id, data: { action: 'sold' } })}
-              loading={update.isPending}
-            />
+            <Button label={t('mob.pkMarkSold')} onPress={() => ownerAction('sold')} loading={update.isPending} />
           )}
           {item.status === 'Sold' && (
-            <Button
-              label={t('mob.pkMarkAvailable')}
-              onPress={() => update.mutate({ id, data: { action: 'available' } })}
-              loading={update.isPending}
-            />
+            <Button label={t('mob.pkMarkAvailable')} onPress={() => ownerAction('available')} loading={update.isPending} />
           )}
           {item.status === 'Inactive' && (
-            <Button
-              label={t('mob.pkRenew')}
-              onPress={() => update.mutate({ id, data: { action: 'renew' } })}
-              loading={update.isPending}
-            />
+            <Button label={t('mob.pkRenew')} onPress={() => ownerAction('renew')} loading={update.isPending} />
           )}
           <Button
             label={t('mob.pkEdit')}
@@ -189,35 +194,52 @@ export default function PurukaPostDetail(): React.ReactElement {
             onPress={() => router.push({ pathname: '/puruka-new', params: { id: String(id) } })}
           />
           {item.status === 'Active' && (
-            <Button
-              label={t('mob.pkDeactivate')}
-              variant="secondary"
-              onPress={() => update.mutate({ id, data: { action: 'deactivate' } })}
-            />
+            <Button label={t('mob.pkDeactivate')} variant="secondary" onPress={() => ownerAction('deactivate')} />
           )}
           <Button label={t('mob.pkDelete')} variant="danger" onPress={confirmDelete} loading={del.isPending} />
         </>
       ) : (
         <>
-          {!!phone && item.status === 'Active' && (
-            <>
-              <Button label={`${t('mob.pkCall')}  ${phone}`} onPress={() => Linking.openURL(`tel:${phone}`)} />
-              <Button
-                label="WhatsApp"
-                variant="secondary"
-                onPress={() => Linking.openURL(`https://wa.me/${whatsappNumber(phone)}`)}
-              />
-            </>
-          )}
-          <View style={{ height: 8 }} />
           <Text
             onPress={askReport}
-            style={{ color: p.textMuted, fontSize: 13, textAlign: 'center', textDecorationLine: 'underline', paddingVertical: 10 }}
+            style={{ color: p.textMuted, fontSize: 13, fontFamily: ty.family.regular, textAlign: 'center', textDecorationLine: 'underline', paddingVertical: spacing.md - 2 }}
           >
             {t('mob.pkReport')}
           </Text>
+          {/* Space so content scrolls clear of the sticky contact bar */}
+          {showContactBar && <View style={{ height: 76 }} />}
         </>
       )}
     </Screen>
+
+    {/* Sticky contact bar — call/WhatsApp always within thumb reach */}
+    {showContactBar && (
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          flexDirection: 'row',
+          gap: spacing.sm + 2,
+          paddingHorizontal: spacing.lg,
+          paddingTop: spacing.md,
+          paddingBottom: Math.max(insets.bottom, spacing.md),
+          backgroundColor: p.surface,
+          borderTopLeftRadius: radius.lg,
+          borderTopRightRadius: radius.lg,
+          shadowColor: p.shadow,
+          ...elevation.md
+        }}
+      >
+        <View style={{ flex: 1.6 }}>
+          <Button label={t('mob.pkCall')} icon="call" onPress={() => Linking.openURL(`tel:${phone}`)} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button label="WhatsApp" icon="logo-whatsapp" variant="secondary" onPress={() => Linking.openURL(`https://wa.me/${whatsappNumber(phone)}`)} />
+        </View>
+      </View>
+    )}
+    </View>
   )
 }
