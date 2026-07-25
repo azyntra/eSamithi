@@ -185,15 +185,19 @@ export default function Puruka(): React.ReactElement {
         >
           <Ionicons name="options-outline" size={20} color={showFilters ? p.onPrimary : p.textMuted} />
         </ScalePressable>
-        <ScalePressable
-          onPress={() => router.push('/puruka-new')}
-          accessibilityRole="button"
-          haptic="impact"
-          style={{ borderRadius: radius.md, width: 46, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
-        >
+        {/* Gradient behind a full-size Pressable — a gradient child would
+            swallow taps off the icon on Android (see Button) */}
+        <View style={{ borderRadius: radius.md, width: 46, overflow: 'hidden' }}>
           <BrandGradient rounded={radius.md} />
-          <Ionicons name="add" size={26} color={p.onPrimary} />
-        </ScalePressable>
+          <ScalePressable
+            onPress={() => router.push('/puruka-new')}
+            accessibilityRole="button"
+            haptic="impact"
+            style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Ionicons name="add" size={26} color={p.onPrimary} />
+          </ScalePressable>
+        </View>
       </View>
 
       {/* Extra filters: availability, price range, location */}

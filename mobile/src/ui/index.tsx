@@ -228,39 +228,51 @@ export function Button({
   const p = usePalette()
   const ty = useType()
   const fg = variant === 'secondary' ? p.primary : p.onPrimary
+  const isPrimary = variant === 'primary'
+  // The gradient is a sibling BEHIND the Pressable, not a child on top of it.
+  // On Fabric/Android an SVG child intercepts touches over its whole area
+  // (pointerEvents doesn't reliably stop it), which left gradient buttons
+  // tappable only on the label. With the Pressable as the topmost full-size
+  // layer, every tap lands on it regardless of SVG touch behaviour.
   return (
-    <ScalePressable
-      accessibilityRole="button"
-      haptic="impact"
-      onPress={onPress}
-      disabled={disabled || loading}
+    <View
       style={{
-        minHeight: 52,
         borderRadius: radius.md,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-        gap: spacing.sm,
-        paddingHorizontal: spacing.xl,
         marginTop: spacing.xs,
         overflow: 'hidden',
-        backgroundColor: variant === 'secondary' ? p.primarySoft : variant === 'danger' ? p.danger : 'transparent',
         opacity: disabled || loading ? 0.55 : 1,
-        ...(variant === 'primary' ? { shadowColor: p.gradEnd, ...elevation.sm } : null)
+        ...(isPrimary ? { shadowColor: p.gradEnd, ...elevation.sm } : null)
       }}
     >
-      {variant === 'primary' ? <BrandGradient rounded={radius.md} /> : null}
-      {/* Label keeps its width while loading so the button doesn't jump */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, opacity: loading ? 0 : 1 }}>
-        {icon ? <Ionicons name={icon} size={18} color={fg} /> : null}
-        <Text style={{ color: fg, fontSize: 16.5, fontFamily: ty.family.bold, lineHeight: ty.lh(16.5) }}>{label}</Text>
-      </View>
-      {loading ? (
-        <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={fg} />
+      {isPrimary ? <BrandGradient rounded={radius.md} /> : null}
+      <ScalePressable
+        accessibilityRole="button"
+        haptic="impact"
+        onPress={onPress}
+        disabled={disabled || loading}
+        style={{
+          minHeight: 52,
+          borderRadius: radius.md,
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'row',
+          gap: spacing.sm,
+          paddingHorizontal: spacing.xl,
+          backgroundColor: variant === 'secondary' ? p.primarySoft : variant === 'danger' ? p.danger : 'transparent'
+        }}
+      >
+        {/* Label keeps its width while loading so the button doesn't jump */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, opacity: loading ? 0 : 1 }}>
+          {icon ? <Ionicons name={icon} size={18} color={fg} /> : null}
+          <Text style={{ color: fg, fontSize: 16.5, fontFamily: ty.family.bold, lineHeight: ty.lh(16.5) }}>{label}</Text>
         </View>
-      ) : null}
-    </ScalePressable>
+        {loading ? (
+          <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator color={fg} />
+          </View>
+        ) : null}
+      </ScalePressable>
+    </View>
   )
 }
 
