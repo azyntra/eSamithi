@@ -246,10 +246,14 @@ export interface PurukaCategory {
 
 export type PurukaStatus = 'Active' | 'Sold' | 'Inactive' | 'Removed' | 'Deleted'
 
+// A post is either an offer to sell or a request to buy ('wanted')
+export type PurukaType = 'sell' | 'wanted'
+
 export interface PurukaPost {
   id: number
   member_id: number
   category_id: number
+  type: PurukaType
   category_code: string
   category_en: string
   category_si: string
@@ -276,6 +280,7 @@ export interface PurukaFeedPage {
 
 export interface PurukaFilters {
   category: number | 'all'
+  type: 'all' | PurukaType
   q: string
   location: string
   minPrice: number | null // cents
@@ -286,6 +291,7 @@ export interface PurukaFilters {
 export interface NewPurukaPost {
   title: string
   category_id: number
+  type: PurukaType
   description: string
   price: number | null // cents
   negotiable: boolean
@@ -308,6 +314,7 @@ export function usePurukaFeed(filters: PurukaFilters) {
     queryFn: async ({ pageParam }) => {
       const params: Record<string, string | number> = { page: pageParam }
       if (filters.category !== 'all') params.category = filters.category
+      if (filters.type !== 'all') params.type = filters.type
       if (filters.q.trim()) params.q = filters.q.trim()
       if (filters.location.trim()) params.location = filters.location.trim()
       if (filters.minPrice !== null) params.min_price = filters.minPrice
@@ -350,6 +357,7 @@ export function useCreatePurukaPost() {
       const form = new FormData()
       form.append('title', data.title)
       form.append('category_id', String(data.category_id))
+      form.append('type', data.type)
       form.append('description', data.description)
       if (data.price !== null) form.append('price', String(data.price))
       form.append('negotiable', data.negotiable ? '1' : '0')

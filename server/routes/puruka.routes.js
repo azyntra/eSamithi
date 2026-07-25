@@ -44,6 +44,12 @@ function httpError(message, statusCode) {
   return Object.assign(new Error(message), { statusCode });
 }
 
+// A post is either an offer to sell (default) or a request to buy ('wanted').
+const LISTING_TYPES = ['sell', 'wanted'];
+function normType(v) {
+  return LISTING_TYPES.includes(v) ? v : 'sell';
+}
+
 // Post lifetime is configurable from the desktop admin (settings table)
 async function getExpiryDays(pool) {
   try {
@@ -112,6 +118,10 @@ router.get('/', async (req, res, next) => {
       where += ' AND p.category_id = ?';
       params.push(categoryId);
     }
+    if (req.query.type === 'sell' || req.query.type === 'wanted') {
+      where += ' AND p.type = ?';
+      params.push(req.query.type);
+    }
     if (req.query.q) {
       where += ' AND (p.title LIKE ? OR p.description LIKE ?)';
       const like = `%${req.query.q}%`;
@@ -127,7 +137,7 @@ router.get('/', async (req, res, next) => {
     if (Number.isFinite(maxPrice)) { where += ' AND p.price <= ?'; params.push(maxPrice); }
 
     const [rows] = await pool.query(`
-      SELECT p.id, p.member_id, p.category_id, p.title, p.description, p.price, p.negotiable,
+      SELECT p.id, p.member_id, p.category_id, p.type, p.title, p.description, p.price, p.negotiable,
              p.phone, p.location, p.status, p.created_at,
              c.code AS category_code, c.label_en AS category_en, c.label_si AS category_si,
              m.full_name AS seller_name, m.date_of_joining AS seller_since
@@ -191,12 +201,14 @@ router.post('/', upload.array('photos', 3), async (req, res, next) => {
     const pool = getPool();
     const { title, description, phone, location } = req.body;
     const categoryId = parseInt(req.body.category_id);
+    const type = normType(req.body.type);
     const negotiable = req.body.negotiable === '1' || req.body.negotiable === 'true' ? 1 : 0;
     const price = req.body.price ? parseInt(req.body.price) : null;
 
     if (!title || !String(title).trim()) throw httpError('Title is required', 400);
     if (price !== null && (!Number.isFinite(price) || price < 0)) throw httpError('Invalid price', 400);
-    if (price === null && !negotiable) throw httpError('Set a price or mark as negotiable', 400);
+    // A "wanted" ad may omit a budget — the requester needn't name a figure.
+    if (type === 'sell' && price === null && !negotiable) throw httpError('Set a price or mark as negotiable', 400);
 
     const [[cat]] = await pool.query('SELECT id FROM puruka_categories WHERE id = ? AND is_active = 1', [categoryId]);
     if (!cat) throw httpError('Invalid category', 400);
@@ -215,9 +227,9 @@ router.post('/', upload.array('photos', 3), async (req, res, next) => {
     const expiryDays = await getExpiryDays(pool);
     const [result] = await pool.query(`
       INSERT INTO puruka_posts
-        (member_id, category_id, title, description, price, negotiable, phone, location, expires_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(CURDATE(), INTERVAL ? DAY))
-    `, [req.member.id, categoryId, String(title).trim(), description || null, price, negotiable,
+        (member_id, category_id, type, title, description, price, negotiable, phone, location, expires_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(CURDATE(), INTERVAL ? DAY))
+    `, [req.member.id, categoryId, type, String(title).trim(), description || null, price, negotiable,
         phone || null, location || null, expiryDays]);
 
     const files = req.files || [];
@@ -257,18 +269,20 @@ router.patch('/:id', async (req, res, next) => {
     } else {
       const { title, description, phone, location } = req.body;
       const categoryId = parseInt(req.body.category_id);
+      // Keep the existing type unless the edit form sends a new one
+      const type = normType(req.body.type ?? row.type);
       const negotiable = req.body.negotiable ? 1 : 0;
       const price = req.body.price === null || req.body.price === undefined || req.body.price === '' ? null : parseInt(req.body.price);
       if (!title || !String(title).trim()) throw httpError('Title is required', 400);
       if (price !== null && (!Number.isFinite(price) || price < 0)) throw httpError('Invalid price', 400);
-      if (price === null && !negotiable) throw httpError('Set a price or mark as negotiable', 400);
+      if (type === 'sell' && price === null && !negotiable) throw httpError('Set a price or mark as negotiable', 400);
       const [[cat]] = await pool.query('SELECT id FROM puruka_categories WHERE id = ? AND is_active = 1', [categoryId]);
       if (!cat) throw httpError('Invalid category', 400);
       await pool.query(`
         UPDATE puruka_posts
-        SET title = ?, category_id = ?, description = ?, price = ?, negotiable = ?, phone = ?, location = ?
+        SET title = ?, category_id = ?, type = ?, description = ?, price = ?, negotiable = ?, phone = ?, location = ?
         WHERE id = ?
-      `, [String(title).trim(), categoryId, description || null, price, negotiable, phone || null, location || null, id]);
+      `, [String(title).trim(), categoryId, type, description || null, price, negotiable, phone || null, location || null, id]);
     }
     res.json({ success: true });
   } catch (err) { next(err); }

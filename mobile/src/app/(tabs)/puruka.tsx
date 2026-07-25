@@ -11,7 +11,8 @@ import {
   usePurukaCategories,
   usePurukaFeed,
   type PurukaFilters,
-  type PurukaPost
+  type PurukaPost,
+  type PurukaType
 } from '../../api/hooks'
 import { Badge, BrandGradient, Button, EmptyState, ErrorView, Money, ScalePressable, Screen, Segmented, SkeletonCards, StaleBanner } from '../../ui'
 
@@ -38,6 +39,7 @@ function PostTile({ post, onPress }: { post: PurukaPost; onPress: () => void }):
   const ty = useType()
   const { scheme } = useThemeMode()
   const catLabel = lang === 'si' ? post.category_si : post.category_en
+  const wanted = post.type === 'wanted'
   return (
     <ScalePressable
       onPress={onPress}
@@ -66,18 +68,22 @@ function PostTile({ post, onPress }: { post: PurukaPost; onPress: () => void }):
         ) : (
           <Ionicons name={categoryIcon(post.category_code)} size={40} color={p.border} />
         )}
-        {post.status === 'Sold' && (
+        {post.status === 'Sold' ? (
           <View style={{ position: 'absolute', top: 8, left: 8 }}>
-            <Badge text={t('mob.pkSold')} color="#fff" bg={p.danger} />
+            <Badge text={wanted ? t('mob.pkFound') : t('mob.pkSold')} color="#fff" bg={p.danger} />
           </View>
-        )}
+        ) : wanted ? (
+          <View style={{ position: 'absolute', top: 8, left: 8 }}>
+            <Badge text={t('mob.pkWanted')} color={p.onPrimary} bg={p.primary} />
+          </View>
+        ) : null}
       </View>
       <View style={{ padding: spacing.md - 2 }}>
         <Text style={{ color: p.text, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }} numberOfLines={1}>{post.title}</Text>
         <View style={{ marginTop: 3 }}>
           {post.price !== null
             ? <Money cents={post.price} size={14.5} bold color={p.primary} />
-            : <Text style={{ color: p.primary, fontSize: 13, fontFamily: ty.family.bold, lineHeight: ty.lh(13) }}>{t('mob.pkNegotiable')}</Text>}
+            : <Text style={{ color: p.primary, fontSize: 13, fontFamily: ty.family.bold, lineHeight: ty.lh(13) }}>{wanted ? t('mob.pkOpenBudget') : t('mob.pkNegotiable')}</Text>}
         </View>
         <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(12), marginTop: 3 }} numberOfLines={1}>
           {catLabel}{post.location ? ` · ${post.location}` : ''}
@@ -101,6 +107,7 @@ export default function Puruka(): React.ReactElement {
   const categories = usePurukaCategories()
 
   const [category, setCategory] = useState<number | 'all'>('all')
+  const [type, setType] = useState<'all' | PurukaType>('all')
   const [searchInput, setSearchInput] = useState('')
   const [q, setQ] = useState('')
   const [showFilters, setShowFilters] = useState(false)
@@ -115,6 +122,7 @@ export default function Puruka(): React.ReactElement {
   }
   const filters: PurukaFilters = {
     category,
+    type,
     q,
     location: showFilters ? location : '',
     minPrice: showFilters ? rupees(minStr) : null,
@@ -133,6 +141,19 @@ export default function Puruka(): React.ReactElement {
       <Text style={{ color: p.textMuted, fontSize: 13, fontFamily: ty.family.semibold, lineHeight: ty.lh(13), marginBottom: spacing.md - 2 }}>
         {t('mob.pkTagline')}
       </Text>
+
+      {/* Sell vs. wanted — a primary axis, always visible */}
+      <View style={{ marginBottom: spacing.md }}>
+        <Segmented<'all' | PurukaType>
+          options={[
+            { value: 'all', label: t('mob.pkAll') },
+            { value: 'sell', label: t('mob.pkTypeSell') },
+            { value: 'wanted', label: t('mob.pkTypeWanted') }
+          ]}
+          value={type}
+          onChange={setType}
+        />
+      </View>
 
       {/* Search + filters toggle + new post */}
       <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md }}>

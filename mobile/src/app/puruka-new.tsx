@@ -12,10 +12,11 @@ import {
   useProfile,
   usePurukaCategories,
   usePurukaPost,
-  useUpdatePurukaPost
+  useUpdatePurukaPost,
+  type PurukaType
 } from '../api/hooks'
 import { categoryIcon } from './(tabs)/puruka'
-import { Button, Input, Screen, SectionHeader, useToast } from '../ui'
+import { Button, Input, Screen, SectionHeader, Segmented, useToast } from '../ui'
 
 const MAX_PHOTOS = 3
 
@@ -41,6 +42,7 @@ export default function PurukaNewPost(): React.ReactElement {
   const create = useCreatePurukaPost()
   const update = useUpdatePurukaPost()
 
+  const [type, setType] = useState<PurukaType>('sell')
   const [title, setTitle] = useState('')
   const [categoryId, setCategoryId] = useState<number | null>(null)
   const [description, setDescription] = useState('')
@@ -56,6 +58,7 @@ export default function PurukaNewPost(): React.ReactElement {
     if (prefilled) return
     if (editId && existing.data) {
       const post = existing.data
+      setType(post.type)
       setTitle(post.title)
       setCategoryId(post.category_id)
       setDescription(post.description ?? '')
@@ -102,7 +105,7 @@ export default function PurukaNewPost(): React.ReactElement {
       Alert.alert('', t('mob.pkCategory'))
       return
     }
-    if (priceCents === null && !negotiable) {
+    if (type === 'sell' && priceCents === null && !negotiable) {
       Alert.alert('', t('mob.pkPriceOrNegotiable'))
       return
     }
@@ -117,7 +120,7 @@ export default function PurukaNewPost(): React.ReactElement {
       update.mutate(
         {
           id: editId,
-          data: { title: title.trim(), category_id: categoryId, description, price: priceCents, negotiable, phone, location }
+          data: { title: title.trim(), category_id: categoryId, type, description, price: priceCents, negotiable, phone, location }
         },
         { onSuccess: () => { toast.show('success', t('mob.pkSaved')); router.back() }, onError }
       )
@@ -126,6 +129,7 @@ export default function PurukaNewPost(): React.ReactElement {
         {
           title: title.trim(),
           category_id: categoryId,
+          type,
           description,
           price: priceCents,
           negotiable,
@@ -144,8 +148,22 @@ export default function PurukaNewPost(): React.ReactElement {
     }
   }
 
+  const wanted = type === 'wanted'
+
   return (
     <Screen>
+      {/* Sell vs. wanted — the primary choice; drives the labels below */}
+      <View style={{ marginBottom: 16 }}>
+        <Segmented<PurukaType>
+          options={[
+            { value: 'sell', label: t('mob.pkTypeSell') },
+            { value: 'wanted', label: t('mob.pkTypeWanted') }
+          ]}
+          value={type}
+          onChange={setType}
+        />
+      </View>
+
       {/* Photos — creation only; fixed once posted */}
       {!editId && (
         <>
@@ -177,7 +195,7 @@ export default function PurukaNewPost(): React.ReactElement {
         </>
       )}
 
-      <Input label={t('mob.pkTitleField')} value={title} onChangeText={setTitle} placeholder={t('mob.pkTitlePh')} maxLength={120} />
+      <Input label={t('mob.pkTitleField')} value={title} onChangeText={setTitle} placeholder={wanted ? t('mob.pkWantedTitlePh') : t('mob.pkTitlePh')} maxLength={120} />
 
       <Text style={{ color: p.text, fontSize: 15, fontWeight: '600', marginBottom: 8 }}>{t('mob.pkCategory')}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
@@ -210,25 +228,27 @@ export default function PurukaNewPost(): React.ReactElement {
       </View>
 
       <Input
-        label={t('mob.pkPrice')}
+        label={wanted ? t('mob.pkBudget') : t('mob.pkPrice')}
         value={priceStr}
         onChangeText={setPriceStr}
         keyboardType="decimal-pad"
-        placeholder="1500.00"
+        placeholder={wanted ? t('mob.pkBudgetPh') : '1500.00'}
       />
 
-      {/* Community fair-price notice (requirement P3.2) — guidance, never enforcement */}
-      <View style={{ backgroundColor: p.surfaceAlt, borderRadius: 12, padding: 12, marginBottom: 14, marginTop: -6, flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-        <Ionicons name="heart-outline" size={18} color={p.primary} style={{ marginTop: 1 }} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: p.primary, fontSize: 13, fontWeight: '700', marginBottom: 2 }}>{t('mob.pkTagline')}</Text>
-          <Text style={{ color: p.textMuted, fontSize: 12, lineHeight: 17 }}>{t('mob.pkFairPrice')}</Text>
+      {/* Community fair-price notice (requirement P3.2) — guidance for sellers only */}
+      {!wanted && (
+        <View style={{ backgroundColor: p.surfaceAlt, borderRadius: 12, padding: 12, marginBottom: 14, marginTop: -6, flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+          <Ionicons name="heart-outline" size={18} color={p.primary} style={{ marginTop: 1 }} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: p.primary, fontSize: 13, fontWeight: '700', marginBottom: 2 }}>{t('mob.pkTagline')}</Text>
+            <Text style={{ color: p.textMuted, fontSize: 12, lineHeight: 17 }}>{t('mob.pkFairPrice')}</Text>
+          </View>
         </View>
-      </View>
+      )}
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16, marginTop: wanted ? 4 : 0 }}>
         <Switch value={negotiable} onValueChange={setNegotiable} trackColor={{ true: p.primary }} />
-        <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>{t('mob.pkNegotiable')}</Text>
+        <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>{wanted ? t('mob.pkBudgetFlexible') : t('mob.pkNegotiable')}</Text>
       </View>
 
       <Input

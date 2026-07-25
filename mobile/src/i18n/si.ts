@@ -944,6 +944,20 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'mob.pkDeleteMsg': 'මෙම පළ කිරීම මකන්නද?',
   'mob.pkExpiringSoon': 'පළ කිරීම් {count}ක් ළඟදීම කල් ඉකුත් වේ — දිගටම පෙන්වීමට අලුත් කරන්න',
   'mob.pkNoMine': 'ඔබට තවම පුරුක පළ කිරීම් නැත',
+  // Wanted listings
+  'mob.pkTypeSell': 'විකිණීමට',
+  'mob.pkTypeWanted': 'අවශ්‍යයි',
+  'mob.pkWanted': 'අවශ්‍යයි',
+  'mob.pkFound': 'ලැබුණා',
+  'mob.pkBudget': 'මුදල් සීමාව (රු.)',
+  'mob.pkBudgetPh': '2000.00',
+  'mob.pkBudgetLabel': 'මුදල් සීමාව',
+  'mob.pkBudgetFlexible': 'මුදල් සීමාව නම්‍යයි',
+  'mob.pkOpenBudget': 'මුදල් සීමාවක් නැත',
+  'mob.pkRequestedBy': 'ඉල්ලුම්කරු',
+  'mob.pkMarkFound': 'ලැබුණා ලෙස සලකුණු කරන්න',
+  'mob.pkStillLooking': 'තවම සොයමින්',
+  'mob.pkWantedTitlePh': 'උදා: ළදරු ඇඳක් අවශ්‍යයි',
 
   // Society funds (financial transparency)
   'mob.fundsTitle': 'සමිතියේ අරමුදල්',

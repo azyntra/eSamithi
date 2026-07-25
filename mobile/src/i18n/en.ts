@@ -940,6 +940,20 @@ export const en = {
   'mob.pkDeleteMsg': 'Delete this post?',
   'mob.pkExpiringSoon': '{count} post(s) expiring soon — renew to keep them visible',
   'mob.pkNoMine': 'You have no Puruka posts yet',
+  // Wanted listings
+  'mob.pkTypeSell': 'For sale',
+  'mob.pkTypeWanted': 'Wanted',
+  'mob.pkWanted': 'WANTED',
+  'mob.pkFound': 'FOUND',
+  'mob.pkBudget': 'Budget (Rs.)',
+  'mob.pkBudgetPh': '2000.00',
+  'mob.pkBudgetLabel': 'Budget',
+  'mob.pkBudgetFlexible': 'Budget flexible',
+  'mob.pkOpenBudget': 'Open budget',
+  'mob.pkRequestedBy': 'Requested by',
+  'mob.pkMarkFound': 'Mark as found',
+  'mob.pkStillLooking': 'Still looking',
+  'mob.pkWantedTitlePh': 'e.g. Looking for a baby cot',
 
   // Society funds (financial transparency)
   'mob.fundsTitle': 'Society Funds',

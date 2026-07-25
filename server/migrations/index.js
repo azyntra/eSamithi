@@ -243,6 +243,21 @@ async function clientErrors(pool) {
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 }
 
+// 011 — Puruka "wanted" listings: a post is either an offer to sell (the
+// default and everything that exists today) or a request to buy. One column
+// carries the distinction; existing rows are all sells.
+async function purukaWanted(pool) {
+  const [cols] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'puruka_posts' AND COLUMN_NAME = 'type'`
+  );
+  if (cols.length === 0) {
+    await pool.query(
+      "ALTER TABLE puruka_posts ADD COLUMN type VARCHAR(10) NOT NULL DEFAULT 'sell' AFTER category_id"
+    );
+  }
+}
+
 module.exports = [
   { id: '000_base_schema', up: baseSchema },
   { id: '004_loan_payment_wallet', up: loanPaymentWallet },
@@ -251,5 +266,6 @@ module.exports = [
   { id: '007_attendance', up: attendance },
   { id: '008_puruka', up: puruka },
   { id: '009_staff_user_lifecycle', up: staffUserLifecycle },
-  { id: '010_client_errors', up: clientErrors }
+  { id: '010_client_errors', up: clientErrors },
+  { id: '011_puruka_wanted', up: purukaWanted }
 ];

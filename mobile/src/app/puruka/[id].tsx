@@ -49,15 +49,19 @@ export default function PurukaPostDetail(): React.ReactElement {
 
   const item = post.data!
   const catLabel = lang === 'si' ? item.category_si : item.category_en
+  const wanted = item.type === 'wanted'
   const pageWidth = Dimensions.get('window').width - 32
   const phone = item.phone || ''
   // Sticky contact bar shows for other members' active posts with a phone
   const showContactBar = !item.is_owner && !!phone && item.status === 'Active'
 
   const statusBadge = (): React.ReactElement | null => {
-    if (item.status === 'Sold') return <Badge text={t('mob.pkSold')} color="#fff" bg={p.danger} />
+    // "Sold" reads as "Found" on a wanted post — the requester got their item
+    if (item.status === 'Sold') return <Badge text={wanted ? t('mob.pkFound') : t('mob.pkSold')} color="#fff" bg={p.danger} />
     if (item.status === 'Inactive') return <Badge text={t('mob.pkInactive')} color={p.warning} bg={p.warningBg} />
     if (item.status === 'Removed') return <Badge text={t('mob.pkRemoved')} color={p.danger} bg={p.dangerBg} />
+    // Active wanted posts wear a standing "WANTED" pill for context
+    if (wanted) return <Badge text={t('mob.pkWanted')} color={p.onPrimary} bg={p.primary} />
     return null
   }
 
@@ -150,8 +154,15 @@ export default function PurukaPostDetail(): React.ReactElement {
         {statusBadge()}
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md }}>
-        {item.price !== null && <Money cents={item.price} size={20} bold color={p.primary} />}
-        {item.negotiable === 1 && <Badge text={t('mob.pkNegotiable')} color={p.primary} bg={p.primarySoft} />}
+        {wanted && (
+          <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.semibold, lineHeight: ty.lh(14) }}>
+            {t('mob.pkBudgetLabel')}
+          </Text>
+        )}
+        {item.price !== null
+          ? <Money cents={item.price} size={20} bold color={p.primary} />
+          : wanted && <Text style={{ color: p.primary, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{t('mob.pkOpenBudget')}</Text>}
+        {item.negotiable === 1 && <Badge text={wanted ? t('mob.pkBudgetFlexible') : t('mob.pkNegotiable')} color={p.primary} bg={p.primarySoft} />}
       </View>
 
       {!!item.description && (
@@ -168,7 +179,7 @@ export default function PurukaPostDetail(): React.ReactElement {
       </Card>
 
       {/* Poster identity — the trust anchor of Puruka */}
-      <SectionHeader>{t('mob.pkSeller')}</SectionHeader>
+      <SectionHeader>{wanted ? t('mob.pkRequestedBy') : t('mob.pkSeller')}</SectionHeader>
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
         <View style={{ width: 44, height: 44, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           <BrandGradient rounded={radius.pill} />
@@ -189,10 +200,10 @@ export default function PurukaPostDetail(): React.ReactElement {
       {item.is_owner ? (
         <>
           {item.status === 'Active' && (
-            <Button label={t('mob.pkMarkSold')} onPress={() => ownerAction('sold')} loading={update.isPending} />
+            <Button label={wanted ? t('mob.pkMarkFound') : t('mob.pkMarkSold')} onPress={() => ownerAction('sold')} loading={update.isPending} />
           )}
           {item.status === 'Sold' && (
-            <Button label={t('mob.pkMarkAvailable')} onPress={() => ownerAction('available')} loading={update.isPending} />
+            <Button label={wanted ? t('mob.pkStillLooking') : t('mob.pkMarkAvailable')} onPress={() => ownerAction('available')} loading={update.isPending} />
           )}
           {item.status === 'Inactive' && (
             <Button label={t('mob.pkRenew')} onPress={() => ownerAction('renew')} loading={update.isPending} />
