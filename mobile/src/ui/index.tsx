@@ -44,7 +44,10 @@ export function BrandGradient({ rounded = 0, style }: { rounded?: number; style?
   const p = usePalette()
   return (
     <View pointerEvents="none" style={[{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, borderRadius: rounded, overflow: 'hidden' }, style]}>
-      <Svg width="100%" height="100%">
+      {/* pointerEvents on the Svg itself: on Android react-native-svg captures
+          touches even when the wrapping View is pointerEvents="none", which
+          made gradient buttons only tappable on the label text. */}
+      <Svg width="100%" height="100%" pointerEvents="none">
         <Defs>
           <SvgLinearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
             <Stop offset="0" stopColor={p.gradStart} />
