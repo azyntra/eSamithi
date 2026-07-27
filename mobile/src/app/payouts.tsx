@@ -1,13 +1,17 @@
 import React from 'react'
 import { Text, View } from 'react-native'
+import { useRouter } from 'expo-router'
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../i18n'
 import { usePalette } from '../theme'
 import { useStatement } from '../api/hooks'
-import { Card, EmptyState, ErrorView, Money, Screen, SkeletonCards, StaleBanner, StatusBadge } from '../ui'
+import { formatDate } from '../lib/date'
+import { Card, EmptyState, ErrorView, Money, ScalePressable, Screen, SkeletonCards, StaleBanner, StatusBadge } from '../ui'
 
 export default function Payouts(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const router = useRouter()
   const statement = useStatement()
 
   if (statement.isPending) return <Screen><SkeletonCards cards={3} /></Screen>
@@ -28,8 +32,11 @@ export default function Payouts(): React.ReactElement {
       {rows.length > 0 && (
         <Card style={{ paddingVertical: 4 }}>
           {rows.map((row, i) => (
-            <View
+            <ScalePressable
               key={row.id}
+              accessibilityRole="button"
+              scaleTo={0.985}
+              onPress={() => router.push({ pathname: '/receipt/[kind]/[id]', params: { kind: 'expense', id: String(row.id) } })}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -40,7 +47,7 @@ export default function Payouts(): React.ReactElement {
             >
               <View style={{ flex: 1, marginRight: 10 }}>
                 <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>{row.type_name}</Text>
-                <Text style={{ color: p.textMuted, fontSize: 13, marginTop: 2 }}>{row.date}</Text>
+                <Text style={{ color: p.textMuted, fontSize: 13, marginTop: 2 }}>{formatDate(row.date)}</Text>
                 {row.status !== 'Active' && (
                   <View style={{ marginTop: 4 }}>
                     <StatusBadge status={row.status} />
@@ -48,7 +55,8 @@ export default function Payouts(): React.ReactElement {
                 )}
               </View>
               <Money cents={row.amount} color={row.status === 'Active' ? p.success : p.textMuted} />
-            </View>
+              <Ionicons name="chevron-forward" size={16} color={p.textMuted} style={{ marginLeft: 6 }} />
+            </ScalePressable>
           ))}
         </Card>
       )}

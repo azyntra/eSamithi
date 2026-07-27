@@ -1,14 +1,16 @@
 import React from 'react'
 import { Text, View } from 'react-native'
-import { useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../i18n'
 import { usePalette } from '../../theme'
 import { useLoan, useSocietyInfo } from '../../api/hooks'
 import { formatDate } from '../../lib/date'
 import { repaidFraction } from '../(tabs)/loans'
-import { Card, EmptyText, ErrorView, Money, ProgressBar, Row, Screen, SectionHeader, SkeletonCards, StaleBanner, StatusBadge } from '../../ui'
+import { Card, EmptyText, ErrorView, Money, ProgressBar, Row, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner, StatusBadge } from '../../ui'
 
 export default function LoanDetail(): React.ReactElement {
+  const router = useRouter()
   const { t } = useT()
   const p = usePalette()
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -75,19 +77,25 @@ export default function LoanDetail(): React.ReactElement {
         {d.payments.map((payment, i) => {
           const paid = payment.principal_paid + payment.interest_paid + payment.fines_paid
           return (
-            <View
+            <ScalePressable
               key={payment.id}
+              accessibilityRole="button"
+              scaleTo={0.985}
+              onPress={() => router.push({ pathname: '/receipt/[kind]/[id]', params: { kind: 'loan-payment', id: String(payment.id) } })}
               style={{ paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.border }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                 <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>{formatDate(payment.date)}</Text>
-                <Money cents={paid} bold color={p.success} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Money cents={paid} bold color={p.success} />
+                  <Ionicons name="chevron-forward" size={16} color={p.textMuted} />
+                </View>
               </View>
               <Text style={{ color: p.textMuted, fontSize: 13 }}>
                 {t('mob.principal')}: {(payment.principal_paid / 100).toLocaleString()} · {t('mob.interest')}:{' '}
                 {(payment.interest_paid / 100).toLocaleString()} · {t('mob.fines')}: {(payment.fines_paid / 100).toLocaleString()}
               </Text>
-            </View>
+            </ScalePressable>
           )
         })}
       </Card>

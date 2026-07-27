@@ -864,5 +864,83 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'settings.samithiChanging': 'වෙනස් වෙමින්…',
   'settings.samithiChanged': '{name} වෙත සම්බන්ධ විය. නැවත අරඹමින්…',
   'settings.samithiChangeFailed': 'සමිතිය වෙනස් කළ නොහැකි විය',
-  'settings.changeSamithiWarn': 'වෙනස් කිරීමෙන් මෙම පරිගණකය වෙනත් සමිතියකට සම්බන්ධ වේ — ඔබට නැවත පිවිසීමට සිදුවේ.'
+  'settings.changeSamithiWarn': 'වෙනස් කිරීමෙන් මෙම පරිගණකය වෙනත් සමිතියකට සම්බන්ධ වේ — ඔබට නැවත පිවිසීමට සිදුවේ.',
+
+  // ── ණය ඇතුළත් කිරීම: නව හෝ දැනට පවතින ─────────────────────────
+  'loans.addLoan': 'ණයක් එක් කරන්න',
+  'loans.kindNew': 'නව ණය',
+  'loans.kindNewHint': 'සමිතියේ මුදල් පසුම්බියකින් දැන් ගෙවනු ලබන මුදල.',
+  'loans.kindExisting': 'දැනට පවතින ණය',
+  'loans.kindExistingHint': 'ලේඛනවල දැනටමත් ක්‍රියාත්මක — අද තත්ත්වය සටහන් කරන්න.',
+  'lform.asOfDate': 'ශේෂය ගණනය කළ දිනය',
+  'lform.asOfHint': 'මෙම අගයන් අවසන් වරට ගණනය කළ දිනය. පොලිය මෙතැන් සිට ගණනය වේ.',
+  'lform.asOfBeforeIssued': 'ශේෂය ගණනය කළ දිනය ණය ලබා දුන් දිනට පෙර විය නොහැක',
+  'lform.nextChargePreview': 'මීළඟ පොලී අයකිරීම: {date} දින {amount}',
+  'lform.guarantorOptional': 'අත්‍යවශ්‍ය නොවේ — ලේඛනයේ ඇත්නම්',
+  'lform.guarantorsDistinct': 'ඇපකරුවන් දෙදෙනා වෙනස් සාමාජිකයන් විය යුතුය',
+  'lform.borrowerNotGuarantor': 'ණය ගැනුම්කරුට තමාගේම ඇපකරු විය නොහැක',
+  'lform.loanStatus': 'තත්ත්වය',
+  'lform.statusAuto': 'අගයන් අනුව (දඩයක් ඇත්නම් හිඟ)',
+
+  // ── ආදායම් / වියදම් වර්ග සංස්කරණය ──────────────────────────────
+  'common.edit': 'සංස්කරණය',
+  'settings.reactivate': 'නැවත සක්‍රිය කරන්න',
+  'settings.typeReactivated': '{name} නැවත භාවිතයට ගත හැක',
+  'settings.updateFailed': 'වෙනස්කම් සුරැකිය නොහැකි විය',
+  'itype.editTitle': 'ආදායම් වර්ගය සංස්කරණය',
+  'itype.updated': 'ආදායම් වර්ගය යාවත්කාලීන විය',
+  'itype.updateFailed': 'ආදායම් වර්ගය යාවත්කාලීන කළ නොහැකි විය',
+  'itype.systemRenameHint': 'පද්ධති වර්ගයකි: නම වෙනස් කළ හැක (උදා: සිංහලට), නමුත් යෙදුමේ එහි කාර්යභාරය එසේම පවතී.',
+  'etype.editTitle': 'වියදම් වර්ගය සංස්කරණය',
+  'etype.updated': 'වියදම් වර්ගය යාවත්කාලීන විය',
+  'etype.updateFailed': 'වියදම් වර්ගය යාවත්කාලීන කළ නොහැකි විය',
+
+  // ── මුද්‍රිත රිසිට්පත් හා වවුචර් ────────────────────────────────
+  'rcpt.receiptNo': 'රිසිට් අංකය',
+  'rcpt.date': 'දිනය',
+  'rcpt.treasurer': 'භාණ්ඩාගාරික',
+  'rcpt.receivedBy': 'ලැබූ අය',
+  // මාතෘකා
+  'rcpt.incomeTitle': 'ආදායම් රිසිට්පත',
+  'rcpt.expenseTitle': 'ගෙවීම් වවුචරය',
+  'rcpt.loanPaymentTitle': 'ණය ආපසු ගෙවීමේ රිසිට්පත',
+  'rcpt.loanStatementTitle': 'ණය ප්‍රකාශනය',
+  // ආදායම්
+  'rcpt.receivedFrom': 'ලැබුණේ',
+  'rcpt.incomeType': 'ආදායම් වර්ගය',
+  'rcpt.depositedTo': 'තැන්පත් කළේ',
+  'rcpt.amountReceived': 'ලැබුණු මුදල',
+  // වියදම්
+  'rcpt.paidTo': 'ගෙවූයේ',
+  'rcpt.expenseType': 'වියදම් වර්ගය',
+  'rcpt.paidFrom': 'ගෙවූ ගිණුම',
+  'rcpt.amountPaid': 'ගෙවූ මුදල',
+  // ණය ආපසු ගෙවීම
+  'rcpt.borrower': 'ණය ගැනුම්කරු',
+  'rcpt.loanRef': 'ණය අංකය',
+  'rcpt.appliedFine': 'දඩ මුදලට',
+  'rcpt.appliedInterest': 'පොලියට',
+  'rcpt.appliedPrincipal': 'මුල් මුදලට',
+  'rcpt.totalPaid': 'මුළු ගෙවීම',
+  'rcpt.allocationNote': 'සමිති නීති අනුව දඩ මුදල → පොලිය → මුල් මුදල ලෙස වෙන් කරන ලදී.',
+  // ණය ප්‍රකාශනය
+  'rcpt.issuedOn': 'ලබා දුන් දිනය',
+  'rcpt.originalPrincipal': 'මුල් ණය මුදල',
+  'rcpt.remainingPrincipal': 'ඉතිරි මුල් මුදල',
+  'rcpt.outstandingInterest': 'හිඟ පොලිය',
+  'rcpt.outstandingFine': 'හිඟ දඩ මුදල',
+  'rcpt.totalOutstanding': 'මුළු හිඟ මුදල',
+  // පොදු
+  'rcpt.nic': 'ජා.හැ. අංකය',
+  'rcpt.paymentMethod': 'ගෙවීමේ ක්‍රමය',
+  'rcpt.status': 'තත්ත්වය',
+  // දත්ත ගබඩාවේ ඉංග්‍රීසියෙන් ඇති අගයන්
+  'rcpt.pmCash': 'මුදල්',
+  'rcpt.pmBankTransfer': 'බැංකු හුවමාරුව',
+  'rcpt.pmCheque': 'චෙක්පත',
+  'rcpt.stActive': 'ක්‍රියාකාරී',
+  'rcpt.stOverdue': 'හිඟ',
+  'rcpt.stPaid': 'ගෙවා අවසන්',
+  'rcpt.stDefaulted': 'පැහැර හැරි',
+  'rcpt.stVoid': 'අවලංගු'
 }

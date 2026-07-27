@@ -10,6 +10,7 @@ import ConfirmModal from '../components/ConfirmModal'
 import IssueLoanModal from '../modals/IssueLoanModal'
 import RepayLoanModal from '../modals/RepayLoanModal'
 import MigrateLoanModal from '../modals/MigrateLoanModal'
+import LoanKindChooser from '../components/LoanKindChooser'
 import LoanDetailModal from '../modals/LoanDetailModal'
 import { useT } from '../i18n'
 import type { Loan } from '../types'
@@ -24,8 +25,9 @@ export default function Loans(): React.ReactElement {
   const { wallets } = useWallets()
   const { settings } = useSettings()
   const [searchTerm, setSearchTerm] = useState('')
-  const [showIssueModal, setShowIssueModal] = useState(false)
-  const [showMigrateModal, setShowMigrateModal] = useState(false)
+  // Which kind of loan is being entered, or null when no modal is open. During
+  // migration the two are a single choice rather than two separate buttons.
+  const [loanEntry, setLoanEntry] = useState<'new' | 'existing' | null>(null)
   const [repayLoan, setRepayLoan] = useState<Loan | null>(null)
   const [detailLoanId, setDetailLoanId] = useState<number | null>(null)
   const [deletingLoan, setDeletingLoan] = useState<Loan | null>(null)
@@ -102,15 +104,11 @@ export default function Loans(): React.ReactElement {
           <p className="page-subtitle">{t('loans.subtitle')}</p>
         </div>
         <div className="header-actions">
-          {inMigrationMode && (
-            <button className="btn btn-secondary glassmorphic" onClick={() => setShowMigrateModal(true)} title={t('loans.addExistingHint')}>
-              <Archive size={18} />
-              {t('loans.addExisting')}
-            </button>
-          )}
-          <button className="btn btn-primary glassmorphic" onClick={() => setShowIssueModal(true)}>
+          {/* One entry point during migration — the modal itself asks whether
+              this is a new loan or one already running on paper. */}
+          <button className="btn btn-primary glassmorphic" onClick={() => setLoanEntry('new')}>
             <Plus size={18} />
-            {t('loans.issueNew')}
+            {inMigrationMode ? t('loans.addLoan') : t('loans.issueNew')}
           </button>
         </div>
       </div>
@@ -243,19 +241,21 @@ export default function Loans(): React.ReactElement {
         </div>
       </div>
 
-      {showIssueModal && (
+      {loanEntry === 'new' && (
         <IssueLoanModal
-          onClose={() => setShowIssueModal(false)}
+          onClose={() => setLoanEntry(null)}
           onCreated={afterLoanChange}
           wallets={wallets}
           settings={settings}
+          headerSlot={inMigrationMode ? <LoanKindChooser value="new" onChange={setLoanEntry} /> : undefined}
         />
       )}
 
-      {showMigrateModal && (
+      {loanEntry === 'existing' && (
         <MigrateLoanModal
-          onClose={() => setShowMigrateModal(false)}
+          onClose={() => setLoanEntry(null)}
           onCreated={afterLoanChange}
+          headerSlot={<LoanKindChooser value="existing" onChange={setLoanEntry} />}
         />
       )}
 

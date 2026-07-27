@@ -1,22 +1,33 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import RupeeInput from '../components/RupeeInput'
 import ModalOverlay from '../components/ModalOverlay'
 import { X } from 'lucide-react'
 import { showToast } from '../components/Toast'
 import SearchableSelect from '../components/SearchableSelect'
+import { useSettings } from '../hooks/useSettings'
+import { formatCurrency } from '../utils/formatters'
+import { formatPrintDate } from '../utils/print'
 import { useT } from '../i18n'
 
 interface Props {
   onClose: () => void
   onCreated: () => void
+  /** Rendered at the top of the body — the New / Existing loan chooser. */
+  headerSlot?: React.ReactNode
 }
 
 // Migration Mode workflow (Requirement 5, v2.0): enter the CURRENT position of
 // an existing active loan from the paper records. No wallet is deducted and no
 // historical transactions are created — the entered balances become the
 // starting point for all future interest, fine, and repayment calculations.
-export default function MigrateLoanModal({ onClose, onCreated }: Props): React.ReactElement {
+//
+// The "balances as of" date is what keeps those calculations honest: interest
+// resumes from the day the society's figures were computed through, so no
+// part-month is forgiven and the monthly charge day still matches the passbook.
+export default function MigrateLoanModal({ onClose, onCreated, headerSlot }: Props): React.ReactElement {
   const { t } = useT()
+  const { settings } = useSettings()
+  const today = new Date().toISOString().split('T')[0]
 
   const [members, setMembers] = useState<Array<{ id: number; nic: string; full_name: string }>>([])
   const [submitting, setSubmitting] = useState(false)
@@ -27,6 +38,10 @@ export default function MigrateLoanModal({ onClose, onCreated }: Props): React.R
   const [interestOwedStr, setInterestOwedStr] = useState('')
   const [finesOwedStr, setFinesOwedStr] = useState('')
   const [dateIssued, setDateIssued] = useState('')
+  const [asOfDate, setAsOfDate] = useState(today)
+  const [status, setStatus] = useState<'Auto' | 'Defaulted'>('Auto')
+  const [guarantor1, setGuarantor1] = useState<number | ''>('')
+  const [guarantor2, setGuarantor2] = useState<number | ''>('')
   const [purpose, setPurpose] = useState('')
 
   useEffect(() => {
@@ -34,6 +49,22 @@ export default function MigrateLoanModal({ onClose, onCreated }: Props): React.R
   }, [])
 
   const toCents = (s: string): number => Math.round(Number(s || 0) * 100)
+
+  // What the officer should be able to check against the passbook before saving.
+  const interestRate = Number(settings.monthly_interest_rate) || 0
+  const principalOwedCents = toCents(principalOwedStr)
+  const nextCharge = ((): { date: string; amount: number } | null => {
+    if (!asOfDate || principalOwedCents <= 0 || interestRate <= 0) return null
+    const [y, m, d] = asOfDate.split('-').map(Number)
+    const nextMonth = m === 12 ? 1 : m + 1
+    const nextYear = m === 12 ? y + 1 : y
+    const daysInNext = new Date(nextYear, nextMonth, 0).getDate()
+    const day = Math.min(d, daysInNext)
+    return {
+      date: `${nextYear}-${String(nextMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      amount: Math.round(principalOwedCents * (interestRate / 100))
+    }
+  })()
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
@@ -52,6 +83,19 @@ export default function MigrateLoanModal({ onClose, onCreated }: Props): React.R
       showToast('error', t('lform.originalLessThanRemaining'))
       return
     }
+    if (asOfDate && dateIssued && asOfDate < dateIssued) {
+      showToast('error', t('lform.asOfBeforeIssued'))
+      return
+    }
+    const guarantorIds = [guarantor1, guarantor2].filter((g): g is number => g !== '')
+    if (guarantorIds.length === 2 && guarantorIds[0] === guarantorIds[1]) {
+      showToast('error', t('lform.guarantorsDistinct'))
+      return
+    }
+    if (guarantorIds.includes(Number(memberId))) {
+      showToast('error', t('lform.borrowerNotGuarantor'))
+      return
+    }
 
     setSubmitting(true)
     try {
@@ -62,6 +106,9 @@ export default function MigrateLoanModal({ onClose, onCreated }: Props): React.R
         interest_owed: toCents(interestOwedStr),
         fines_owed: toCents(finesOwedStr),
         date_issued: dateIssued || null,
+        as_of_date: asOfDate || null,
+        status: status === 'Defaulted' ? 'Defaulted' : undefined,
+        guarantor_ids: guarantorIds,
         purpose: purpose.trim() || null
       })
       showToast('success', t('lform.migrateSuccess'))
@@ -73,6 +120,11 @@ export default function MigrateLoanModal({ onClose, onCreated }: Props): React.R
     }
   }
 
+  const guarantorOptions = (exclude: number | ''): Array<{ value: number; label: string; sublabel: string }> =>
+    members
+      .filter((m) => m.id !== Number(memberId) && m.id !== exclude)
+      .map((m) => ({ value: m.id, label: m.full_name, sublabel: m.nic }))
+
   return (
     <ModalOverlay onClose={onClose} guardUnsaved>
       <div className="modal" role="dialog" aria-label={t('loans.addExisting')} aria-modal="true">
@@ -83,6 +135,8 @@ export default function MigrateLoanModal({ onClose, onCreated }: Props): React.R
 
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
+            {headerSlot}
+
             <div style={{ background: 'var(--bg-page)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: '16px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
               {t('lform.migrateInfoPre')} <strong>{t('lform.migrateInfoStrong')}</strong> {t('lform.migrateInfoPost')}
             </div>
@@ -123,7 +177,50 @@ export default function MigrateLoanModal({ onClose, onCreated }: Props): React.R
             <div className="form-grid">
               <div className="form-group">
                 <label>{t('lform.originalIssueDate')}</label>
-                <input type="date" max={new Date().toISOString().split('T')[0]} className="form-control" value={dateIssued} onChange={(e) => setDateIssued(e.target.value)} />
+                <input type="date" max={today} className="form-control" value={dateIssued} onChange={(e) => setDateIssued(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>{t('lform.asOfDate')} <span style={{ color: 'var(--danger)' }}>*</span></label>
+                <input type="date" max={today} min={dateIssued || undefined} className="form-control" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} required />
+                <small style={{ color: 'var(--text-secondary)', fontSize: '0.76rem' }}>{t('lform.asOfHint')}</small>
+              </div>
+            </div>
+
+            {/* Check this against the passbook before saving */}
+            {nextCharge && (
+              <div style={{ background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', padding: '10px 14px', marginBottom: '16px', fontSize: '0.82rem', color: 'var(--primary)' }}>
+                {t('lform.nextChargePreview', { amount: formatCurrency(nextCharge.amount), date: formatPrintDate(nextCharge.date) })}
+              </div>
+            )}
+
+            <div className="form-grid">
+              <div className="form-group">
+                <label>{t('lform.guarantor1')}</label>
+                <SearchableSelect
+                  options={guarantorOptions(guarantor2)}
+                  value={guarantor1}
+                  onChange={(val) => setGuarantor1(val === '' ? '' : Number(val))}
+                  placeholder={t('lform.guarantorOptional')}
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('lform.guarantor2')}</label>
+                <SearchableSelect
+                  options={guarantorOptions(guarantor1)}
+                  value={guarantor2}
+                  onChange={(val) => setGuarantor2(val === '' ? '' : Number(val))}
+                  placeholder={t('lform.guarantorOptional')}
+                />
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <div className="form-group">
+                <label>{t('lform.loanStatus')}</label>
+                <select className="form-control" value={status} onChange={(e) => setStatus(e.target.value as 'Auto' | 'Defaulted')}>
+                  <option value="Auto">{t('lform.statusAuto')}</option>
+                  <option value="Defaulted">{t('rcpt.stDefaulted')}</option>
+                </select>
               </div>
               <div className="form-group">
                 <label>{t('lform.notesLabel')}</label>

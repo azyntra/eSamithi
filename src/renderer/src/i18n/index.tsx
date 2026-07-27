@@ -6,14 +6,20 @@ export type Lang = 'en' | 'si'
 
 const STORAGE_KEY = 'esamithi-lang'
 
-const MONTHS_LONG: Record<Lang, string[]> = {
+export const MONTHS_LONG: Record<Lang, string[]> = {
   en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
   si: ['ජනවාරි', 'පෙබරවාරි', 'මාර්තු', 'අප්‍රේල්', 'මැයි', 'ජූනි', 'ජූලි', 'අගෝස්තු', 'සැප්තැම්බර්', 'ඔක්තෝබර්', 'නොවැම්බර්', 'දෙසැම්බර්']
 }
 
-const MONTHS_SHORT: Record<Lang, string[]> = {
+export const MONTHS_SHORT: Record<Lang, string[]> = {
   en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
   si: ['ජන', 'පෙබ', 'මාර්', 'අප්‍රේ', 'මැයි', 'ජූනි', 'ජූලි', 'අගෝ', 'සැප්', 'ඔක්', 'නොවැ', 'දෙසැ']
+}
+
+// The language as persisted, readable outside React. Printing builds raw HTML
+// from a plain module (utils/print.ts) that has no access to the context.
+export function currentLang(): Lang {
+  return localStorage.getItem(STORAGE_KEY) === 'si' ? 'si' : 'en'
 }
 
 interface I18nContextValue {
@@ -24,7 +30,7 @@ interface I18nContextValue {
   monthsShort: string[]
 }
 
-function translate(lang: Lang, key: TranslationKey, vars?: Record<string, string | number>): string {
+export function translate(lang: Lang, key: TranslationKey, vars?: Record<string, string | number>): string {
   let s: string = (lang === 'si' ? si[key] : undefined) ?? en[key]
   if (vars) {
     for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, String(v))

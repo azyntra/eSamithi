@@ -10,9 +10,11 @@ interface Props {
   onCreated: () => void
   wallets: Array<{ id: number; name: string; balance: number; is_active: number }>
   settings: Record<string, string>
+  /** Rendered at the top of the body — the New / Existing loan chooser. */
+  headerSlot?: React.ReactNode
 }
 
-export default function IssueLoanModal({ onClose, onCreated, wallets, settings }: Props): React.ReactElement {
+export default function IssueLoanModal({ onClose, onCreated, wallets, settings, headerSlot }: Props): React.ReactElement {
   const { t } = useT()
 
   const activeWallets = wallets.filter(w => w.is_active == 1)
@@ -105,6 +107,7 @@ export default function IssueLoanModal({ onClose, onCreated, wallets, settings }
 
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
+            {headerSlot}
             <div className="form-grid">
               <div className="form-group">
                 <label>{t('lform.applicantMember')} <span style={{ color: 'var(--danger)' }}>*</span></label>

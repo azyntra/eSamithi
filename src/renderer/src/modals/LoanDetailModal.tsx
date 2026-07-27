@@ -3,7 +3,7 @@ import { X, ShieldCheck, HandCoins, Printer, Archive } from 'lucide-react'
 import { showToast } from '../components/Toast'
 import ModalOverlay from '../components/ModalOverlay'
 import { formatCurrency } from '../utils/formatters'
-import { printReceipt, buildReceiptHtml } from '../utils/print'
+import { printReceipt, buildReceiptHtml, formatPrintDate, printLoanStatus } from '../utils/print'
 import RepayLoanModal from './RepayLoanModal'
 import { useT } from '../i18n'
 import type { Loan } from '../types'
@@ -68,19 +68,19 @@ export default function LoanDetailModal({ loanId, onClose, onChanged, wallets, s
     const totalPaid = p.principal_paid + p.interest_paid + p.fines_paid
     printReceipt(buildReceiptHtml({
       societyName,
-      title: 'Loan Repayment Receipt',
+      title: t('rcpt.loanPaymentTitle'),
       receiptNo: `LNP-${String(p.id).padStart(5, '0')}`,
-      date: new Date(p.date).toLocaleDateString('en-GB'),
+      date: formatPrintDate(p.date),
       rows: [
-        ['Borrower', loan.member_name || '—'],
-        ['Loan Ref.', `#${loan.id}`],
-        ['Applied to Fine', formatCurrency(p.fines_paid)],
-        ['Applied to Interest', formatCurrency(p.interest_paid)],
-        ['Applied to Principal', formatCurrency(p.principal_paid)]
+        [t('rcpt.borrower'), loan.member_name || '—'],
+        [t('rcpt.loanRef'), `#${loan.id}`],
+        [t('rcpt.appliedFine'), formatCurrency(p.fines_paid)],
+        [t('rcpt.appliedInterest'), formatCurrency(p.interest_paid)],
+        [t('rcpt.appliedPrincipal'), formatCurrency(p.principal_paid)]
       ],
-      amountLabel: 'Total Paid',
+      amountLabel: t('rcpt.totalPaid'),
       amountValue: formatCurrency(totalPaid),
-      footerNote: 'Fine → Interest → Principal allocation as per society rules.'
+      footerNote: t('rcpt.allocationNote')
     }))
   }
 
@@ -88,20 +88,20 @@ export default function LoanDetailModal({ loanId, onClose, onChanged, wallets, s
     if (!loan) return
     printReceipt(buildReceiptHtml({
       societyName,
-      title: 'Loan Statement',
+      title: t('rcpt.loanStatementTitle'),
       receiptNo: `LN-${String(loan.id).padStart(5, '0')}`,
-      date: new Date().toLocaleDateString('en-GB'),
+      date: formatPrintDate(new Date()),
       rows: [
-        ['Borrower', loan.member_name || '—'],
-        ['NIC', loan.member_nic || '—'],
-        ['Issued On', loan.date_issued ? new Date(loan.date_issued).toLocaleDateString('en-GB') : '—'],
-        ['Original Principal', formatCurrency(loan.principal_amount)],
-        ['Remaining Principal', formatCurrency(loan.principal_owed)],
-        ['Outstanding Interest', formatCurrency(loan.interest_owed)],
-        ['Outstanding Fine', formatCurrency(loan.fines_owed)],
-        ['Status', loan.status]
+        [t('rcpt.borrower'), loan.member_name || '—'],
+        [t('rcpt.nic'), loan.member_nic || '—'],
+        [t('rcpt.issuedOn'), formatPrintDate(loan.date_issued)],
+        [t('rcpt.originalPrincipal'), formatCurrency(loan.principal_amount)],
+        [t('rcpt.remainingPrincipal'), formatCurrency(loan.principal_owed)],
+        [t('rcpt.outstandingInterest'), formatCurrency(loan.interest_owed)],
+        [t('rcpt.outstandingFine'), formatCurrency(loan.fines_owed)],
+        [t('rcpt.status'), printLoanStatus(loan.status)]
       ],
-      amountLabel: 'Total Outstanding',
+      amountLabel: t('rcpt.totalOutstanding'),
       amountValue: formatCurrency(totalOwed)
     }))
   }

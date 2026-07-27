@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { Printer, FileBarChart, AlertTriangle, Phone } from 'lucide-react'
 import { useSettings } from '../hooks/useSettings'
 import { formatCurrency } from '../utils/formatters'
+import { formatPrintDate } from '../utils/print'
 import { showToast } from '../components/Toast'
 import { useT } from '../i18n'
 
@@ -227,7 +228,7 @@ export default function Reports(): React.ReactElement {
       <div className="print-only" style={{ textAlign: 'center', marginBottom: '16px' }}>
         <h1 style={{ fontSize: '18px', margin: 0 }}>{societyName}</h1>
         <p style={{ fontSize: '14px', margin: '4px 0 0' }}>{printTitle}</p>
-        <p style={{ fontSize: '11px', margin: '2px 0 0' }}>{t('reports.generatedOn', { date: now.toLocaleDateString('en-GB') })}</p>
+        <p style={{ fontSize: '11px', margin: '2px 0 0' }}>{t('reports.generatedOn', { date: formatPrintDate(now) })}</p>
       </div>
 
       {!bridgeMissing && (
@@ -357,7 +358,7 @@ export default function Reports(): React.ReactElement {
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Phone size={12} />{l.phone}</span>
                           ) : '—'}
                         </td>
-                        <td>{new Date(l.date_issued).toLocaleDateString('en-GB')}</td>
+                        <td>{formatPrintDate(l.date_issued)}</td>
                         <td className="text-right">{formatCurrency(l.principal_owed)}</td>
                         <td className="text-right">{formatCurrency(l.interest_owed)}</td>
                         <td className="text-right" style={{ color: 'var(--danger)' }}>{formatCurrency(l.fines_owed)}</td>
@@ -398,7 +399,7 @@ export default function Reports(): React.ReactElement {
                           <td>{f.bank_name}</td>
                           <td className="text-right">{formatCurrency(f.principal)}</td>
                           <td className="text-right" style={{ color: matured ? 'var(--danger)' : undefined, fontWeight: matured ? 700 : 400 }}>
-                            {new Date(f.maturity_date).toLocaleDateString('en-GB')}{matured ? t('reports.matured') : ''}
+                            {formatPrintDate(f.maturity_date)}{matured ? t('reports.matured') : ''}
                           </td>
                         </tr>
                       )

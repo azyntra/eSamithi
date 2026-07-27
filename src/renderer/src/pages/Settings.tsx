@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import RupeeInput from '../components/RupeeInput'
-import { Save, Download, AlertCircle, Plus, Trash2, UserPlus, Shield, ShieldCheck, RefreshCw, CheckCircle2, Info, ArrowDownToLine } from 'lucide-react'
+import { Save, Download, AlertCircle, Plus, Trash2, Pencil, RotateCcw, UserPlus, Shield, ShieldCheck, RefreshCw, CheckCircle2, Info, ArrowDownToLine } from 'lucide-react'
 import { useSettings } from '../hooks/useSettings'
 import { showToast } from '../components/Toast'
 import { formatCurrency } from '../utils/formatters'
@@ -8,6 +8,7 @@ import AddIncomeTypeModal from '../modals/AddIncomeTypeModal'
 import AddExpenseTypeModal from '../modals/AddExpenseTypeModal'
 import ConfirmModal from '../components/ConfirmModal'
 import { useT } from '../i18n'
+import type { ExpenseType, IncomeType } from '../types'
 
 interface SettingsPageProps {
   user: { id: number; username: string; full_name: string; role: string }
@@ -23,7 +24,7 @@ interface SystemUser {
 export default function SettingsPage({ user }: SettingsPageProps): React.ReactElement {
   const { t } = useT()
   const isAdmin = user.role === 'admin'
-  const { settings, incomeTypes, expenseTypes, loading, fetchData, updateSettings, deleteIncomeType, deleteExpenseType } = useSettings()
+  const { settings, incomeTypes, expenseTypes, loading, fetchData, updateSettings, deleteIncomeType, deleteExpenseType, updateIncomeType, updateExpenseType } = useSettings()
 
   const [activeTab, setActiveTab] = useState<'general' | 'loans' | 'income' | 'expense' | 'system' | 'about'>('general')
   const [formData, setFormData] = useState<Record<string, string>>({})
@@ -31,6 +32,8 @@ export default function SettingsPage({ user }: SettingsPageProps): React.ReactEl
 
   const [showAddIncome, setShowAddIncome] = useState(false)
   const [showAddExpense, setShowAddExpense] = useState(false)
+  const [editIncome, setEditIncome] = useState<IncomeType | null>(null)
+  const [editExpense, setEditExpense] = useState<ExpenseType | null>(null)
   const [confirmState, setConfirmState] = useState<{ title: string; message: React.ReactNode; label: string; action: () => void } | null>(null)
 
   // System Users
@@ -189,6 +192,26 @@ export default function SettingsPage({ user }: SettingsPageProps): React.ReactEl
         }
       }
     })
+  }
+
+  // A type that was deactivated (because ledger history referenced it) can be
+  // brought back into the pickers without touching that history.
+  const handleReactivateIncomeType = async (it: IncomeType): Promise<void> => {
+    try {
+      await updateIncomeType(it.id, { is_active: 1 })
+      showToast('success', t('settings.typeReactivated', { name: it.name }))
+    } catch (err: any) {
+      showToast('error', err.message || t('settings.updateFailed'))
+    }
+  }
+
+  const handleReactivateExpenseType = async (et: ExpenseType): Promise<void> => {
+    try {
+      await updateExpenseType(et.id, { is_active: 1 })
+      showToast('success', t('settings.typeReactivated', { name: et.name }))
+    } catch (err: any) {
+      showToast('error', err.message || t('settings.updateFailed'))
+    }
   }
 
   const handleCreateUser = async (e: React.FormEvent): Promise<void> => {
@@ -423,6 +446,11 @@ export default function SettingsPage({ user }: SettingsPageProps): React.ReactEl
                     <td><span className="status-badge badge-primary">{it.category_group}</span></td>
                     <td className="text-right">{formatCurrency(it.standard_amount)}</td>
                     <td className="actions-cell">
+                      {/* System types can be renamed (for Sinhala labels) but never deleted */}
+                      <button className="icon-btn" title={t('common.edit')} onClick={() => setEditIncome(it)}><Pencil size={16} /></button>
+                      {Number(it.is_active) === 0 && (
+                        <button className="icon-btn text-success" title={t('settings.reactivate')} onClick={() => handleReactivateIncomeType(it)}><RotateCcw size={16} /></button>
+                      )}
                       {it.code ? (
                         <span className="status-badge badge-neutral" title={t('settings.systemHint')}>{t('settings.system')}</span>
                       ) : (
@@ -463,6 +491,10 @@ export default function SettingsPage({ user }: SettingsPageProps): React.ReactEl
                     <td className="font-medium">{et.name} {Number(et.is_active) === 0 && <span className="status-badge badge-neutral">{t('common.inactive')}</span>}</td>
                     <td className="text-right">{formatCurrency(et.standard_payout)}</td>
                     <td className="actions-cell">
+                      <button className="icon-btn" title={t('common.edit')} onClick={() => setEditExpense(et)}><Pencil size={16} /></button>
+                      {Number(et.is_active) === 0 && (
+                        <button className="icon-btn text-success" title={t('settings.reactivate')} onClick={() => handleReactivateExpenseType(et)}><RotateCcw size={16} /></button>
+                      )}
                       {et.code ? (
                         <span className="status-badge badge-neutral" title={t('settings.systemHint')}>{t('settings.system')}</span>
                       ) : (
@@ -703,6 +735,8 @@ export default function SettingsPage({ user }: SettingsPageProps): React.ReactEl
 
       {showAddIncome && <AddIncomeTypeModal onClose={() => { setShowAddIncome(false); }} onCreated={fetchData} />}
       {showAddExpense && <AddExpenseTypeModal onClose={() => { setShowAddExpense(false); }} onCreated={fetchData} />}
+      {editIncome && <AddIncomeTypeModal incomeType={editIncome} onClose={() => setEditIncome(null)} onCreated={fetchData} />}
+      {editExpense && <AddExpenseTypeModal expenseType={editExpense} onClose={() => setEditExpense(null)} onCreated={fetchData} />}
 
       {confirmState && (
         <ConfirmModal

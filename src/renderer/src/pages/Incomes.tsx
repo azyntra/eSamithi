@@ -5,7 +5,7 @@ import { useLedger, PAGE_SIZE_OPTIONS } from '../hooks/useLedger'
 import { useWallets } from '../hooks/useWallets'
 import { useSettings } from '../hooks/useSettings'
 import { formatCurrency } from '../utils/formatters'
-import { printReceipt, buildReceiptHtml } from '../utils/print'
+import { printReceipt, buildReceiptHtml, formatPrintDate, printPaymentMethod } from '../utils/print'
 import { invalidateCaches } from '../utils/cache'
 import { showToast } from '../components/Toast'
 import LedgerFilterBar from '../components/LedgerFilterBar'
@@ -73,22 +73,24 @@ export default function Incomes(): React.ReactElement {
     }
   }
 
-  const handlePrintReceipt = (t: IncomeTransaction): void => {
+  // `tx`, not `t` — the parameter used to shadow the i18n t() and made the
+  // receipt impossible to translate.
+  const handlePrintReceipt = (tx: IncomeTransaction): void => {
     printReceipt(buildReceiptHtml({
       societyName: settings.society_name || 'eSamithi',
-      title: 'Income Receipt',
-      receiptNo: `INC-${String(t.id).padStart(5, '0')}`,
-      date: new Date(t.date).toLocaleDateString('en-GB'),
+      title: t('rcpt.incomeTitle'),
+      receiptNo: `INC-${String(tx.id).padStart(5, '0')}`,
+      date: formatPrintDate(tx.date),
       rows: [
-        ['Received From', t.payer_name || '—'],
-        ...(t.member_nic ? ([['NIC', t.member_nic]] as Array<[string, string]>) : []),
-        ['Income Type', t.income_type_name || '—'],
-        ['Payment Method', t.payment_method],
-        ['Deposited To', t.wallet_name || '—']
+        [t('rcpt.receivedFrom'), tx.payer_name || '—'],
+        ...(tx.member_nic ? ([[t('rcpt.nic'), tx.member_nic]] as Array<[string, string]>) : []),
+        [t('rcpt.incomeType'), tx.income_type_name || '—'],
+        [t('rcpt.paymentMethod'), printPaymentMethod(tx.payment_method)],
+        [t('rcpt.depositedTo'), tx.wallet_name || '—']
       ],
-      amountLabel: 'Amount Received',
-      amountValue: formatCurrency(t.amount),
-      footerNote: t.notes || undefined
+      amountLabel: t('rcpt.amountReceived'),
+      amountValue: formatCurrency(tx.amount),
+      footerNote: tx.notes || undefined
     }))
   }
 

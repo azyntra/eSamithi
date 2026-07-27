@@ -57,6 +57,34 @@ export interface Guarantee {
   borrower_name: string
 }
 
+// One transaction in receipt detail — the same document the office prints.
+// The server sends structured fields; the app supplies the wording, so a
+// receipt reads in whichever language the member has chosen.
+export type ReceiptKind = 'income' | 'expense' | 'loan-payment'
+
+export interface Receipt {
+  kind: ReceiptKind
+  society: { name: string | null; phone: string | null; address: string | null }
+  member: { full_name: string | null; nic: string | null; society_id: string | null }
+  receipt_no: string
+  date: string
+  amount: number
+  status: string
+  payment_method?: string | null
+  type_name?: string | null
+  type_code?: string | null
+  wallet_name?: string | null
+  months_covered?: string | null
+  notes?: string | null
+  principal_part?: number | null
+  interest_part?: number | null
+  death_reference?: string | null
+  loan_id?: number | null
+  principal_paid?: number
+  interest_paid?: number
+  fines_paid?: number
+}
+
 export interface Statement {
   income: LedgerRow[]
   expenses: LedgerRow[]
@@ -167,6 +195,15 @@ export function useLoan(id: number) {
     queryFn: async () => (await api.get<LoanDetail>(`/me/loans/${id}`)).data,
     staleTime: STALE_MS,
     enabled: Number.isFinite(id)
+  })
+}
+
+export function useReceipt(kind: ReceiptKind, id: number) {
+  return useQuery({
+    queryKey: ['receipt', kind, id],
+    queryFn: async () => (await api.get<Receipt>(`/me/receipts/${kind}/${id}`)).data,
+    staleTime: STALE_MS,
+    enabled: Number.isFinite(id) && id > 0
   })
 }
 

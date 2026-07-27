@@ -860,7 +860,87 @@ export const en = {
   'settings.samithiChanging': 'Changing…',
   'settings.samithiChanged': 'Connected to {name}. Restarting…',
   'settings.samithiChangeFailed': 'Could not change the samithi',
-  'settings.changeSamithiWarn': 'Changing reconnects this computer to a different society — you will need to sign in again.'
+  'settings.changeSamithiWarn': 'Changing reconnects this computer to a different society — you will need to sign in again.',
+
+  // ── Loan entry: new vs. already-running ────────────────────────
+  'loans.addLoan': 'Add loan',
+  'loans.kindNew': 'New loan',
+  'loans.kindNewHint': 'Money paid out now from a society wallet.',
+  'loans.kindExisting': 'Existing loan',
+  'loans.kindExistingHint': 'Already running on paper — record where it stands today.',
+  'lform.asOfDate': 'Balances as of',
+  'lform.asOfHint': 'The date these figures were last worked out. Interest continues from here.',
+  'lform.asOfBeforeIssued': 'The "balances as of" date cannot be before the loan was issued',
+  'lform.nextChargePreview': 'Next interest charge: {amount} on {date}',
+  'lform.guarantorOptional': 'Optional — if the record names one',
+  'lform.guarantorsDistinct': 'The two guarantors must be different members',
+  'lform.borrowerNotGuarantor': 'The borrower cannot be their own guarantor',
+  'lform.loanStatus': 'Status',
+  'lform.statusAuto': 'From the figures (overdue if a fine is owed)',
+
+  // ── Editing income / expense categories ────────────────────────
+  'common.edit': 'Edit',
+  'settings.reactivate': 'Reactivate',
+  'settings.typeReactivated': '{name} is available again',
+  'settings.updateFailed': 'Could not save the changes',
+  'itype.editTitle': 'Edit Income Type',
+  'itype.updated': 'Income type updated',
+  'itype.updateFailed': 'Could not update the income type',
+  'itype.systemRenameHint': 'A system type: you can rename it (e.g. into Sinhala), but its role in the app stays the same.',
+  'etype.editTitle': 'Edit Expense Type',
+  'etype.updated': 'Expense type updated',
+  'etype.updateFailed': 'Could not update the expense type',
+
+  // ── Printed receipts, vouchers and statements ──────────────────
+  // Everything that lands on paper. Printing follows the app's language
+  // toggle, so these are the only strings a member ever sees in print.
+  'rcpt.receiptNo': 'Receipt No.',
+  'rcpt.date': 'Date',
+  'rcpt.treasurer': 'Treasurer',
+  'rcpt.receivedBy': 'Received By',
+  // Titles
+  'rcpt.incomeTitle': 'Income Receipt',
+  'rcpt.expenseTitle': 'Payment Voucher',
+  'rcpt.loanPaymentTitle': 'Loan Repayment Receipt',
+  'rcpt.loanStatementTitle': 'Loan Statement',
+  // Income receipt
+  'rcpt.receivedFrom': 'Received From',
+  'rcpt.incomeType': 'Income Type',
+  'rcpt.depositedTo': 'Deposited To',
+  'rcpt.amountReceived': 'Amount Received',
+  // Expense voucher
+  'rcpt.paidTo': 'Paid To',
+  'rcpt.expenseType': 'Expense Type',
+  'rcpt.paidFrom': 'Paid From',
+  'rcpt.amountPaid': 'Amount Paid',
+  // Loan repayment receipt
+  'rcpt.borrower': 'Borrower',
+  'rcpt.loanRef': 'Loan Ref.',
+  'rcpt.appliedFine': 'Applied to Fine',
+  'rcpt.appliedInterest': 'Applied to Interest',
+  'rcpt.appliedPrincipal': 'Applied to Principal',
+  'rcpt.totalPaid': 'Total Paid',
+  'rcpt.allocationNote': 'Fine → Interest → Principal allocation as per society rules.',
+  // Loan statement
+  'rcpt.issuedOn': 'Issued On',
+  'rcpt.originalPrincipal': 'Original Principal',
+  'rcpt.remainingPrincipal': 'Remaining Principal',
+  'rcpt.outstandingInterest': 'Outstanding Interest',
+  'rcpt.outstandingFine': 'Outstanding Fine',
+  'rcpt.totalOutstanding': 'Total Outstanding',
+  // Shared
+  'rcpt.nic': 'NIC',
+  'rcpt.paymentMethod': 'Payment Method',
+  'rcpt.status': 'Status',
+  // Enum values stored in English in the database
+  'rcpt.pmCash': 'Cash',
+  'rcpt.pmBankTransfer': 'Bank Transfer',
+  'rcpt.pmCheque': 'Cheque',
+  'rcpt.stActive': 'Active',
+  'rcpt.stOverdue': 'Overdue',
+  'rcpt.stPaid': 'Paid',
+  'rcpt.stDefaulted': 'Defaulted',
+  'rcpt.stVoid': 'Void'
 }
 
 export type TranslationKey = keyof typeof en

@@ -134,8 +134,21 @@ router.patch('/:slug', requireSuperadmin, async (req, res, next) => {
       await pool.query('UPDATE samithis SET join_code = ? WHERE id = ?', [newJoinCode(before.slug), before.id]);
     } else {
       const fields = {};
-      for (const f of ['name_en', 'name_si', 'min_app_version']) {
-        if (req.body[f] !== undefined) fields[f] = req.body[f] || null;
+      // name_en is NOT NULL in the schema: blanking it used to reach MySQL and
+      // surface as a 500 instead of a validation error.
+      if (req.body.name_en !== undefined) {
+        const nameEn = String(req.body.name_en || '').trim();
+        if (!nameEn) return res.status(400).json({ error: 'Display name (English) is required' });
+        if (nameEn.length > 160) return res.status(400).json({ error: 'Display name (English) must be 160 characters or fewer' });
+        fields.name_en = nameEn;
+      }
+      if (req.body.name_si !== undefined) {
+        const nameSi = String(req.body.name_si || '').trim();
+        if (nameSi.length > 200) return res.status(400).json({ error: 'Display name (Sinhala) must be 200 characters or fewer' });
+        fields.name_si = nameSi || null;
+      }
+      if (req.body.min_app_version !== undefined) {
+        fields.min_app_version = String(req.body.min_app_version || '').trim() || null;
       }
       if (Object.keys(fields).length === 0) return res.status(400).json({ error: 'Nothing to update' });
       await pool.query('UPDATE samithis SET ? WHERE id = ?', [fields, before.id]);
@@ -143,13 +156,31 @@ router.patch('/:slug', requireSuperadmin, async (req, res, next) => {
 
     const [[after]] = await pool.query('SELECT * FROM samithis WHERE id = ?', [before.id]);
     await syncTenantsFile();
+
+    // A rename only becomes real once the society's own database knows about
+    // it — that is what receipts, reports and the member app read. Best effort:
+    // an unreachable tenant must not fail the rename, but the operator is told
+    // so they can re-sync rather than silently seeing two different names.
+    let propagated = null;
+    if (after.name_en !== before.name_en) {
+      const tenant = await activeTenant(before.slug);
+      if (tenant && tenant.status === 'active' && tenant.api_url) {
+        const r = await tenantWrite(tenant.api_url, before.slug, 'PATCH', '/internal/settings', {
+          society_name: after.name_en
+        });
+        propagated = r.status === 200;
+      } else {
+        propagated = false;
+      }
+    }
+
     res.locals.audit = {
       action: `samithi_${action || 'edit'}`,
       samithi: before.slug,
-      before: { status: before.status, join_code: before.join_code, name_en: before.name_en, min_app_version: before.min_app_version },
-      after: { status: after.status, join_code: after.join_code, name_en: after.name_en, min_app_version: after.min_app_version }
+      before: { status: before.status, join_code: before.join_code, name_en: before.name_en, name_si: before.name_si, min_app_version: before.min_app_version },
+      after: { status: after.status, join_code: after.join_code, name_en: after.name_en, name_si: after.name_si, min_app_version: after.min_app_version }
     };
-    res.json({ success: true, samithi: after });
+    res.json({ success: true, samithi: after, propagated });
   } catch (err) { next(err); }
 });
 

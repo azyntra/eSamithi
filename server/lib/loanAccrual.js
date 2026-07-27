@@ -9,10 +9,15 @@ function daysInMonth(year, month) {
   return new Date(year, month, 0).getDate(); // month is 1-based
 }
 
-function addOneMonth({ y, m, d }) {
+// Advance one month, placing the date on `anchorDay` (the loan's real charge
+// day) clamped to the month's length. Clamping from the *anchor* rather than
+// from the previous cursor is what stops the drift: a loan charged on the 31st
+// used to become the 28th after February and stay there forever, walking the
+// charge date away from the borrower's passbook.
+function addOneMonth({ y, m }, anchorDay) {
   let year = y, month = m + 1;
   if (month > 12) { month = 1; year++; }
-  return { y: year, m: month, d: Math.min(d, daysInMonth(year, month)) };
+  return { y: year, m: month, d: Math.min(anchorDay, daysInMonth(year, month)) };
 }
 
 function dateLte(a, b) {
@@ -42,8 +47,9 @@ function todayParts() {
 // Interest shrinks as the principal is paid down; fines compound only off unpaid interest.
 async function accrueLoan(conn, loanId, interestRate, fineRate) {
   const [rows] = await conn.query(
-    `SELECT id, principal_owed, interest_owed, fines_owed, status,
-            DATE_FORMAT(COALESCE(last_accrual_date, date_issued), '%Y-%m-%d') as accrual_from
+    `SELECT id, principal_owed, interest_owed, fines_owed, status, accrual_day,
+            DATE_FORMAT(COALESCE(last_accrual_date, date_issued), '%Y-%m-%d') as accrual_from,
+            DAY(date_issued) as issued_day
      FROM loans WHERE id = ? FOR UPDATE`,
     [loanId]
   );
@@ -56,10 +62,13 @@ async function accrueLoan(conn, loanId, interestRate, fineRate) {
   let finesOwed = Number(loan.fines_owed);
 
   let cursor = parseDateStr(loan.accrual_from);
+  // The loan's true charge day. Falls back to the issue day, then to the
+  // cursor's own day, so rows predating the accrual_day column still work.
+  const anchorDay = Number(loan.accrual_day) || Number(loan.issued_day) || cursor.d;
   const today = todayParts();
   let changed = false;
 
-  let next = addOneMonth(cursor);
+  let next = addOneMonth(cursor, anchorDay);
   while (dateLte(next, today)) {
     if (interestOwed > 0 && fineRate > 0) {
       finesOwed += Math.round(interestOwed * (fineRate / 100));
@@ -68,7 +77,7 @@ async function accrueLoan(conn, loanId, interestRate, fineRate) {
       interestOwed += Math.round(principalOwed * (interestRate / 100));
     }
     cursor = next;
-    next = addOneMonth(cursor);
+    next = addOneMonth(cursor, anchorDay);
     changed = true;
   }
 

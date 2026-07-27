@@ -985,5 +985,30 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'mob.samithiExisting': 'ඔබේ සමිති',
   'mob.samithiSection': 'මගේ සමිති',
   'mob.samithiAdd': 'තවත් සමිතියක් එක් කරන්න',
-  'mob.samithiActive': 'පිවිසී ඇත'
+  'mob.samithiActive': 'පිවිසී ඇත',
+
+  // ── රිසිට්පත් ──────────────────────────────────────────────────
+  'mob.rcptTitle': 'රිසිට්පත',
+  'mob.rcptIncomeTitle': 'ආදායම් රිසිට්පත',
+  'mob.rcptExpenseTitle': 'ගෙවීම් වවුචරය',
+  'mob.rcptLoanTitle': 'ණය ආපසු ගෙවීමේ රිසිට්පත',
+  'mob.rcptNo': 'රිසිට් අංකය',
+  'mob.rcptType': 'වර්ගය',
+  'mob.rcptPaymentMethod': 'ගෙවීමේ ක්‍රමය',
+  'mob.rcptMonthsCovered': 'ආවරණය වන මාස',
+  'mob.rcptReceivedFrom': 'ලැබුණේ',
+  'mob.rcptPaidTo': 'ගෙවූයේ',
+  'mob.rcptBorrower': 'ණය ගැනුම්කරු',
+  'mob.rcptLoanRef': 'ණය අංකය',
+  'mob.rcptAppliedFine': 'දඩ මුදලට',
+  'mob.rcptAppliedInterest': 'පොලියට',
+  'mob.rcptAppliedPrincipal': 'මුල් මුදලට',
+  'mob.rcptAmountReceived': 'ලැබුණු මුදල',
+  'mob.rcptAmountPaid': 'ගෙවූ මුදල',
+  'mob.rcptTotalPaid': 'මුළු ගෙවීම',
+  'mob.rcptAllocationNote': 'සමිති නීති අනුව දඩ මුදල → පොලිය → මුල් මුදල ලෙස වෙන් කරන ලදී.',
+  'mob.rcptFooterNote': 'මෙය සමිති වාර්තාවේ ඔබේ පිටපතයි. අත්සන් කළ මුද්‍රිත රිසිට්පත කාර්යාලයේ තබා ගැනේ.',
+  'mob.rcptPmCash': 'මුදල්',
+  'mob.rcptPmBankTransfer': 'බැංකු හුවමාරුව',
+  'mob.rcptPmCheque': 'චෙක්පත'
 }

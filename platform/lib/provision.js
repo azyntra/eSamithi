@@ -28,12 +28,12 @@ class ProvisionError extends Error {
   constructor(message, status = 400) { super(message); this.status = status; }
 }
 
-async function internalCall(apiUrl, path, body, { timeoutMs = 15000, headers = {} } = {}) {
+async function internalCall(apiUrl, path, body, { timeoutMs = 15000, headers = {}, method = 'POST' } = {}) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(`${apiUrl}${path}`, {
-      method: 'POST',
+      method,
       headers: { Authorization: `Bearer ${internalToken()}`, 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify(body),
       signal: ctrl.signal
@@ -123,6 +123,15 @@ async function provisionSamithi({ slug, name_en, name_si, min_app_version, serve
 
   // 4) build schema + seed admin via the target's own migration runner
   const result = await tenantProvisionHandshake(server.api_url, slug, adminPass);
+
+  // 5) name the society in its own database. The base migration seeds
+  // society_name as the literal 'Maranadhara Samithi', so without this every
+  // new society's receipts, reports and member cards would carry the wrong
+  // name until someone noticed and fixed it by hand on the desktop.
+  await internalCall(server.api_url, '/internal/settings', { society_name: name_en }, {
+    method: 'PATCH',
+    headers: { 'X-Samithi': slug }
+  });
 
   const [[row]] = await pool.query(
     `SELECT s.slug, s.join_code, s.name_en, s.db_name, v.api_url, v.code AS server_code

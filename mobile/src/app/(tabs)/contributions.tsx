@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react'
 import { Text, View } from 'react-native'
+import { useRouter } from 'expo-router'
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../i18n'
 import { usePalette } from '../../theme'
 import { useStatement, type LedgerRow } from '../../api/hooks'
 import { formatDate } from '../../lib/date'
-import { Card, EmptyState, ErrorView, Money, Screen, SectionHeader, SkeletonCards, StaleBanner, StatusBadge } from '../../ui'
+import { Card, EmptyState, ErrorView, Money, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner, StatusBadge } from '../../ui'
 
 // Group ledger rows by year-month, newest first (rows arrive date-desc)
 function groupByMonth(rows: LedgerRow[]): Array<{ key: string; rows: LedgerRow[] }> {
@@ -21,6 +23,7 @@ function groupByMonth(rows: LedgerRow[]): Array<{ key: string; rows: LedgerRow[]
 export default function Contributions(): React.ReactElement {
   const { t, monthsLong } = useT()
   const p = usePalette()
+  const router = useRouter()
   const statement = useStatement()
 
   const groups = useMemo(() => groupByMonth(statement.data?.income ?? []), [statement.data])
@@ -56,8 +59,11 @@ export default function Contributions(): React.ReactElement {
           <SectionHeader>{monthLabel(group.key)}</SectionHeader>
           <Card style={{ paddingVertical: 4 }}>
             {group.rows.map((row, i) => (
-              <View
+              <ScalePressable
                 key={row.id}
+                accessibilityRole="button"
+                scaleTo={0.985}
+                onPress={() => router.push({ pathname: '/receipt/[kind]/[id]', params: { kind: 'income', id: String(row.id) } })}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -76,7 +82,8 @@ export default function Contributions(): React.ReactElement {
                   )}
                 </View>
                 <Money cents={row.amount} color={row.status === 'Active' ? p.text : p.textMuted} />
-              </View>
+                <Ionicons name="chevron-forward" size={16} color={p.textMuted} style={{ marginLeft: 6 }} />
+              </ScalePressable>
             ))}
           </Card>
         </View>

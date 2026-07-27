@@ -247,6 +247,33 @@ router.post('/broadcast', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// PATCH /internal/settings — the control plane pushing tenant-visible settings.
+// Today that means the society's own name: the console holds the registry name,
+// but receipts, reports and the member app all read settings.society_name, so a
+// rename that stops at the registry would never reach the people who see it.
+// Whitelisted on purpose — this must never become a general settings backdoor.
+const PUSHABLE_SETTINGS = ['society_name'];
+
+router.patch('/settings', async (req, res, next) => {
+  try {
+    const updates = Object.entries(req.body || {})
+      .filter(([key]) => PUSHABLE_SETTINGS.includes(key))
+      .map(([key, value]) => [key, String(value ?? '').trim()])
+      .filter(([, value]) => value.length > 0);
+
+    if (updates.length === 0) return res.status(400).json({ error: 'No supported settings supplied' });
+
+    const pool = getPool();
+    for (const [key, value] of updates) {
+      await pool.query(
+        'INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)',
+        [key, value]
+      );
+    }
+    res.json({ success: true, updated: updates.map(([key]) => key) });
+  } catch (err) { next(err); }
+});
+
 // POST /internal/members/:id/unlock-pin — clear a mobile PIN lockout (FR-4.3)
 router.post('/members/:id/unlock-pin', async (req, res, next) => {
   try {

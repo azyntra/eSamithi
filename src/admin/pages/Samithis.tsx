@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogIn, Ban, CircleCheck, RefreshCcw, ChevronRight, Plus, Building2, PartyPopper } from 'lucide-react'
+import { LogIn, Ban, CircleCheck, RefreshCcw, ChevronRight, Plus, Building2, PartyPopper, Pencil } from 'lucide-react'
 import { api } from '../api'
 import { useAuth } from '../auth'
 import { Button, StatusBadge, Skeleton, CopyChip, useToast, useConfirm, Modal } from '../components/ui'
 import { enterSamithi } from '../lib/enter'
 
 interface Row {
-  id: number; slug: string; join_code: string; name_en: string; status: string
+  id: number; slug: string; join_code: string; name_en: string; name_si: string | null; status: string
   db_name: string; min_app_version: string | null; api_url: string; server_code: string
 }
 
@@ -26,6 +26,7 @@ export default function Samithis(): React.ReactElement {
   const [rows, setRows] = useState<Row[] | null>(null)
   const [busy, setBusy] = useState('')
   const [onboardOpen, setOnboardOpen] = useState(false)
+  const [renaming, setRenaming] = useState<Row | null>(null)
   const [result, setResult] = useState<OnboardResult | null>(null)
   const canWrite = admin?.role === 'superadmin'
 
@@ -88,6 +89,9 @@ export default function Samithis(): React.ReactElement {
                       {r.status === 'active'
                         ? <Button size="sm" variant="ghost" loading={busy === r.slug} onClick={() => enter(r)}><LogIn size={13} /> Enter</Button>
                         : null}
+                      {canWrite && (
+                        <Button size="sm" variant="ghost" onClick={() => setRenaming(r)} title="Rename samithi"><Pencil size={13} /></Button>
+                      )}
                       {r.status === 'active'
                         ? <Button size="sm" variant="ghost" onClick={() => suspend(r)}><Ban size={13} /> Suspend</Button>
                         : <Button size="sm" variant="success" onClick={() => reactivate(r)}><CircleCheck size={13} /> Reactivate</Button>}
@@ -107,6 +111,15 @@ export default function Samithis(): React.ReactElement {
           onDone={(r) => { setOnboardOpen(false); setResult(r); load() }}
           onError={(m) => toast('error', m)}
           existingSlugs={rows?.map((r) => r.slug) || []}
+        />
+      )}
+
+      {renaming && (
+        <RenameModal
+          samithi={renaming}
+          onClose={() => setRenaming(null)}
+          onDone={async (msg) => { setRenaming(null); await load(); toast('success', msg) }}
+          onError={(m) => toast('error', m)}
         />
       )}
 
@@ -135,6 +148,64 @@ function CredRow({ label, value }: { label: string; value: string }): React.Reac
       <code className="mono" style={{ flex: 1, fontSize: 14 }}>{value}</code>
       <CopyChip text={value} />
     </div>
+  )
+}
+
+// Renaming is not cosmetic: the new name is pushed into the samithi's own
+// database, so its printed receipts, reports and every member's card pick it up.
+function RenameModal({ samithi, onClose, onDone, onError }: {
+  samithi: Row; onClose: () => void; onDone: (msg: string) => void; onError: (m: string) => void
+}): React.ReactElement {
+  const [nameEn, setNameEn] = useState(samithi.name_en)
+  const [nameSi, setNameSi] = useState(samithi.name_si || '')
+  const [busy, setBusy] = useState(false)
+
+  const submit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault()
+    if (!nameEn.trim()) return
+    setBusy(true)
+    try {
+      const r = await api<{ propagated: boolean | null }>(`/samithis/${samithi.slug}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name_en: nameEn.trim(), name_si: nameSi.trim() })
+      })
+      // A registry rename always succeeds; the push into the samithi's own DB
+      // can fail if its server is down. Say so rather than implying it's done.
+      onDone(
+        r.propagated === false
+          ? `Renamed to ${nameEn.trim()} — but its server was unreachable, so its receipts still show the old name. Rename again once it is back.`
+          : `Renamed to ${nameEn.trim()}`
+      )
+    } catch (err) {
+      onError((err as Error).message)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal
+      title={`Rename ${samithi.name_en}`}
+      icon={<Pencil size={18} />}
+      onClose={onClose}
+      footer={<>
+        <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+        <Button loading={busy} disabled={!nameEn.trim()} onClick={() => (document.getElementById('rename-form') as HTMLFormElement)?.requestSubmit()}>Rename</Button>
+      </>}
+    >
+      <form id="rename-form" onSubmit={submit}>
+        <div className="field">
+          <label>Display name (English)</label>
+          <input className="input" value={nameEn} onChange={(e) => setNameEn(e.target.value)} autoFocus maxLength={160} placeholder="e.g. Kandy Welfare Society" />
+        </div>
+        <div className="field">
+          <label>Display name (Sinhala) <span className="t-mut">— optional</span></label>
+          <input className="input" value={nameSi} onChange={(e) => setNameSi(e.target.value)} maxLength={200} placeholder="මහනුවර සුභසාධක සමිතිය" />
+        </div>
+        <p className="t-mut" style={{ fontSize: 12.5, marginTop: 4 }}>
+          The new name is pushed to the samithi&apos;s own database, so printed receipts, reports and member cards update too. The join code and slug (<code className="mono">{samithi.slug}</code>) are unchanged.
+        </p>
+      </form>
+    </Modal>
   )
 }
 

@@ -981,7 +981,33 @@ export const en = {
   'mob.samithiExisting': 'Your samithis',
   'mob.samithiSection': 'My samithis',
   'mob.samithiAdd': 'Add another samithi',
-  'mob.samithiActive': 'Signed in'
+  'mob.samithiActive': 'Signed in',
+
+  // ── Receipts ───────────────────────────────────────────────────
+  // The member's copy of what the office prints and hands over on paper.
+  'mob.rcptTitle': 'Receipt',
+  'mob.rcptIncomeTitle': 'Income Receipt',
+  'mob.rcptExpenseTitle': 'Payment Voucher',
+  'mob.rcptLoanTitle': 'Loan Repayment Receipt',
+  'mob.rcptNo': 'Receipt No.',
+  'mob.rcptType': 'Type',
+  'mob.rcptPaymentMethod': 'Payment method',
+  'mob.rcptMonthsCovered': 'Months covered',
+  'mob.rcptReceivedFrom': 'Received from',
+  'mob.rcptPaidTo': 'Paid to',
+  'mob.rcptBorrower': 'Borrower',
+  'mob.rcptLoanRef': 'Loan ref.',
+  'mob.rcptAppliedFine': 'Applied to fine',
+  'mob.rcptAppliedInterest': 'Applied to interest',
+  'mob.rcptAppliedPrincipal': 'Applied to principal',
+  'mob.rcptAmountReceived': 'Amount received',
+  'mob.rcptAmountPaid': 'Amount paid',
+  'mob.rcptTotalPaid': 'Total paid',
+  'mob.rcptAllocationNote': 'Fine → Interest → Principal allocation as per society rules.',
+  'mob.rcptFooterNote': 'This is your copy of the society record. The office keeps the signed paper receipt.',
+  'mob.rcptPmCash': 'Cash',
+  'mob.rcptPmBankTransfer': 'Bank transfer',
+  'mob.rcptPmCheque': 'Cheque'
 }
 
 export type TranslationKey = keyof typeof en

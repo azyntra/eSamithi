@@ -75,6 +75,137 @@ router.get('/dues', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/v1/me/receipts/:kind/:id — one transaction in receipt detail, so the
+// app can show the member the same document the office prints. Structured data
+// rather than rendered HTML: the app owns the wording and the language, and the
+// same payload can feed a PDF later.
+// Ownership is checked in the WHERE clause — another member's id is a plain 404.
+const RECEIPT_KINDS = ['income', 'expense', 'loan-payment'];
+
+router.get('/receipts/:kind/:id(\\d+)', async (req, res, next) => {
+  try {
+    const { kind } = req.params;
+    if (!RECEIPT_KINDS.includes(kind)) {
+      throw Object.assign(new Error('Unknown receipt type'), { statusCode: 404 });
+    }
+    const id = parseInt(req.params.id);
+    const pool = getPool();
+
+    // Header block — same whitelist the society-info screen uses
+    const [settingsRows] = await pool.query(
+      "SELECT `key`, `value` FROM settings WHERE `key` IN ('society_name','society_phone','society_address')"
+    );
+    const society = {};
+    for (const s of settingsRows) society[s.key] = s.value;
+
+    const [[member]] = await pool.query(
+      'SELECT full_name, nic, society_id FROM members WHERE id = ?',
+      [req.member.id]
+    );
+
+    let receipt = null;
+
+    if (kind === 'income') {
+      const [[row]] = await pool.query(
+        `SELECT i.id, DATE_FORMAT(i.date, '%Y-%m-%d') as date, i.amount, i.status, i.payment_method,
+                i.months_covered, i.notes, i.principal_part, i.interest_part, i.loan_id,
+                t.name as type_name, t.code as type_code, w.name as wallet_name
+         FROM income_ledger i
+         JOIN income_types t ON t.id = i.income_type_id
+         LEFT JOIN wallets w ON w.id = i.wallet_id
+         WHERE i.id = ? AND i.member_id = ?`,
+        [id, req.member.id]
+      );
+      if (row) {
+        receipt = {
+          receipt_no: `INC-${String(row.id).padStart(5, '0')}`,
+          date: row.date,
+          amount: Number(row.amount),
+          status: row.status,
+          payment_method: row.payment_method,
+          type_name: row.type_name,
+          type_code: row.type_code,
+          wallet_name: row.wallet_name,
+          months_covered: row.months_covered,
+          notes: row.notes,
+          principal_part: row.principal_part === null ? null : Number(row.principal_part),
+          interest_part: row.interest_part === null ? null : Number(row.interest_part),
+          loan_id: row.loan_id
+        };
+      }
+    } else if (kind === 'expense') {
+      const [[row]] = await pool.query(
+        `SELECT e.id, DATE_FORMAT(e.date, '%Y-%m-%d') as date, e.amount, e.status, e.payment_method,
+                e.voucher_no, e.notes, e.death_reference,
+                t.name as type_name, t.code as type_code, w.name as wallet_name
+         FROM expense_ledger e
+         JOIN expense_types t ON t.id = e.expense_type_id
+         LEFT JOIN wallets w ON w.id = e.wallet_id
+         WHERE e.id = ? AND e.member_id = ?`,
+        [id, req.member.id]
+      );
+      if (row) {
+        receipt = {
+          receipt_no: row.voucher_no || `EXP-${String(row.id).padStart(5, '0')}`,
+          date: row.date,
+          amount: Number(row.amount),
+          status: row.status,
+          payment_method: row.payment_method,
+          type_name: row.type_name,
+          type_code: row.type_code,
+          wallet_name: row.wallet_name,
+          notes: row.notes,
+          death_reference: row.death_reference
+        };
+      }
+    } else {
+      // Loan repayment — ownership rides on the parent loan
+      const [[row]] = await pool.query(
+        `SELECT lp.id, lp.loan_id, DATE_FORMAT(lp.date, '%Y-%m-%d') as date,
+                lp.principal_paid, lp.interest_paid, lp.fines_paid, w.name as wallet_name
+         FROM loan_payments lp
+         JOIN loans l ON l.id = lp.loan_id
+         LEFT JOIN wallets w ON w.id = lp.wallet_id
+         WHERE lp.id = ? AND l.member_id = ?`,
+        [id, req.member.id]
+      );
+      if (row) {
+        const principal = Number(row.principal_paid);
+        const interest = Number(row.interest_paid);
+        const fines = Number(row.fines_paid);
+        receipt = {
+          receipt_no: `LNP-${String(row.id).padStart(5, '0')}`,
+          date: row.date,
+          amount: principal + interest + fines,
+          status: 'Active',
+          loan_id: row.loan_id,
+          principal_paid: principal,
+          interest_paid: interest,
+          fines_paid: fines,
+          wallet_name: row.wallet_name
+        };
+      }
+    }
+
+    if (!receipt) throw Object.assign(new Error('Receipt not found'), { statusCode: 404 });
+
+    res.json({
+      kind,
+      society: {
+        name: society.society_name || null,
+        phone: society.society_phone || null,
+        address: society.society_address || null
+      },
+      member: {
+        full_name: member ? member.full_name : null,
+        nic: member ? member.nic : null,
+        society_id: member ? member.society_id : null
+      },
+      ...receipt
+    });
+  } catch (err) { next(err); }
+});
+
 // GET /api/v1/me/loans/:id — own loan only; accrues first so figures are current
 router.get('/loans/:id(\\d+)', async (req, res, next) => {
   const conn = await getPool().getConnection();

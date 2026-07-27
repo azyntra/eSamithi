@@ -3,7 +3,33 @@
    ═══════════════════════════════════════════════════════════════ */
 
 /* Inter font — uses system-installed Inter if available, otherwise falls back to system UI fonts.
-   Removed Google Fonts @import to ensure full offline capability. */
+   Removed Google Fonts @import to ensure full offline capability.
+
+   Noto Sans Sinhala IS bundled: printed receipts must render Sinhala identically on
+   every machine, and a stock Windows install has no Noto Sinhala. Shipping the file
+   also keeps printing correct with no network. It carries Latin glyphs too, so it
+   doubles as the fallback when Inter is absent. */
+@font-face {
+  font-family: 'Noto Sans Sinhala';
+  src: url('./assets/fonts/NotoSansSinhala-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans Sinhala';
+  src: url('./assets/fonts/NotoSansSinhala-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans Sinhala';
+  src: url('./assets/fonts/NotoSansSinhala-Bold.ttf') format('truetype');
+  font-weight: 700 800;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   /* Brand Colors */
@@ -2196,14 +2222,26 @@ tbody td {
     border-collapse: collapse !important;
   }
 
+  /* Report tables want ruled cells. Receipts do NOT — they are a narrow
+     label/value list, so exclude them or every receipt line gets boxed. */
   th, td {
     border: 1px solid #ddd !important;
     padding: 8px !important;
     color: #000 !important;
   }
 
+  .printable-receipt th,
+  .printable-receipt td {
+    border: 0 !important;
+    padding: 6px 0 !important;
+  }
+
   .printable-receipt {
     display: block !important;
+  }
+
+  @page {
+    margin: 12mm;
   }
 }
 

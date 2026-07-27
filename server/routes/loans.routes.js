@@ -100,10 +100,12 @@ router.post('/', async (req, res, next) => {
     if (wallet.length === 0) throw Object.assign(new Error('Disbursement wallet not found'), { statusCode: 404 });
     if (Number(wallet[0].balance) < d.principal_amount) throw Object.assign(new Error('Insufficient funds to disburse this loan'), { statusCode: 400 });
 
+    // accrual_day pins the monthly charge to the issue day-of-month so it never
+    // drifts through short months (see migration 012).
     const [result] = await conn.query(
-      `INSERT INTO loans (member_id, principal_amount, principal_owed, interest_owed, fines_owed, purpose, date_issued, status, is_migrated, last_accrual_date, disbursement_wallet_id)
-       VALUES (?, ?, ?, 0, 0, ?, ?, 'Active', 0, ?, ?)`,
-      [d.member_id, d.principal_amount, d.principal_amount, d.purpose || null, d.date_issued, d.date_issued, d.disbursement_wallet_id]
+      `INSERT INTO loans (member_id, principal_amount, principal_owed, interest_owed, fines_owed, purpose, date_issued, status, is_migrated, last_accrual_date, accrual_day, disbursement_wallet_id)
+       VALUES (?, ?, ?, 0, 0, ?, ?, 'Active', 0, ?, DAY(?), ?)`,
+      [d.member_id, d.principal_amount, d.principal_amount, d.purpose || null, d.date_issued, d.date_issued, d.date_issued, d.disbursement_wallet_id]
     );
     const loanId = result.insertId;
 
@@ -133,6 +135,43 @@ router.post('/migrate', async (req, res, next) => {
       throw Object.assign(new Error('Borrower and remaining principal are required'), { statusCode: 400 });
     }
 
+    const principalOwed = Number(d.principal_owed);
+    // The original face value must be stated explicitly. Defaulting it to the
+    // remaining balance (the old behaviour) recorded a figure the loan never had.
+    const principalAmount = d.principal_amount == null || d.principal_amount === ''
+      ? principalOwed
+      : Number(d.principal_amount);
+    if (!Number.isFinite(principalAmount) || principalAmount < principalOwed) {
+      throw Object.assign(new Error('Original principal cannot be less than the remaining principal'), { statusCode: 400 });
+    }
+
+    const interestOwed = Number(d.interest_owed) || 0;
+    const finesOwed = Number(d.fines_owed) || 0;
+    if (interestOwed < 0 || finesOwed < 0) {
+      throw Object.assign(new Error('Outstanding interest and fines cannot be negative'), { statusCode: 400 });
+    }
+
+    // "Balances as of" — the date the society's paper figures were computed
+    // through. Interest resumes from exactly here, so no part-month is lost or
+    // double-charged and the charge day keeps matching the borrower's passbook.
+    // Defaults to today, which is the old behaviour.
+    const [[dateCheck]] = await conn.query(
+      'SELECT COALESCE(?, CURDATE()) AS as_of, CURDATE() AS today, ? AS issued',
+      [d.as_of_date || null, d.date_issued || null]
+    );
+    const asOf = String(dateCheck.as_of).slice(0, 10);
+    const today = String(dateCheck.today).slice(0, 10);
+    // An unknown issue date falls back to the as-of date, not today: the paper
+    // record often omits it, and defaulting to today would make every past
+    // as-of date look like it predates the loan.
+    const issued = dateCheck.issued ? String(dateCheck.issued).slice(0, 10) : asOf;
+    if (asOf > today) {
+      throw Object.assign(new Error('The "balances as of" date cannot be in the future'), { statusCode: 400 });
+    }
+    if (asOf < issued) {
+      throw Object.assign(new Error('The "balances as of" date cannot be before the loan was issued'), { statusCode: 400 });
+    }
+
     const [activeLoan] = await conn.query(
       "SELECT COUNT(*) as count FROM loans WHERE member_id = ? AND status IN ('Active', 'Overdue')",
       [d.member_id]
@@ -141,26 +180,44 @@ router.post('/migrate', async (req, res, next) => {
       throw Object.assign(new Error('This member already has an active loan in the system'), { statusCode: 400 });
     }
 
-    // Future accrual starts from today's position — history stays on paper
+    // Guarantors are optional here (old paper records often omit them), but
+    // whatever is entered must be sane — and it counts toward the society's
+    // exposure limits from then on.
+    const guarantorIds = [...new Set((d.guarantor_ids || []).map(Number).filter(Boolean))];
+    if (guarantorIds.includes(Number(d.member_id))) {
+      throw Object.assign(new Error('The borrower cannot be their own guarantor'), { statusCode: 400 });
+    }
+    if (guarantorIds.length > 0) {
+      const [known] = await conn.query('SELECT id FROM members WHERE id IN (?)', [guarantorIds]);
+      if (known.length !== guarantorIds.length) {
+        throw Object.assign(new Error('One of the selected guarantors is not a member'), { statusCode: 400 });
+      }
+    }
+
+    // Status follows the figures instead of being hardcoded 'Active': unpaid
+    // fines mean the loan is behind. 'Defaulted' can be stated explicitly.
+    const status = d.status === 'Defaulted' ? 'Defaulted' : finesOwed > 0 ? 'Overdue' : 'Active';
+
     const [result] = await conn.query(
-      `INSERT INTO loans (member_id, principal_amount, principal_owed, interest_owed, fines_owed, purpose, date_issued, status, is_migrated, last_accrual_date, disbursement_wallet_id)
-       VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, CURDATE()), 'Active', 1, CURDATE(), NULL)`,
+      `INSERT INTO loans (member_id, principal_amount, principal_owed, interest_owed, fines_owed, purpose, date_issued, status, is_migrated, last_accrual_date, accrual_day, disbursement_wallet_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, DAY(?), NULL)`,
       [
         d.member_id,
-        d.principal_amount || d.principal_owed,
-        d.principal_owed,
-        d.interest_owed || 0,
-        d.fines_owed || 0,
+        principalAmount,
+        principalOwed,
+        interestOwed,
+        finesOwed,
         d.purpose || 'Migrated from paper records',
-        d.date_issued || null
+        issued,
+        status,
+        asOf,
+        asOf
       ]
     );
     const loanId = result.insertId;
 
-    if (d.guarantor_ids && d.guarantor_ids.length > 0) {
-      for (const gid of d.guarantor_ids) {
-        await conn.query('INSERT INTO loan_guarantors (loan_id, member_id) VALUES (?, ?)', [loanId, gid]);
-      }
+    for (const gid of guarantorIds) {
+      await conn.query('INSERT INTO loan_guarantors (loan_id, member_id) VALUES (?, ?)', [loanId, gid]);
     }
 
     await conn.commit();

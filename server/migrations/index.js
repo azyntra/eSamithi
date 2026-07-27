@@ -258,6 +258,22 @@ async function purukaWanted(pool) {
   }
 }
 
+// 012 — the loan's real monthly charge day. The accrual loop used to clamp the
+// day-of-month downward and never restore it, so a loan charged on the 31st
+// slid to the 28th after February and stayed there, drifting away from the
+// borrower's passbook. Anchoring to a stored day fixes that. Backfilled from
+// date_issued so existing loans return to their original day.
+async function loanAccrualDay(pool) {
+  const [cols] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'loans' AND COLUMN_NAME = 'accrual_day'`
+  );
+  if (cols.length === 0) {
+    await pool.query('ALTER TABLE loans ADD COLUMN accrual_day TINYINT DEFAULT NULL AFTER last_accrual_date');
+    await pool.query('UPDATE loans SET accrual_day = DAY(date_issued) WHERE accrual_day IS NULL AND date_issued IS NOT NULL');
+  }
+}
+
 module.exports = [
   { id: '000_base_schema', up: baseSchema },
   { id: '004_loan_payment_wallet', up: loanPaymentWallet },
@@ -267,5 +283,6 @@ module.exports = [
   { id: '008_puruka', up: puruka },
   { id: '009_staff_user_lifecycle', up: staffUserLifecycle },
   { id: '010_client_errors', up: clientErrors },
-  { id: '011_puruka_wanted', up: purukaWanted }
+  { id: '011_puruka_wanted', up: purukaWanted },
+  { id: '012_loan_accrual_day', up: loanAccrualDay }
 ];

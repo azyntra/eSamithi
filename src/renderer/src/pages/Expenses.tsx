@@ -4,7 +4,7 @@ import { useLedger, PAGE_SIZE_OPTIONS } from '../hooks/useLedger'
 import { useWallets } from '../hooks/useWallets'
 import { useSettings } from '../hooks/useSettings'
 import { formatCurrency } from '../utils/formatters'
-import { printReceipt, buildReceiptHtml } from '../utils/print'
+import { printReceipt, buildReceiptHtml, formatPrintDate, printPaymentMethod } from '../utils/print'
 import { invalidateCaches } from '../utils/cache'
 import { showToast } from '../components/Toast'
 import LedgerFilterBar from '../components/LedgerFilterBar'
@@ -53,22 +53,23 @@ export default function Expenses(): React.ReactElement {
     }
   }
 
-  const handlePrintVoucher = (t: ExpenseTransaction): void => {
+  // `tx`, not `t` — the parameter used to shadow the i18n t().
+  const handlePrintVoucher = (tx: ExpenseTransaction): void => {
     printReceipt(buildReceiptHtml({
       societyName: settings.society_name || 'eSamithi',
-      title: 'Payment Voucher',
-      receiptNo: t.voucher_no || `EXP-${String(t.id).padStart(5, '0')}`,
-      date: new Date(t.date).toLocaleDateString('en-GB'),
+      title: t('rcpt.expenseTitle'),
+      receiptNo: tx.voucher_no || `EXP-${String(tx.id).padStart(5, '0')}`,
+      date: formatPrintDate(tx.date),
       rows: [
-        ['Paid To', t.recipient_name || '—'],
-        ...(t.member_nic ? ([['NIC', t.member_nic]] as Array<[string, string]>) : []),
-        ['Expense Type', t.expense_type_name || '—'],
-        ['Payment Method', t.payment_method],
-        ['Paid From', t.wallet_name || '—']
+        [t('rcpt.paidTo'), tx.recipient_name || '—'],
+        ...(tx.member_nic ? ([[t('rcpt.nic'), tx.member_nic]] as Array<[string, string]>) : []),
+        [t('rcpt.expenseType'), tx.expense_type_name || '—'],
+        [t('rcpt.paymentMethod'), printPaymentMethod(tx.payment_method)],
+        [t('rcpt.paidFrom'), tx.wallet_name || '—']
       ],
-      amountLabel: 'Amount Paid',
-      amountValue: formatCurrency(t.amount),
-      footerNote: t.notes || undefined
+      amountLabel: t('rcpt.amountPaid'),
+      amountValue: formatCurrency(tx.amount),
+      footerNote: tx.notes || undefined
     }))
   }
 
