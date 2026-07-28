@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, LogIn, Users, Wallet, Landmark, PiggyBank, Smartphone, Lock, ShieldAlert, Database, WifiOff, UserPlus, KeyRound, Trash2, ShieldCheck, Shield, Unlock } from 'lucide-react'
+import { ArrowLeft, LogIn, Users, Wallet, Landmark, PiggyBank, Smartphone, Lock, ShieldAlert, Database, WifiOff, UserPlus, KeyRound, Trash2, ShieldCheck, Shield, Unlock, Wrench } from 'lucide-react'
 import { api, rs, fmtDate, timeAgo } from '../api'
 import { useAuth } from '../auth'
 import { Button, StatusBadge, Skeleton, EmptyState, useToast, Modal, useConfirm, CopyChip } from '../components/ui'
@@ -63,6 +63,44 @@ export default function SamithiDetail(): React.ReactElement {
     try { await fn(); await load() }
     catch (e) { toast('error', (e as Error).message) }
     finally { setBusy(null) }
+  }
+
+  // ── Migration mode ──
+  // Stored inverted in the tenant: migration_completed 'true' = migration
+  // finished = mode OFF. Anything else (including a missing row) means ON.
+  const migrationOn = d?.detail
+    ? (d.detail.settings.find((s) => s.key === 'migration_completed')?.value ?? 'false') !== 'true'
+    : null
+
+  const toggleMigration = async (): Promise<void> => {
+    const turningOn = !migrationOn
+    const ok = await confirm({
+      title: turningOn ? `Put ${d!.samithi.name_en} back into migration mode?` : `Finish migration for ${d!.samithi.name_en}?`,
+      danger: turningOn,
+      confirmLabel: turningOn ? 'Turn on' : 'Go live',
+      message: turningOn ? (
+        <>
+          Officers will see a permanent <b>Migration Mode</b> banner, and the guards that
+          protect live data relax: opening wallet balances become editable again and loans
+          already running on paper can be entered without the usual limits.
+          <br /><br />
+          Only do this for a society that is still being set up.
+        </>
+      ) : (
+        <>
+          Entering paper history stops: no more opening wallet balances and no more
+          &quot;existing loan&quot; entry. Normal day-to-day operation begins, and the
+          banner disappears.
+          <br /><br />
+          You can switch it back on from here if something was missed.
+        </>
+      )
+    })
+    if (!ok) return
+    run('migration', async () => {
+      await api(`/samithis/${slug}/migration-mode`, { method: 'PATCH', body: JSON.stringify({ enabled: turningOn }) })
+      toast('success', turningOn ? 'Migration mode is on' : `${d!.samithi.name_en} is live`)
+    })
   }
 
   const resetPassword = (u: StaffUser): Promise<void> => run(`rp-${u.id}`, async () => {
@@ -198,6 +236,35 @@ export default function SamithiDetail(): React.ReactElement {
                     <td>{!w.is_active && <span className="badge neutral">inactive</span>}</td></tr>
                 ))}</tbody>
               </table></div>
+            </div>
+          </div>
+
+          {/* Go-live switch. Deliberately not on the tenant's own Settings page:
+              staff must not be able to put their live society back into setup. */}
+          <div className="card" style={{ marginBottom: 18 }}>
+            <div className="card-head">
+              <Wrench size={15} />
+              <h3 style={{ flex: 1 }}>Migration mode</h3>
+              <span className={`badge ${migrationOn ? 'warn' : 'active'}`}>
+                <span className="dot" style={{ background: 'currentColor' }} />
+                {migrationOn ? 'On — setting up' : 'Off — live'}
+              </span>
+            </div>
+            <div className="card-pad row" style={{ gap: 16, alignItems: 'flex-start' }}>
+              <p className="t-mut" style={{ flex: 1, fontSize: 13, lineHeight: 1.55, margin: 0 }}>
+                {migrationOn
+                  ? 'This society is still being set up. Officers can enter opening wallet balances and loans already running on paper, and they see a Migration Mode banner. Turn it off once the paper records are in.'
+                  : 'Normal operation. Opening wallet balances are locked and loans already running on paper can no longer be entered. Turn it back on only if something from the paper records was missed.'}
+              </p>
+              {canWrite && (
+                <Button
+                  variant={migrationOn ? 'success' : 'ghost'}
+                  loading={busy === 'migration'}
+                  onClick={toggleMigration}
+                >
+                  {migrationOn ? 'Finish migration — go live' : 'Turn migration mode on'}
+                </Button>
+              )}
             </div>
           </div>
 

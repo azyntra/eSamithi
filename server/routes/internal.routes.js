@@ -248,18 +248,32 @@ router.post('/broadcast', async (req, res, next) => {
 });
 
 // PATCH /internal/settings — the control plane pushing tenant-visible settings.
-// Today that means the society's own name: the console holds the registry name,
-// but receipts, reports and the member app all read settings.society_name, so a
-// rename that stops at the registry would never reach the people who see it.
+// society_name: the console holds the registry name, but receipts, reports and
+// the member app all read settings.society_name, so a rename that stops at the
+// registry would never reach the people who see it.
+// migration_completed: the operator's go-live switch. It was deliberately kept
+// out of the tenant's own Settings page (staff must not flip their own society
+// into setup mode) — the super-admin console is the "administrator" that
+// comment reserved it for. Note the inverted sense: 'true' means migration is
+// FINISHED, i.e. migration mode is OFF.
 // Whitelisted on purpose — this must never become a general settings backdoor.
-const PUSHABLE_SETTINGS = ['society_name'];
+const PUSHABLE_SETTINGS = {
+  society_name: (v) => (v.length > 0 ? v : null),
+  migration_completed: (v) => (v === 'true' || v === 'false' ? v : null)
+};
 
 router.patch('/settings', async (req, res, next) => {
   try {
-    const updates = Object.entries(req.body || {})
-      .filter(([key]) => PUSHABLE_SETTINGS.includes(key))
-      .map(([key, value]) => [key, String(value ?? '').trim()])
-      .filter(([, value]) => value.length > 0);
+    const updates = [];
+    for (const [key, raw] of Object.entries(req.body || {})) {
+      const validate = PUSHABLE_SETTINGS[key];
+      if (!validate) continue;
+      const value = validate(String(raw ?? '').trim());
+      if (value === null) {
+        return res.status(400).json({ error: `Invalid value for ${key}` });
+      }
+      updates.push([key, value]);
+    }
 
     if (updates.length === 0) return res.status(400).json({ error: 'No supported settings supplied' });
 

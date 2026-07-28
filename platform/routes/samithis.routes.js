@@ -194,6 +194,38 @@ function tempPassword() {
   return crypto.randomBytes(6).toString('base64url'); // ~8 chars, url-safe
 }
 
+// PATCH /pa/v1/samithis/:slug/migration-mode — the go-live switch.
+// Migration mode lets a society enter its paper history: opening wallet
+// balances and loans already running. It is deliberately absent from the
+// tenant's own Settings page so staff cannot put their live society back into
+// setup; the operator owns it. Stored inverted in the tenant DB
+// (migration_completed 'true' = migration finished = mode OFF).
+// Unlike a rename this cannot degrade gracefully — if the tenant is
+// unreachable nothing changed, so surface the failure.
+router.patch('/:slug/migration-mode', requireSuperadmin, async (req, res, next) => {
+  try {
+    const s = await activeTenant(req.params.slug);
+    if (!s) return res.status(404).json({ error: 'Unknown samithi' });
+    if (s.status !== 'active') return res.status(409).json({ error: 'Samithi is not active' });
+    if (typeof req.body.enabled !== 'boolean') {
+      return res.status(400).json({ error: 'enabled (true/false) is required' });
+    }
+
+    const enabled = req.body.enabled;
+    const r = await tenantWrite(s.api_url, s.slug, 'PATCH', '/internal/settings', {
+      migration_completed: enabled ? 'false' : 'true'
+    });
+
+    res.locals.audit = {
+      action: enabled ? 'migration_mode_on' : 'migration_mode_off',
+      samithi: s.slug,
+      after: { migration_mode: enabled }
+    };
+    if (r.status >= 400) return res.status(r.status).json(r.data);
+    res.json({ success: true, migration_mode: enabled });
+  } catch (err) { next(err); }
+});
+
 // POST /pa/v1/samithis/:slug/users — create a staff login
 router.post('/:slug/users', requireSuperadmin, async (req, res, next) => {
   try {

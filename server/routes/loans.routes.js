@@ -155,8 +155,13 @@ router.post('/migrate', async (req, res, next) => {
     // through. Interest resumes from exactly here, so no part-month is lost or
     // double-charged and the charge day keeps matching the borrower's passbook.
     // Defaults to today, which is the old behaviour.
+    // DATE_FORMAT, not raw CURDATE(): mysql2 hands DATE values back as JS Date
+    // objects, and String(date).slice(0,10) yields "Tue Jul 28" — which then
+    // fails to insert. Formatting in SQL guarantees 'YYYY-MM-DD' strings.
     const [[dateCheck]] = await conn.query(
-      'SELECT COALESCE(?, CURDATE()) AS as_of, CURDATE() AS today, ? AS issued',
+      `SELECT DATE_FORMAT(COALESCE(?, CURDATE()), '%Y-%m-%d') AS as_of,
+              DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS today,
+              DATE_FORMAT(?, '%Y-%m-%d') AS issued`,
       [d.as_of_date || null, d.date_issued || null]
     );
     const asOf = String(dateCheck.as_of).slice(0, 10);
