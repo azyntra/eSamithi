@@ -149,8 +149,12 @@ export default function App(): React.ReactElement {
     window.api.setup
       ?.getState?.()
       .then((s) => {
-        setConfigured(s.configured)
-        setSetupNeeded(!s.configured)
+        // A samithi code is mandatory: a legacy config (server address but no
+        // code) must also go through the setup screen — signing in without a
+        // samithi identity silently relies on the server's default tenant.
+        const ready = s.configured && Boolean(s.code)
+        setConfigured(ready)
+        setSetupNeeded(!ready)
       })
       .catch(() => setSetupNeeded(false))
   }, [])
