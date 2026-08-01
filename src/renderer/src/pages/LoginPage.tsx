@@ -5,9 +5,10 @@ import { useT, LangSwitcher } from '../i18n'
 
 interface LoginPageProps {
   onLogin: (user: { id: number; username: string; full_name: string; role: string }) => void
+  onChangeSamithi?: () => void
 }
 
-export default function LoginPage({ onLogin }: LoginPageProps): React.ReactElement {
+export default function LoginPage({ onLogin, onChangeSamithi }: LoginPageProps): React.ReactElement {
   const { t } = useT()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -15,6 +16,7 @@ export default function LoginPage({ onLogin }: LoginPageProps): React.ReactEleme
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [appVersion, setAppVersion] = useState('v1.0.0')
+  const [samithi, setSamithi] = useState<{ code: string | null; name: string | null } | null>(null)
   const usernameRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -23,6 +25,12 @@ export default function LoginPage({ onLogin }: LoginPageProps): React.ReactEleme
     if (window.api && window.api.updater) {
       window.api.updater.getVersion().then(v => setAppVersion(`v${v}`)).catch(() => {})
     }
+    // Which samithi is this machine connected to? Shown under the brand so an
+    // office can immediately see when a computer points at the wrong samithi.
+    window.api.setup
+      ?.getState?.()
+      .then((s) => setSamithi({ code: s.code, name: s.name }))
+      .catch(() => {})
   }, [])
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -62,6 +70,50 @@ export default function LoginPage({ onLogin }: LoginPageProps): React.ReactEleme
             </div>
             <h1>eSamithi</h1>
             <p>{t('login.platform')}</p>
+            {samithi?.name ? (
+              <p style={{ marginTop: '6px', fontSize: '13px', color: 'var(--text-muted, #64748b)' }}>
+                {t('login.connectedTo')} <strong style={{ color: 'var(--text, #0f172a)' }}>{samithi.name}</strong>
+                {samithi.code ? <span style={{ fontFamily: 'monospace' }}> ({samithi.code})</span> : null}
+                {onChangeSamithi && (
+                  <>
+                    {' · '}
+                    <button
+                      type="button"
+                      onClick={onChangeSamithi}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        color: 'var(--primary, #1E64D4)',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      {t('settings.changeSamithi')}
+                    </button>
+                  </>
+                )}
+              </p>
+            ) : onChangeSamithi ? (
+              <p style={{ marginTop: '6px', fontSize: '13px' }}>
+                <button
+                  type="button"
+                  onClick={onChangeSamithi}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    color: 'var(--primary, #1E64D4)',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  {t('login.setSamithi')}
+                </button>
+              </p>
+            ) : null}
           </div>
 
           {/* Form */}

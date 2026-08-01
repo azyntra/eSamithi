@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { WifiOff } from 'lucide-react'
+import { WifiOff, DownloadCloud } from 'lucide-react'
 import Layout from './components/Layout'
-import { I18nProvider } from './i18n'
+import { I18nProvider, useT } from './i18n'
 import ToastContainer, { showToast } from './components/Toast'
 import { clearAllCaches } from './utils/cache'
 import LoginPage from './pages/LoginPage'
@@ -82,6 +82,52 @@ function OfflineBar(): React.ReactElement {
   )
 }
 
+// Shown on every screen (including login) once an update has finished
+// downloading — offices otherwise only ever saw updates inside Settings.
+function UpdateReadyBar({ version }: { version: string }): React.ReactElement {
+  const { t } = useT()
+  return (
+    <div
+      role="status"
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 2900,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '12px',
+        padding: '8px 16px',
+        background: 'var(--primary, #1E64D4)',
+        color: '#fff',
+        fontSize: '0.85rem',
+        fontWeight: 600,
+        boxShadow: '0 -2px 8px rgba(0,0,0,0.25)'
+      }}
+    >
+      <DownloadCloud size={16} />
+      <span>{t('settings.downloadedReady', { v: version })}</span>
+      <button
+        onClick={() => window.api.updater.installUpdate()}
+        style={{
+          border: '1px solid rgba(255,255,255,0.6)',
+          background: 'rgba(255,255,255,0.12)',
+          color: '#fff',
+          borderRadius: '6px',
+          padding: '3px 14px',
+          fontSize: '0.8rem',
+          fontWeight: 600,
+          cursor: 'pointer'
+        }}
+      >
+        {t('settings.installRestart')}
+      </button>
+    </div>
+  )
+}
+
 // Super-admin support workspace injects a pre-authenticated user (the
 // impersonation token is already valid) so we skip the login/setup screens.
 // Undefined in the normal desktop app — zero effect there.
@@ -93,13 +139,30 @@ export default function App(): React.ReactElement {
   // null = still asking the main process; true = no samithi configured yet
   // (first run) → show the samithi-code setup screen before login
   const [setupNeeded, setSetupNeeded] = useState<boolean | null>(impersonationUser ? false : null)
+  // Whether a config already exists — decides if the setup screen may be
+  // cancelled back to sign-in (change-samithi) or is a mandatory first run
+  const [configured, setConfigured] = useState(false)
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null)
 
   useEffect(() => {
     if (impersonationUser) return // workspace: already authenticated
     window.api.setup
       ?.getState?.()
-      .then((s) => setSetupNeeded(!s.configured))
+      .then((s) => {
+        setConfigured(s.configured)
+        setSetupNeeded(!s.configured)
+      })
       .catch(() => setSetupNeeded(false))
+  }, [])
+
+  // Updates download automatically in the main process; surface the "ready to
+  // install" state everywhere, not just inside Settings → About.
+  useEffect(() => {
+    if (impersonationUser) return // workspace shim has no real updater
+    const cleanup = window.api.updater?.onUpdateEvent?.((e: { type: string; version?: string }) => {
+      if (e.type === 'downloaded' && e.version) setUpdateVersion(e.version)
+    })
+    return cleanup
   }, [])
 
   // JWT expired mid-session (main process saw a 401) — return to login
@@ -150,10 +213,17 @@ export default function App(): React.ReactElement {
       <I18nProvider>
         <ToastContainer />
         {offline && <OfflineBar />}
+        {updateVersion && <UpdateReadyBar version={updateVersion} />}
         {setupNeeded === null ? null : setupNeeded ? (
-          <SetupPage onDone={() => setSetupNeeded(false)} />
+          <SetupPage
+            onDone={() => {
+              setConfigured(true)
+              setSetupNeeded(false)
+            }}
+            onCancel={configured ? () => setSetupNeeded(false) : undefined}
+          />
         ) : (
-          <LoginPage onLogin={handleLogin} />
+          <LoginPage onLogin={handleLogin} onChangeSamithi={() => setSetupNeeded(true)} />
         )}
       </I18nProvider>
     )
@@ -164,6 +234,7 @@ export default function App(): React.ReactElement {
       <HashRouter>
         <ToastContainer />
         {offline && <OfflineBar />}
+        {updateVersion && <UpdateReadyBar version={updateVersion} />}
         <Routes>
           <Route path="/" element={<Layout user={user} onLogout={handleLogout} />}>
             <Route index element={<Navigate to="/dashboard" replace />} />

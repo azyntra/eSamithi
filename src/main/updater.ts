@@ -30,8 +30,11 @@ export function initUpdater(window: BrowserWindow): void {
     return
   }
 
-  // Configure updater
-  autoUpdater.autoDownload = false
+  // Configure updater. autoDownload matters: offices rarely open
+  // Settings → About (the only place with a Download button), and a machine
+  // that cannot sign in can never reach it — so updates must download
+  // themselves and install on quit (or via the renderer's "ready" bar).
+  autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
 
   // ── Event listeners ────────────────────────────────────────────

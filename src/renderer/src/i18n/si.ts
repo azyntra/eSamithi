@@ -51,7 +51,7 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'sidebar.activeLoans': 'සක්‍රීය ණය {count}',
 
   // Login
-  'login.platform': 'මරණාධාර සමිති කළමනාකරණ වේදිකාව',
+  'login.platform': 'සමිති කළමනාකරණ වේදිකාව',
   'login.username': 'පරිශීලක නාමය',
   'login.password': 'මුරපදය',
   'login.usernamePlaceholder': 'ඔබගේ පරිශීලක නාමය ඇතුළත් කරන්න',
@@ -63,6 +63,8 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'login.tagline': 'සමාජය. සමගිය. සහයෝගය.',
   'login.taglineSub': 'නවීන තාක්ෂණයෙන් ගම්මාන සුබසාධක සමිති ශක්තිමත් කිරීම',
   'login.desktopApp': 'ඩෙස්ක්ටොප් යෙදුම',
+  'login.connectedTo': 'සමිතිය:',
+  'login.setSamithi': 'සමිති කේතය ඇතුළත් කරන්න',
 
   // Migration banner
   'banner.migration':
@@ -858,6 +860,7 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'setup.errCode': 'කරුණාකර ඔබේ සමිති කේතය ඇතුළත් කරන්න',
   'setup.errResolve': 'එම සමිතිය සොයාගත නොහැකි විය. කේතය සහ ඔබේ සම්බන්ධතාවය පරීක්ෂා කරන්න.',
   'setup.help': 'කේතය ඔබේ සමිතියේ පිළිගැනීමේ ලිපියේ ඇත',
+  'setup.cancel': 'පිවිසුමට ආපසු යන්න',
   'settings.samithiSection': 'සමිති සම්බන්ධතාවය',
   'settings.samithiCodePlaceholder': 'නව සමිති කේතය',
   'settings.changeSamithi': 'සමිතිය වෙනස් කරන්න',

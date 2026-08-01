@@ -47,7 +47,7 @@ export const en = {
   'sidebar.activeLoans': '{count} active loan(s)',
 
   // Login
-  'login.platform': 'Maranadhara Samithi Management Platform',
+  'login.platform': 'Samithi Management Platform',
   'login.username': 'Username',
   'login.password': 'Password',
   'login.usernamePlaceholder': 'Enter your username',
@@ -59,6 +59,8 @@ export const en = {
   'login.tagline': 'Community. Unity. Support.',
   'login.taglineSub': 'Empowering village welfare societies with modern technology',
   'login.desktopApp': 'Desktop Application',
+  'login.connectedTo': 'Samithi:',
+  'login.setSamithi': 'Set samithi code',
 
   // Migration banner
   'banner.migration':
@@ -854,6 +856,7 @@ export const en = {
   'setup.errCode': 'Please enter your samithi code',
   'setup.errResolve': 'Could not find that samithi. Check the code and your connection.',
   'setup.help': 'The code is on your society\'s welcome letter',
+  'setup.cancel': 'Back to sign in',
   'settings.samithiSection': 'Samithi connection',
   'settings.samithiCodePlaceholder': 'New samithi code',
   'settings.changeSamithi': 'Change samithi',

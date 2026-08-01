@@ -39,62 +39,11 @@ function createWindow(): BrowserWindow {
   return mainWindow
 }
 
-import fs from 'fs'
-
-function ensureConfigExists(): void {
-  const configPath = path.join(app.getPath('userData'), 'server.config.json')
-  
-  const rootConfig = path.join(app.getAppPath(), 'server.config.json')
-  let defaultUrl = 'http://141.147.75.132/api/v1'
-  
-  if (fs.existsSync(rootConfig)) {
-    try {
-      const rootData = JSON.parse(fs.readFileSync(rootConfig, 'utf-8'))
-      if (rootData.api_url) defaultUrl = rootData.api_url
-    } catch(e) {}
-  }
-
-  if (!fs.existsSync(configPath)) {
-    if (fs.existsSync(rootConfig)) {
-      fs.copyFileSync(rootConfig, configPath)
-    } else {
-      fs.writeFileSync(configPath, JSON.stringify({ api_url: defaultUrl }, null, 2))
-    }
-  } else {
-    try {
-      const currentData = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
-      let dirty = false
-
-      // If the existing config points to localhost but the bundled one points to cloud, overwrite it.
-      // This fixes the issue for users who already opened the app and got the bad default.
-      if (currentData.api_url && currentData.api_url.includes('localhost') && !defaultUrl.includes('localhost')) {
-        currentData.api_url = defaultUrl
-        dirty = true
-      }
-
-      // Keep the named-environment map in sync with the bundled config so new
-      // server IPs ship with app updates — but never override a machine's
-      // chosen "env" (a field client stays on prod; a test machine on testbed).
-      if (fs.existsSync(rootConfig)) {
-        try {
-          const rootData = JSON.parse(fs.readFileSync(rootConfig, 'utf-8'))
-          if (rootData.environments) {
-            if (JSON.stringify(currentData.environments) !== JSON.stringify(rootData.environments)) {
-              currentData.environments = rootData.environments
-              dirty = true
-            }
-            if (!currentData.env && rootData.env) {
-              currentData.env = rootData.env
-              dirty = true
-            }
-          }
-        } catch(e) {}
-      }
-
-      if (dirty) fs.writeFileSync(configPath, JSON.stringify(currentData, null, 2))
-    } catch(e) {}
-  }
-}
+// NOTE: there is deliberately NO ensureConfigExists() here any more. The old
+// version copied the bundled dev config (env/environments/samithis) onto field
+// machines, which is how the 1.3.0 update silently pointed live offices at the
+// testbed server. Packaged builds now start with no config (→ samithi-code
+// setup screen) and api-client.ts heals configs the old code damaged.
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('lk.esamithi.app')
@@ -102,9 +51,6 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
-
-  // Ensure config exists for API client
-  ensureConfigExists()
 
   // Register IPC handlers (now cloud-based)
   registerIpcHandlers()

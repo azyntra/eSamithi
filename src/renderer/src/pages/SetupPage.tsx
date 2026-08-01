@@ -5,12 +5,15 @@ import { useT, LangSwitcher } from '../i18n'
 
 interface SetupPageProps {
   onDone: () => void
+  // Provided only when the machine is already configured (change-samithi from
+  // the login screen); true first runs must resolve a code to continue.
+  onCancel?: () => void
 }
 
 // First-run screen (multi-samithi): resolve the office's samithi join code
 // via the directory service and persist { slug, name, api_url } for this
 // machine. Replaces the old hardcoded server IP.
-export default function SetupPage({ onDone }: SetupPageProps): React.ReactElement {
+export default function SetupPage({ onDone, onCancel }: SetupPageProps): React.ReactElement {
   const { t } = useT()
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
@@ -117,6 +120,16 @@ export default function SetupPage({ onDone }: SetupPageProps): React.ReactElemen
               <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
                 {loading ? t('setup.checking') : t('setup.check')}
               </button>
+              {onCancel && (
+                <button
+                  type="button"
+                  className="btn login-btn"
+                  style={{ marginTop: '8px' }}
+                  onClick={onCancel}
+                >
+                  {t('setup.cancel')}
+                </button>
+              )}
             </form>
           )}
 

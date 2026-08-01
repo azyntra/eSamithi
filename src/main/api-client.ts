@@ -8,7 +8,9 @@ import { app, BrowserWindow } from 'electron'
 // { code, samithi(slug), name, api_url } is persisted per machine. Legacy
 // configs (api_url only, no samithi) keep working against their server's
 // default tenant until the office is onboarded with a code.
-const DEFAULT_DIRECTORY = 'http://212.227.103.150/directory'
+// Preferred first (stable TLS name on prod, proxies to the platform), IP kept
+// as a fallback for machines with broken DNS.
+const DIRECTORY_URLS = ['https://api.esamithi.com/directory', 'http://212.227.103.150/directory']
 const RE_RESOLVE_AFTER_MS = 3 * 60 * 1000 // unreachable this long → ask the directory again (failover)
 const RE_RESOLVE_EVERY_MS = 60 * 1000
 
@@ -113,18 +115,15 @@ class ApiClient {
       }
     }
 
+    this.healConfig()
+
     try {
       if (fs.existsSync(this.configPath)) {
-        const config: ServerConfig = JSON.parse(fs.readFileSync(this.configPath, 'utf-8'))
-        // Named environments win over the flat api_url: set "env" to one of
-        // the keys in "environments" (e.g. "prod" | "testbed") to switch.
-        if (config.env && config.environments?.[config.env]) {
-          config.api_url = config.environments[config.env]
-        }
-        if (config.env && config.samithis?.[config.env]) {
-          config.samithi = config.samithis[config.env]
-        }
-        return config
+        // Packaged builds understand only the flat fields (api_url, samithi,
+        // code, name, directory_url). The named-environment map is a dev-only
+        // convenience — honouring it here is what let a dev value flip field
+        // machines to the testbed server (the 1.3.0 incident).
+        return JSON.parse(fs.readFileSync(this.configPath, 'utf-8'))
       }
     } catch (err) {
       console.error('Failed to load server.config.json:', err)
@@ -132,6 +131,33 @@ class ApiClient {
     // No config at all → first run: the renderer shows the samithi-code
     // setup screen (no more hardcoded default server)
     return {}
+  }
+
+  // One-time repair for configs damaged by the 1.3.0 update: the old
+  // ensureConfigExists() copied "env"/"environments"/"samithis" from the
+  // bundled dev config into every machine's config, and 1.3.0 shipped with
+  // env:"testbed" — which silently redirected field machines to the testbed
+  // server. Stripping those keys lets the machine's own api_url win again;
+  // a config that only ever held the bundled dev fields becomes empty and is
+  // removed so the samithi-code setup screen appears.
+  private healConfig(): void {
+    try {
+      if (!fs.existsSync(this.configPath)) return
+      const raw = JSON.parse(fs.readFileSync(this.configPath, 'utf-8'))
+      if (!('env' in raw) && !('environments' in raw) && !('samithis' in raw)) return
+      delete raw.env
+      delete raw.environments
+      delete raw.samithis
+      if (Object.keys(raw).length === 0) {
+        fs.rmSync(this.configPath)
+        console.log('[api] removed bundled dev config — first-run setup will ask for a samithi code')
+      } else {
+        fs.writeFileSync(this.configPath, JSON.stringify(raw, null, 2))
+        console.log(`[api] healed server config — env override removed, using ${raw.api_url}`)
+      }
+    } catch (err) {
+      console.error('[api] config heal failed:', err)
+    }
   }
 
   private persistConfig(): void {
@@ -151,6 +177,29 @@ class ApiClient {
     }
   }
 
+  // Ask the samithi directory about a join code, trying each directory base
+  // in turn. A 404 is authoritative (the code is unknown) — only network
+  // failures fall through to the next base.
+  private async directoryResolve(code: string): Promise<{ slug: string; name: string; api_url: string; status: string }> {
+    const bases = this.config.directory_url
+      ? [this.config.directory_url, ...DIRECTORY_URLS.filter((u) => u !== this.config.directory_url)]
+      : DIRECTORY_URLS
+    let lastErr: any = null
+    for (const base of bases) {
+      try {
+        const res = await axios.get(`${base}/v1/resolve/${code}`, { timeout: 10000 })
+        return res.data
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          throw new Error('Unknown samithi code. Please check the code with your society office.')
+        }
+        lastErr = err
+      }
+    }
+    if (lastErr?.response) throw new Error('The samithi directory is unavailable. Please try again shortly.')
+    throw new Error('Cannot reach the samithi directory. Check your internet connection.')
+  }
+
   // First-run setup and Settings → change samithi. Resolves a join code via
   // the directory and makes it this machine's server config.
   public async resolveSamithi(code: string): Promise<{ slug: string; name: string; api_url: string }> {
@@ -158,22 +207,14 @@ class ApiClient {
     if (!/^[A-Z0-9-]{2,20}$/.test(clean)) {
       throw new Error('Enter a valid samithi code (e.g. TST-2481)')
     }
-    const directory = this.config.directory_url || DEFAULT_DIRECTORY
-    let record: { slug: string; name: string; api_url: string; status: string }
-    try {
-      const res = await axios.get(`${directory}/v1/resolve/${clean}`, { timeout: 10000 })
-      record = res.data
-    } catch (err: any) {
-      if (err.response?.status === 404) {
-        throw new Error('Unknown samithi code. Please check the code with your society office.')
-      }
-      throw new Error('Cannot reach the samithi directory. Check your internet connection.')
-    }
+    const record = await this.directoryResolve(clean)
     if (record.status !== 'active') {
       throw new Error('This samithi is not active. Please contact eSamithi support.')
     }
+    // Written from scratch (not spread) so stale fields from older config
+    // formats can never survive a samithi change.
     this.config = {
-      ...this.config,
+      directory_url: this.config.directory_url,
       code: clean,
       samithi: record.slug,
       name: record.name,
@@ -203,12 +244,11 @@ class ApiClient {
     if (now - this.lastReResolve < RE_RESOLVE_EVERY_MS) return
     this.lastReResolve = now
     try {
-      const directory = this.config.directory_url || DEFAULT_DIRECTORY
-      const res = await axios.get(`${directory}/v1/resolve/${this.config.code}`, { timeout: 10000 })
-      if (res.data?.api_url && res.data.api_url !== this.config.api_url) {
-        console.log(`[api] directory moved ${this.config.code}: ${this.config.api_url} → ${res.data.api_url}`)
-        this.config.api_url = res.data.api_url
-        this.config.samithi = res.data.slug ?? this.config.samithi
+      const record = await this.directoryResolve(this.config.code)
+      if (record.api_url && record.api_url !== this.config.api_url) {
+        console.log(`[api] directory moved ${this.config.code}: ${this.config.api_url} → ${record.api_url}`)
+        this.config.api_url = record.api_url
+        this.config.samithi = record.slug ?? this.config.samithi
         this.persistConfig()
         this.applyConfig()
       }
