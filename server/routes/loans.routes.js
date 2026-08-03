@@ -30,6 +30,7 @@ router.get('/', async (_req, res, next) => {
 
     const [rows] = await conn.query(`
       SELECT l.*, m.full_name as member_name, m.nic as member_nic,
+             m.society_id as member_society_id,
              w.name as disbursement_wallet_name,
              (SELECT COUNT(*) FROM loan_guarantors WHERE loan_id = l.id) as guarantor_count
       FROM loans l

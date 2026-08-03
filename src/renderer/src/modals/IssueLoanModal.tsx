@@ -5,6 +5,7 @@ import { X } from 'lucide-react'
 import { showToast } from '../components/Toast'
 import SearchableSelect from '../components/SearchableSelect'
 import { useT } from '../i18n'
+import { memberOptions, SlimMember } from '../utils/members'
 interface Props {
   onClose: () => void
   onCreated: () => void
@@ -19,7 +20,7 @@ export default function IssueLoanModal({ onClose, onCreated, wallets, settings, 
 
   const activeWallets = wallets.filter(w => w.is_active == 1)
 
-  const [members, setMembers] = useState<Array<{ id: number; nic: string; full_name: string }>>([])
+  const [members, setMembers] = useState<SlimMember[]>([])
   const [submitting, setSubmitting] = useState(false)
 
   // Config bounds
@@ -112,7 +113,8 @@ export default function IssueLoanModal({ onClose, onCreated, wallets, settings, 
               <div className="form-group">
                 <label>{t('lform.applicantMember')} <span style={{ color: 'var(--danger)' }}>*</span></label>
                 <SearchableSelect
-                  options={members.map(m => ({ value: m.id, label: m.full_name, sublabel: m.nic }))}
+                  searchPlaceholder={t('common.searchMember')}
+                  options={memberOptions(members)}
                   value={memberId}
                   onChange={(val) => setMemberId(Number(val))}
                   placeholder={t('lform.selectMember')}
@@ -151,9 +153,8 @@ export default function IssueLoanModal({ onClose, onCreated, wallets, settings, 
               <div className="form-group">
                 <label>{t('lform.guarantor1')} <span style={{ color: 'var(--danger)' }}>*</span></label>
                 <SearchableSelect
-                  options={members
-                    .filter(m => m.id !== memberId && m.id !== guarantor2)
-                    .map(m => ({ value: m.id, label: m.full_name, sublabel: m.nic }))}
+                  searchPlaceholder={t('common.searchMember')}
+                  options={memberOptions(members.filter(m => m.id !== memberId && m.id !== guarantor2))}
                   value={guarantor1}
                   onChange={(val) => setGuarantor1(Number(val))}
                   placeholder={t('lform.selectGuarantor1')}
@@ -163,9 +164,8 @@ export default function IssueLoanModal({ onClose, onCreated, wallets, settings, 
               <div className="form-group">
                 <label>{t('lform.guarantor2')} <span style={{ color: 'var(--danger)' }}>*</span></label>
                 <SearchableSelect
-                  options={members
-                    .filter(m => m.id !== memberId && m.id !== guarantor1)
-                    .map(m => ({ value: m.id, label: m.full_name, sublabel: m.nic }))}
+                  searchPlaceholder={t('common.searchMember')}
+                  options={memberOptions(members.filter(m => m.id !== memberId && m.id !== guarantor1))}
                   value={guarantor2}
                   onChange={(val) => setGuarantor2(Number(val))}
                   placeholder={t('lform.selectGuarantor2')}

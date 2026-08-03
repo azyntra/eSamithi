@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Search, ChevronDown, X } from 'lucide-react'
+import { useT } from '../i18n'
 
 interface Option {
   value: string | number
@@ -12,6 +13,7 @@ interface SearchableSelectProps {
   value: string | number
   onChange: (value: string | number) => void
   placeholder?: string
+  searchPlaceholder?: string
   required?: boolean
   disabled?: boolean
 }
@@ -21,9 +23,11 @@ export default function SearchableSelect({
   value,
   onChange,
   placeholder = 'Select an option...',
+  searchPlaceholder,
   required = false,
   disabled = false
 }: SearchableSelectProps): React.ReactElement {
+  const { t } = useT()
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [highlighted, setHighlighted] = useState(0)
@@ -202,7 +206,7 @@ export default function SearchableSelect({
               <input
                 type="text"
                 className="form-control"
-                placeholder="Search..."
+                placeholder={searchPlaceholder ?? t('common.search')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value)
@@ -223,7 +227,7 @@ export default function SearchableSelect({
           <div ref={listRef} id={listboxId.current} role="listbox" style={{ overflowY: 'auto', flex: 1, padding: '4px' }}>
             {filteredOptions.length === 0 ? (
               <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                No matches found
+                {t('common.noMatches')}
               </div>
             ) : (
               filteredOptions.map((opt, idx) => {

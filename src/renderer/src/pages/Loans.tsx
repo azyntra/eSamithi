@@ -62,10 +62,14 @@ export default function Loans(): React.ReactElement {
     }
   }
 
-  const filteredLoans = loans.filter(l => 
-    l.member_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    l.member_nic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    l.purpose?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Name, NIC, member ID or purpose — staff search by whatever is in front of
+  // them (a card shows the member ID, a file shows the NIC)
+  const loanQuery = searchTerm.toLowerCase()
+  const filteredLoans = loans.filter(l =>
+    l.member_name?.toLowerCase().includes(loanQuery) ||
+    l.member_nic?.toLowerCase().includes(loanQuery) ||
+    String(l.member_society_id ?? '').toLowerCase().includes(loanQuery) ||
+    l.purpose?.toLowerCase().includes(loanQuery)
   )
 
   const sortedLoans = [...filteredLoans].sort((a, b) => {

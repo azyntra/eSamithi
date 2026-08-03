@@ -8,6 +8,7 @@ import { useSettings } from '../hooks/useSettings'
 import { formatCurrency } from '../utils/formatters'
 import { formatPrintDate } from '../utils/print'
 import { useT } from '../i18n'
+import { memberOptions, MemberOption, SlimMember } from '../utils/members'
 
 interface Props {
   onClose: () => void
@@ -29,7 +30,7 @@ export default function MigrateLoanModal({ onClose, onCreated, headerSlot }: Pro
   const { settings } = useSettings()
   const today = new Date().toISOString().split('T')[0]
 
-  const [members, setMembers] = useState<Array<{ id: number; nic: string; full_name: string }>>([])
+  const [members, setMembers] = useState<SlimMember[]>([])
   const [submitting, setSubmitting] = useState(false)
 
   const [memberId, setMemberId] = useState<number | ''>('')
@@ -120,10 +121,8 @@ export default function MigrateLoanModal({ onClose, onCreated, headerSlot }: Pro
     }
   }
 
-  const guarantorOptions = (exclude: number | ''): Array<{ value: number; label: string; sublabel: string }> =>
-    members
-      .filter((m) => m.id !== Number(memberId) && m.id !== exclude)
-      .map((m) => ({ value: m.id, label: m.full_name, sublabel: m.nic }))
+  const guarantorOptions = (exclude: number | ''): MemberOption[] =>
+    memberOptions(members.filter((m) => m.id !== Number(memberId) && m.id !== exclude))
 
   return (
     <ModalOverlay onClose={onClose} guardUnsaved>
@@ -144,7 +143,8 @@ export default function MigrateLoanModal({ onClose, onCreated, headerSlot }: Pro
             <div className="form-group full-width">
               <label>{t('lform.borrower')} <span style={{ color: 'var(--danger)' }}>*</span></label>
               <SearchableSelect
-                options={members.map(m => ({ value: m.id, label: m.full_name, sublabel: m.nic }))}
+                options={memberOptions(members)}
+                searchPlaceholder={t('common.searchMember')}
                 value={memberId}
                 onChange={(val) => setMemberId(Number(val))}
                 placeholder={t('lform.selectMember')}
@@ -198,6 +198,7 @@ export default function MigrateLoanModal({ onClose, onCreated, headerSlot }: Pro
                 <label>{t('lform.guarantor1')}</label>
                 <SearchableSelect
                   options={guarantorOptions(guarantor2)}
+                  searchPlaceholder={t('common.searchMember')}
                   value={guarantor1}
                   onChange={(val) => setGuarantor1(val === '' ? '' : Number(val))}
                   placeholder={t('lform.guarantorOptional')}
@@ -207,6 +208,7 @@ export default function MigrateLoanModal({ onClose, onCreated, headerSlot }: Pro
                 <label>{t('lform.guarantor2')}</label>
                 <SearchableSelect
                   options={guarantorOptions(guarantor1)}
+                  searchPlaceholder={t('common.searchMember')}
                   value={guarantor2}
                   onChange={(val) => setGuarantor2(val === '' ? '' : Number(val))}
                   placeholder={t('lform.guarantorOptional')}

@@ -5,6 +5,7 @@ import { X } from 'lucide-react'
 import { showToast } from '../components/Toast'
 import SearchableSelect from '../components/SearchableSelect'
 import { useT } from '../i18n'
+import { memberOptions, SlimMember } from '../utils/members'
 interface Props {
   onClose: () => void
   onCreated: () => void
@@ -38,7 +39,7 @@ export default function AddExpenseModal({ onClose, onCreated, expenseTypes, wall
   const activeWallets = wallets.filter(w => w.is_active == 1)
   const activeExpenseTypes = expenseTypes.filter(et => et.is_active == 1)
 
-  const [members, setMembers] = useState<Array<{ id: number; nic: string; full_name: string }>>([])
+  const [members, setMembers] = useState<SlimMember[]>([])
   const [submitting, setSubmitting] = useState(false)
 
   // Form State — expense type is selected first; the rest of the form adapts
@@ -189,7 +190,8 @@ export default function AddExpenseModal({ onClose, onCreated, expenseTypes, wall
                   <div className="form-group full-width">
                     <label>{t('common.member')} <span style={{ color: 'var(--danger)' }}>*</span></label>
                     <SearchableSelect
-                      options={members.map(m => ({ value: m.id, label: m.full_name, sublabel: m.nic }))}
+                      options={memberOptions(members)}
+                      searchPlaceholder={t('common.searchMember')}
                       value={memberId}
                       onChange={(val) => setMemberId(Number(val))}
                       placeholder={t('lform.selectMember')}

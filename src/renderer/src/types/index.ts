@@ -197,6 +197,7 @@ export interface Loan {
   // Joined fields
   member_name?: string
   member_nic?: string
+  member_society_id?: string | null
   disbursement_wallet_name?: string
   guarantor_count?: number
 }

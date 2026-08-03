@@ -17,9 +17,9 @@ router.get('/', async (req, res, next) => {
     if (to) { where.push('i.date <= ?'); params.push(to); }
     if (type_id) { where.push('i.income_type_id = ?'); params.push(parseInt(type_id)); }
     if (search && search.trim()) {
-      where.push('(m.full_name LIKE ? OR i.guest_name LIKE ? OR m.nic LIKE ? OR t.name LIKE ? OR i.notes LIKE ?)');
+      where.push('(m.full_name LIKE ? OR i.guest_name LIKE ? OR m.nic LIKE ? OR m.society_id LIKE ? OR t.name LIKE ? OR i.notes LIKE ?)');
       const pattern = `%${search.trim()}%`;
-      params.push(pattern, pattern, pattern, pattern, pattern);
+      params.push(pattern, pattern, pattern, pattern, pattern, pattern);
     }
     const whereClause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 

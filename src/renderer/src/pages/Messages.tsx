@@ -5,6 +5,8 @@ import ConfirmModal from '../components/ConfirmModal'
 import { showToast } from '../components/Toast'
 import { formatCurrency } from '../utils/formatters'
 import { useT } from '../i18n'
+import SearchableSelect from '../components/SearchableSelect'
+import { memberOptions, SlimMember } from '../utils/members'
 
 interface Announcement {
   id: number
@@ -36,7 +38,6 @@ interface MemberRequest {
   created_at: string
 }
 
-interface SlimMember { id: number; nic: string; full_name: string }
 
 const EMPTY_FORM = {
   type: 'general' as Announcement['type'],
@@ -229,12 +230,13 @@ export default function Messages(): React.ReactElement {
                     </div>
                     <div className="form-group">
                       <label>{t('msg.deceasedMember')}</label>
-                      <select value={form.deceased_member_id} onChange={(e) => setForm({ ...form, deceased_member_id: e.target.value })} style={inputStyle}>
-                        <option value="">—</option>
-                        {members.map((m) => (
-                          <option key={m.id} value={m.id}>{m.full_name} ({m.nic})</option>
-                        ))}
-                      </select>
+                      <SearchableSelect
+                        options={memberOptions(members)}
+                        searchPlaceholder={t('common.searchMember')}
+                        value={form.deceased_member_id}
+                        onChange={(val) => setForm({ ...form, deceased_member_id: String(val) })}
+                        placeholder={t('lform.selectMember')}
+                      />
                     </div>
                     <div className="form-group">
                       <label>{t('msg.funeralDate')}</label>

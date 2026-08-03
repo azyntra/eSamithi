@@ -8,6 +8,8 @@ export const en = {
   'common.close': 'Close',
   'common.confirm': 'Confirm',
   'common.search': 'Search',
+  'common.searchMember': 'Search by name, member ID or NIC…',
+  'common.noMatches': 'No matches found',
   'common.print': 'Print',
   'common.refresh': 'Refresh',
   'common.loading': 'Loading...',

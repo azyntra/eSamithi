@@ -12,6 +12,8 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'common.close': 'වසන්න',
   'common.confirm': 'තහවුරු කරන්න',
   'common.search': 'සොයන්න',
+  'common.searchMember': 'නම, සමිති අංකය හෝ ජා.හැ. අංකය අනුව සොයන්න…',
+  'common.noMatches': 'ගැළපීම් හමු නොවීය',
   'common.print': 'මුද්‍රණය',
   'common.refresh': 'නැවුම් කරන්න',
   'common.loading': 'පූරණය වෙමින්...',

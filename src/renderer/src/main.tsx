@@ -87,7 +87,7 @@ if (!window.api) {
     },
     members: {
       getAllSlim: async () => {
-        return members.map((m) => ({ id: m.id, nic: m.nic, full_name: m.full_name }))
+        return members.map((m) => ({ id: m.id, society_id: m.society_id, nic: m.nic, full_name: m.full_name }))
       },
       getAll: async ({ search = '', page = 1, limit = 15 }) => {
         let filtered = members

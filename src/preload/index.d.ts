@@ -112,7 +112,7 @@ interface ElectronAPI {
   }
   members: {
     getAll: (params: GetAllParams) => Promise<{ members: Member[]; total: number }>
-    getAllSlim: () => Promise<Array<{ id: number; nic: string; full_name: string }>>
+    getAllSlim: () => Promise<Array<{ id: number; society_id: string; nic: string; full_name: string }>>
     getById: (id: number) => Promise<MemberWithDependents>
     create: (data: MemberFormData) => Promise<{ success: boolean; id: number }>
     update: (id: number, data: MemberFormData) => Promise<{ success: boolean }>

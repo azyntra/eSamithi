@@ -77,7 +77,9 @@ router.get('/', async (req, res, next) => {
 router.get('/slim', async (_req, res, next) => {
   try {
     const [rows] = await getPool().query(
-      "SELECT id, nic, full_name FROM members WHERE is_active = 1 ORDER BY full_name ASC"
+      // society_id travels with every picker so staff can find a member by
+      // the number on their card, not just by name or NIC
+      "SELECT id, society_id, nic, full_name FROM members WHERE is_active = 1 ORDER BY full_name ASC"
     );
     res.json(rows);
   } catch (err) { next(err); }

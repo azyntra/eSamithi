@@ -224,7 +224,10 @@ export default function Attendance(): React.ReactElement {
     const q = search.trim().toLowerCase()
     if (!q) return rows
     return rows.filter(
-      (r) => r.full_name.toLowerCase().includes(q) || String(r.society_id).toLowerCase().includes(q)
+      (r) =>
+        r.full_name.toLowerCase().includes(q) ||
+        String(r.society_id ?? '').toLowerCase().includes(q) ||
+        String(r.nic ?? '').toLowerCase().includes(q)
     )
   }, [rows, search])
 
