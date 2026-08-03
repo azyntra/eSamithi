@@ -245,9 +245,25 @@ export function registerIpcHandlers(): void {
     }
   })
 
+  ipcMain.handle('events:setMode', async (_event, id: number, mode: string) => {
+    try {
+      return await apiClient.patch(`/events/${id}`, { attendance_mode: mode })
+    } catch (err: any) {
+      throw new Error(err.response?.data?.error || err.message)
+    }
+  })
+
   ipcMain.handle('events:mark', async (_event, id: number, societyId: string) => {
     try {
       return await apiClient.post(`/events/${id}/attendance`, { society_id: societyId })
+    } catch (err: any) {
+      throw new Error(err.response?.data?.error || err.message)
+    }
+  })
+
+  ipcMain.handle('events:markById', async (_event, id: number, memberId: number) => {
+    try {
+      return await apiClient.post(`/events/${id}/attendance`, { member_id: memberId })
     } catch (err: any) {
       throw new Error(err.response?.data?.error || err.message)
     }

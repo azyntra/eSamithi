@@ -132,6 +132,24 @@ async function attendance(pool) {
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 }
 
+// 013 — how an event's attendance is recorded. 'present' (the original and
+// default behaviour) marks the members who attended and treats everyone else
+// as absent. 'absent' inverts it for well-attended meetings: mark the few who
+// did NOT come and everyone else counts as present. In both modes the marked
+// members are the rows in event_attendance — only their meaning changes.
+async function attendanceMode(pool) {
+  const [cols] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'society_events'
+       AND COLUMN_NAME = 'attendance_mode'`
+  );
+  if (cols.length === 0) {
+    await pool.query(
+      "ALTER TABLE society_events ADD COLUMN attendance_mode VARCHAR(10) NOT NULL DEFAULT 'present' AFTER event_date"
+    );
+  }
+}
+
 // 008 — Puruka (community exchange platform)
 async function puruka(pool) {
   await pool.query(`CREATE TABLE IF NOT EXISTS puruka_categories (
@@ -284,5 +302,6 @@ module.exports = [
   { id: '009_staff_user_lifecycle', up: staffUserLifecycle },
   { id: '010_client_errors', up: clientErrors },
   { id: '011_puruka_wanted', up: purukaWanted },
-  { id: '012_loan_accrual_day', up: loanAccrualDay }
+  { id: '012_loan_accrual_day', up: loanAccrualDay },
+  { id: '013_attendance_mode', up: attendanceMode }
 ];

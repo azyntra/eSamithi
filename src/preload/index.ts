@@ -111,7 +111,9 @@ const api = {
     create: (data: unknown) => invoke('events:create', data),
     delete: (id: number) => invoke('events:delete', id),
     getAttendance: (id: number) => invoke('events:getAttendance', id),
+    setMode: (id: number, mode: string) => invoke('events:setMode', id, mode),
     mark: (id: number, societyId: string) => invoke('events:mark', id, societyId),
+    markById: (id: number, memberId: number) => invoke('events:markById', id, memberId),
     unmark: (id: number, memberId: number) => invoke('events:unmark', id, memberId)
   },
   puruka: {

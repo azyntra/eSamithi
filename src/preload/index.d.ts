@@ -142,7 +142,9 @@ interface ElectronAPI {
     create: (data: unknown) => Promise<{ success: boolean; id: number }>
     delete: (id: number) => Promise<{ success: boolean }>
     getAttendance: (id: number) => Promise<any>
+    setMode: (id: number, mode: string) => Promise<{ success: boolean; attendance_mode: string; cleared: number }>
     mark: (id: number, societyId: string) => Promise<{ success: boolean; member: any; already: boolean }>
+    markById: (id: number, memberId: number) => Promise<{ success: boolean; member: any; already: boolean }>
     unmark: (id: number, memberId: number) => Promise<{ success: boolean }>
   }
   puruka: {

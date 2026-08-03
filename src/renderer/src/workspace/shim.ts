@@ -120,7 +120,9 @@ export function installShim(session: WorkspaceSession): void {
       create: (d: any) => post('/events', d),
       delete: (id: number) => del(`/events/${id}`),
       getAttendance: (id: number) => get(`/events/${id}/attendance`),
+      setMode: (id: number, mode: string) => patch(`/events/${id}`, { attendance_mode: mode }),
       mark: (id: number, societyId: string) => post(`/events/${id}/attendance`, { society_id: societyId }),
+      markById: (id: number, memberId: number) => post(`/events/${id}/attendance`, { member_id: memberId }),
       unmark: (id: number, memberId: number) => del(`/events/${id}/attendance/${memberId}`)
     },
     puruka: {
