@@ -850,6 +850,8 @@ export const en = {
   'mob.officeContact': 'Society office',
   'mob.memberCard': 'Membership card',
   'mob.cardShowOffice': 'Show this card at the society office',
+  'mob.cardShare': 'Share card',
+  'mob.cardShareFail': 'Could not share the card. Please try again.',
   'mob.duesDetail': 'Dues & arrears',
   'mob.loanNum': 'Loan #{id}',
   'mob.viewLoan': 'View loan',

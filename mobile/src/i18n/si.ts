@@ -854,6 +854,8 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'mob.officeContact': 'සමිති කාර්යාලය',
   'mob.memberCard': 'සාමාජික කාඩ්පත',
   'mob.cardShowOffice': 'මෙම කාඩ්පත සමිති කාර්යාලයේදී පෙන්වන්න',
+  'mob.cardShare': 'කාඩ්පත බෙදාගන්න',
+  'mob.cardShareFail': 'කාඩ්පත බෙදාගත නොහැකි විය. නැවත උත්සාහ කරන්න.',
   'mob.duesDetail': 'හිඟ මුදල්',
   'mob.loanNum': 'ණය #{id}',
   'mob.viewLoan': 'ණය බලන්න',
