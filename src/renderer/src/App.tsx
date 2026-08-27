@@ -131,9 +131,15 @@ function UpdateReadyBar({ version }: { version: string }): React.ReactElement {
 // Super-admin support workspace injects a pre-authenticated user (the
 // impersonation token is already valid) so we skip the login/setup screens.
 // Undefined in the normal desktop app — zero effect there.
-const impersonationUser = (globalThis as { __IMPERSONATION__?: { user: AuthUser } }).__IMPERSONATION__?.user
+// Read lazily (not at module scope): ES-module evaluation order runs this
+// file before workspace.tsx's body has set the global, so a module-level
+// read sees undefined depending on bundler ordering. By first render the
+// workspace has always set it — it mounts React only after doing so.
+const getImpersonationUser = (): AuthUser | undefined =>
+  (globalThis as { __IMPERSONATION__?: { user: AuthUser } }).__IMPERSONATION__?.user
 
 export default function App(): React.ReactElement {
+  const impersonationUser = getImpersonationUser()
   const [user, setUser] = useState<AuthUser | null>(impersonationUser ?? null)
   const [offline, setOffline] = useState(false)
   // null = still asking the main process; true = no samithi configured yet
