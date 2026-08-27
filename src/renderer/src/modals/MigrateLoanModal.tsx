@@ -9,10 +9,15 @@ import { formatCurrency } from '../utils/formatters'
 import { formatPrintDate } from '../utils/print'
 import { useT } from '../i18n'
 import { memberOptions, MemberOption, SlimMember } from '../utils/members'
+import ExistingLoansPanel from '../components/ExistingLoansPanel'
+import type { Loan } from '../types'
 
 interface Props {
   onClose: () => void
   onCreated: () => void
+  /** Portfolio for the existing-loans panel — informational only here (the
+      exposure cap deliberately does not apply to paper-record migration). */
+  loans?: Loan[]
   /** Rendered at the top of the body — the New / Existing loan chooser. */
   headerSlot?: React.ReactNode
 }
@@ -25,7 +30,7 @@ interface Props {
 // The "balances as of" date is what keeps those calculations honest: interest
 // resumes from the day the society's figures were computed through, so no
 // part-month is forgiven and the monthly charge day still matches the passbook.
-export default function MigrateLoanModal({ onClose, onCreated, headerSlot }: Props): React.ReactElement {
+export default function MigrateLoanModal({ onClose, onCreated, loans = [], headerSlot }: Props): React.ReactElement {
   const { t } = useT()
   const { settings } = useSettings()
   const today = new Date().toISOString().split('T')[0]
@@ -151,6 +156,8 @@ export default function MigrateLoanModal({ onClose, onCreated, headerSlot }: Pro
                 required
               />
             </div>
+
+            <ExistingLoansPanel loans={loans} memberId={memberId} maxLoanLimit={0} />
 
             <div className="form-grid">
               <div className="form-group">

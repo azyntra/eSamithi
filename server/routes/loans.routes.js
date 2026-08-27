@@ -50,19 +50,26 @@ router.get('/', async (_req, res, next) => {
   } catch (err) { await conn.rollback(); next(err); } finally { conn.release(); }
 });
 
-// Shared issuance validations (Req 5)
+// Shared issuance validations (Req 5).
+// A member may hold several loans at once; max_loan_limit caps their TOTAL
+// outstanding principal, so repayments free up borrowing headroom. A limit of
+// 0 disables the cap entirely.
 async function validateLoanRules(conn, memberId, principalAmount, guarantorIds) {
   const maxLimit = Number(await getSetting('max_loan_limit', conn)) || 0;
-  if (maxLimit > 0 && principalAmount > maxLimit) {
-    throw Object.assign(new Error(`Loan amount exceeds the maximum loan limit of ${maxLimit / 100} configured in Settings`), { statusCode: 400 });
-  }
-
-  const [activeLoan] = await conn.query(
-    "SELECT COUNT(*) as count FROM loans WHERE member_id = ? AND status IN ('Active', 'Overdue')",
-    [memberId]
-  );
-  if (Number(activeLoan[0].count) > 0) {
-    throw Object.assign(new Error('This member already has an active loan. A borrower cannot hold more than one active loan.'), { statusCode: 400 });
+  if (maxLimit > 0) {
+    const [[exp]] = await conn.query(
+      `SELECT COALESCE(SUM(principal_owed), 0) AS exposure
+       FROM loans WHERE member_id = ? AND status IN ('Active', 'Overdue')`,
+      [memberId]
+    );
+    const exposure = Number(exp.exposure);
+    const headroom = maxLimit - exposure;
+    if (principalAmount > headroom) {
+      throw Object.assign(new Error(
+        `This loan would exceed the member's loan limit of Rs. ${maxLimit / 100}. ` +
+        `Outstanding principal is Rs. ${exposure / 100}; only Rs. ${Math.max(headroom, 0) / 100} is available.`
+      ), { statusCode: 400 });
+    }
   }
 
   const ids = (guarantorIds || []).map(Number);
@@ -73,16 +80,19 @@ async function validateLoanRules(conn, memberId, principalAmount, guarantorIds) 
     throw Object.assign(new Error('The borrower cannot be their own guarantor'), { statusCode: 400 });
   }
   for (const gid of ids) {
+    // The cap is on DISTINCT borrowers, not loans: backing another loan of a
+    // borrower they already guarantee consumes no extra slot.
     const [gRows] = await conn.query(
-      `SELECT COUNT(*) as count FROM loan_guarantors lg
+      `SELECT COUNT(DISTINCT l.member_id) as borrowers
+       FROM loan_guarantors lg
        JOIN loans l ON lg.loan_id = l.id
-       WHERE lg.member_id = ? AND l.status IN ('Active', 'Overdue')`,
-      [gid]
+       WHERE lg.member_id = ? AND l.status IN ('Active', 'Overdue') AND l.member_id <> ?`,
+      [gid, memberId]
     );
-    if (Number(gRows[0].count) >= 2) {
+    if (Number(gRows[0].borrowers) >= 2) {
       const [nameRows] = await conn.query('SELECT full_name FROM members WHERE id = ?', [gid]);
       const name = nameRows.length > 0 ? nameRows[0].full_name : `Member #${gid}`;
-      throw Object.assign(new Error(`${name} is already guaranteeing 2 active loans and cannot guarantee another`), { statusCode: 400 });
+      throw Object.assign(new Error(`${name} is already guaranteeing loans for 2 other members and cannot guarantee an additional borrower`), { statusCode: 400 });
     }
   }
   return ids;
@@ -178,13 +188,9 @@ router.post('/migrate', async (req, res, next) => {
       throw Object.assign(new Error('The "balances as of" date cannot be before the loan was issued'), { statusCode: 400 });
     }
 
-    const [activeLoan] = await conn.query(
-      "SELECT COUNT(*) as count FROM loans WHERE member_id = ? AND status IN ('Active', 'Overdue')",
-      [d.member_id]
-    );
-    if (Number(activeLoan[0].count) > 0) {
-      throw Object.assign(new Error('This member already has an active loan in the system'), { statusCode: 400 });
-    }
+    // No one-loan guard and no exposure cap here: migration records the paper
+    // ledger as it stands, and a member may genuinely hold several loans on
+    // paper (possibly above today's configured limit).
 
     // Guarantors are optional here (old paper records often omit them), but
     // whatever is entered must be sane — and it counts toward the society's

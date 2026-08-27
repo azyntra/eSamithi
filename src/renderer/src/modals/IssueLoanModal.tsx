@@ -6,16 +6,21 @@ import { showToast } from '../components/Toast'
 import SearchableSelect from '../components/SearchableSelect'
 import { useT } from '../i18n'
 import { memberOptions, SlimMember } from '../utils/members'
+import ExistingLoansPanel from '../components/ExistingLoansPanel'
+import type { Loan } from '../types'
 interface Props {
   onClose: () => void
   onCreated: () => void
   wallets: Array<{ id: number; name: string; balance: number; is_active: number }>
   settings: Record<string, string>
+  /** The full portfolio (already accrued by GET /loans) — drives the
+      existing-loans panel and the headroom cap for the selected member. */
+  loans: Loan[]
   /** Rendered at the top of the body — the New / Existing loan chooser. */
   headerSlot?: React.ReactNode
 }
 
-export default function IssueLoanModal({ onClose, onCreated, wallets, settings, headerSlot }: Props): React.ReactElement {
+export default function IssueLoanModal({ onClose, onCreated, wallets, settings, loans, headerSlot }: Props): React.ReactElement {
   const { t } = useT()
 
   const activeWallets = wallets.filter(w => w.is_active == 1)
@@ -23,8 +28,9 @@ export default function IssueLoanModal({ onClose, onCreated, wallets, settings, 
   const [members, setMembers] = useState<SlimMember[]>([])
   const [submitting, setSubmitting] = useState(false)
 
-  // Config bounds
-  const maxLoanLimit = Number(settings.max_loan_limit || 100000)
+  // Config bounds. NOTE: "0" is a truthy string, so an explicit 0 setting
+  // correctly disables the cap; only a missing setting falls back.
+  const maxLoanLimit = Number(settings.max_loan_limit ?? 100000) || 0
 
   // Form State — exactly two guarantors are required (Requirement 5, v2.0)
   const [memberId, setMemberId] = useState<number | ''>('')
@@ -38,6 +44,16 @@ export default function IssueLoanModal({ onClose, onCreated, wallets, settings, 
   useEffect(() => {
     window.api.members.getAllSlim().then(setMembers)
   }, [])
+
+  // The selected member's exposure — outstanding PRINCIPAL only, the same
+  // figure the server checks. Headroom is what they may still borrow.
+  const exposure = memberId === ''
+    ? 0
+    : loans
+        .filter((l) => l.member_id === memberId && (l.status === 'Active' || l.status === 'Overdue'))
+        .reduce((s, l) => s + l.principal_owed, 0)
+  const headroom = maxLoanLimit > 0 ? maxLoanLimit - exposure : Infinity
+  const noHeadroom = maxLoanLimit > 0 && memberId !== '' && headroom <= 0
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
@@ -68,8 +84,8 @@ export default function IssueLoanModal({ onClose, onCreated, wallets, settings, 
       return
     }
 
-    if (principalCents > maxLoanLimit) {
-      showToast('error', t('lform.maxLimit', { max: maxLoanLimit / 100 }))
+    if (maxLoanLimit > 0 && principalCents > headroom) {
+      showToast('error', t('lform.headroomExceeded', { max: Math.max(headroom, 0) / 100 }))
       return
     }
 
@@ -127,11 +143,23 @@ export default function IssueLoanModal({ onClose, onCreated, wallets, settings, 
               </div>
             </div>
 
+            <ExistingLoansPanel loans={loans} memberId={memberId} maxLoanLimit={maxLoanLimit} showHeadroom />
+
             <div className="form-grid">
               <div className="form-group">
                 <label>{t('wform.principalAmount')} <span style={{ color: 'var(--danger)' }}>*</span></label>
-                <RupeeInput max={maxLoanLimit / 100} style={{ fontWeight: 700 }} value={principalStr} onChange={setPrincipalStr} required />
-                <small style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>{t('lform.maxLimitHint', { max: maxLoanLimit / 100 })}</small>
+                <RupeeInput
+                  max={maxLoanLimit > 0 ? Math.max(headroom, 0) / 100 : undefined}
+                  style={{ fontWeight: 700 }}
+                  value={principalStr}
+                  onChange={setPrincipalStr}
+                  required
+                />
+                {maxLoanLimit > 0 && (
+                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
+                    {t('lform.maxLimitHint', { max: Math.max(headroom, 0) / 100 })}
+                  </small>
+                )}
               </div>
               <div className="form-group">
                 <label>{t('lform.disbursementWallet')} <span style={{ color: 'var(--danger)' }}>*</span></label>
@@ -180,7 +208,7 @@ export default function IssueLoanModal({ onClose, onCreated, wallets, settings, 
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={submitting}>{t('common.cancel')}</button>
-            <button type="submit" className="btn btn-primary" disabled={submitting || guarantor1 === '' || guarantor2 === ''}>
+            <button type="submit" className="btn btn-primary" disabled={submitting || noHeadroom || guarantor1 === '' || guarantor2 === ''}>
               {submitting ? t('common.processing') : t('lform.issueDisburse')}
             </button>
           </div>

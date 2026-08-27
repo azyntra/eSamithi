@@ -33,11 +33,29 @@ router.get('/profile', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/v1/me/statement — contributions, payouts, loans, guarantees
+// GET /api/v1/me/statement — contributions, payouts, loans, guarantees.
+// Accrue this member's running loans first so the balances match what the
+// office sees — noticeable once a member holds more than one loan.
 router.get('/statement', async (req, res, next) => {
+  const conn = await getPool().getConnection();
   try {
+    await conn.beginTransaction();
+    const { interestRate, fineRate } = await getRates(conn);
+    const [running] = await conn.query(
+      "SELECT id FROM loans WHERE member_id = ? AND status IN ('Active', 'Overdue')",
+      [req.member.id]
+    );
+    for (const l of running) {
+      await accrueLoan(conn, l.id, interestRate, fineRate);
+    }
+    await conn.commit();
     res.json(await getMemberStatement(getPool(), req.member.id));
-  } catch (err) { next(err); }
+  } catch (err) {
+    await conn.rollback().catch(() => {});
+    next(err);
+  } finally {
+    conn.release();
+  }
 });
 
 // GET /api/v1/me/dues — "do I owe anything?" summary
@@ -331,13 +349,23 @@ router.post('/requests', async (req, res, next) => {
       const cents = Math.round(Number(amount));
       if (!Number.isFinite(cents) || cents <= 0) return res.status(400).json({ error: 'A valid loan amount is required' });
       if (!purpose || !String(purpose).trim()) return res.status(400).json({ error: 'The loan purpose is required' });
-      // Same society rule the desktop enforces at issuance: one active loan per borrower
-      const [active] = await pool.query(
-        "SELECT COUNT(*) as count FROM loans WHERE member_id = ? AND status IN ('Active', 'Overdue')",
-        [req.member.id]
-      );
-      if (Number(active[0].count) > 0) {
-        return res.status(400).json({ error: 'You already have an active loan. A new loan can be requested after it is settled.' });
+      // Same headroom rule the desktop enforces at issuance: outstanding
+      // principal across all active loans may not exceed max_loan_limit.
+      // Additional loans within the limit are fine; a limit of 0 disables it.
+      const maxLimit = Number(await getSetting('max_loan_limit')) || 0;
+      if (maxLimit > 0) {
+        const [[exp]] = await pool.query(
+          `SELECT COALESCE(SUM(principal_owed), 0) AS exposure
+           FROM loans WHERE member_id = ? AND status IN ('Active', 'Overdue')`,
+          [req.member.id]
+        );
+        const exposure = Number(exp.exposure);
+        const headroom = maxLimit - exposure;
+        if (cents > headroom) {
+          return res.status(400).json({ error:
+            `Your outstanding loans total Rs. ${exposure / 100}. You can request up to ` +
+            `Rs. ${Math.max(headroom, 0) / 100} under the society's Rs. ${maxLimit / 100} loan limit.` });
+        }
       }
     }
     if (type === 'correction' && (!message || !String(message).trim())) {

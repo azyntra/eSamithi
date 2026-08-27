@@ -268,6 +268,7 @@ export default function Loans(): React.ReactElement {
           onCreated={afterLoanChange}
           wallets={wallets}
           settings={settings}
+          loans={loans}
           headerSlot={inMigrationMode ? <LoanKindChooser value="new" onChange={setLoanEntry} /> : undefined}
         />
       )}
@@ -276,6 +277,7 @@ export default function Loans(): React.ReactElement {
         <MigrateLoanModal
           onClose={() => setLoanEntry(null)}
           onCreated={afterLoanChange}
+          loans={loans}
           headerSlot={<LoanKindChooser value="existing" onChange={setLoanEntry} />}
         />
       )}
