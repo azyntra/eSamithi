@@ -303,6 +303,7 @@ export const en = {
   'loans.deleteMsgNormal': 'The disbursed principal is returned to the wallet it was paid from.',
   'loans.deleted': 'Loan permanently deleted',
   'loans.deleteFailed': 'Failed to delete loan',
+  'loans.sortMember': 'Sort by member ID',
   'loans.sortIssued': 'Sort by issued date',
   'loans.sortPrincipal': 'Sort by principal',
   'loans.sortBalance': 'Sort by balance owed',

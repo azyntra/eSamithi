@@ -15,7 +15,7 @@ import LoanDetailModal from '../modals/LoanDetailModal'
 import { useT } from '../i18n'
 import type { Loan } from '../types'
 
-type SortKey = 'date_issued' | 'principal_amount' | 'balance'
+type SortKey = 'member_id' | 'date_issued' | 'principal_amount' | 'balance'
 
 const balanceOf = (l: Loan): number => l.principal_owed + l.interest_owed + l.fines_owed
 
@@ -31,7 +31,7 @@ export default function Loans(): React.ReactElement {
   const [repayLoan, setRepayLoan] = useState<Loan | null>(null)
   const [detailLoanId, setDetailLoanId] = useState<number | null>(null)
   const [deletingLoan, setDeletingLoan] = useState<Loan | null>(null)
-  const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'date_issued', dir: 'desc' })
+  const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'member_id', dir: 'asc' })
 
   // Migration Mode (Requirement 2): existing paper-record loans can only be
   // entered before the developer flips migration_completed to true.
@@ -74,14 +74,25 @@ export default function Loans(): React.ReactElement {
 
   const sortedLoans = [...filteredLoans].sort((a, b) => {
     let cmp = 0
-    if (sort.key === 'date_issued') cmp = new Date(a.date_issued).getTime() - new Date(b.date_issued).getTime()
+    if (sort.key === 'member_id') {
+      // Natural compare so '2' < '10' < '003-style' IDs all order sanely;
+      // a member's own loans tie-break newest first
+      cmp = String(a.member_society_id ?? '').localeCompare(String(b.member_society_id ?? ''), undefined, { numeric: true })
+      if (cmp === 0) cmp = new Date(b.date_issued).getTime() - new Date(a.date_issued).getTime()
+    } else if (sort.key === 'date_issued') cmp = new Date(a.date_issued).getTime() - new Date(b.date_issued).getTime()
     else if (sort.key === 'principal_amount') cmp = a.principal_amount - b.principal_amount
     else cmp = balanceOf(a) - balanceOf(b)
     return sort.dir === 'asc' ? cmp : -cmp
   })
 
   const toggleSort = (key: SortKey): void => {
-    setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'desc' }))
+    // member ID reads top-down, so it opens ascending; the money/date columns
+    // keep opening descending (biggest/newest first)
+    setSort((s) =>
+      s.key === key
+        ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' }
+        : { key, dir: key === 'member_id' ? 'asc' : 'desc' }
+    )
   }
 
   const sortIcon = (key: SortKey): React.ReactElement =>
@@ -145,7 +156,9 @@ export default function Loans(): React.ReactElement {
                 <th style={sortableThStyle} onClick={() => toggleSort('date_issued')} aria-sort={sort.key === 'date_issued' ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'} title={t('loans.sortIssued')}>
                   <span style={thInner}>{t('loans.issuedDate')} {sortIcon('date_issued')}</span>
                 </th>
-                <th>{t('loans.memberApplicant')}</th>
+                <th style={sortableThStyle} onClick={() => toggleSort('member_id')} aria-sort={sort.key === 'member_id' ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'} title={t('loans.sortMember')}>
+                  <span style={thInner}>{t('loans.memberApplicant')} {sortIcon('member_id')}</span>
+                </th>
                 <th className="text-right" style={sortableThStyle} onClick={() => toggleSort('principal_amount')} aria-sort={sort.key === 'principal_amount' ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'} title={t('loans.sortPrincipal')}>
                   <span style={thInner}>{t('reports.principal')} {sortIcon('principal_amount')}</span>
                 </th>
@@ -181,7 +194,11 @@ export default function Loans(): React.ReactElement {
                               </span>
                             )}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{l.member_nic}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            {l.member_society_id ? <span style={{ fontWeight: 700 }}>{l.member_society_id}</span> : null}
+                            {l.member_society_id && l.member_nic ? ' · ' : ''}
+                            {l.member_nic}
+                          </div>
                         </div>
                       </div>
                     </td>

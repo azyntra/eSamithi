@@ -307,6 +307,7 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'loans.deleteMsgNormal': 'නිකුත් කළ මුල් මුදල ගෙවූ පසුම්බියට ආපසු බැර කෙරේ.',
   'loans.deleted': 'ණය ස්ථිරවම මකා දමන ලදී',
   'loans.deleteFailed': 'ණය මැකීම අසාර්ථක විය',
+  'loans.sortMember': 'සමිති අංකය අනුව පෙළගස්වන්න',
   'loans.sortIssued': 'නිකුත් කළ දිනය අනුව පෙළගස්වන්න',
   'loans.sortPrincipal': 'මුල් මුදල අනුව පෙළගස්වන්න',
   'loans.sortBalance': 'ශේෂය අනුව පෙළගස්වන්න',
