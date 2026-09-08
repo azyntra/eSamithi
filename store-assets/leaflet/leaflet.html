@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="si">
+<head>
+<meta charset="utf-8">
+<title>eSamithi leaflet</title>
+<!--
+  eSamithi village sales leaflet — 4 × A4, printed double-sided on 2 sheets.
+  Build with ./build.sh (headless Chrome). Fonts/logo are referenced relative to
+  this file; build.sh also emits a base64-inlined standalone copy.
+  ALL NUMBERS IN THE DEVICE MOCKUPS ARE INVENTED DEMO VALUES — never client data.
+-->
+<style>
+@font-face{font-family:'Noto Sans Sinhala';font-weight:400;src:url('../../mobile/assets/fonts/NotoSansSinhala-Regular.ttf') format('truetype')}
+@font-face{font-family:'Noto Sans Sinhala';font-weight:600;src:url('../../mobile/assets/fonts/NotoSansSinhala-SemiBold.ttf') format('truetype')}
+@font-face{font-family:'Noto Sans Sinhala';font-weight:700;src:url('../../mobile/assets/fonts/NotoSansSinhala-Bold.ttf') format('truetype')}
+@font-face{font-family:'Inter';font-weight:400;size-adjust:94%;src:url('../../mobile/assets/fonts/Inter-Regular.ttf') format('truetype')}
+@font-face{font-family:'Inter';font-weight:600;size-adjust:94%;src:url('../../mobile/assets/fonts/Inter-SemiBold.ttf') format('truetype')}
+@font-face{font-family:'Inter';font-weight:700;size-adjust:94%;src:url('../../mobile/assets/fonts/Inter-Bold.ttf') format('truetype')}
+@font-face{font-family:'Inter';font-weight:800;size-adjust:94%;src:url('../../mobile/assets/fonts/Inter-ExtraBold.ttf') format('truetype')}
+
+:root{
+  --b900:#0F172A; --b700:#1854B8; --b500:#1E64D4; --b200:#9DBDF0; --b100:#EBF2FC; --b050:#F5F8FD;
+  --sky:#0EA5E9; --purple:#8B5CF6; --purple-l:#F3EEFF; --amber:#D97706; --amber-l:#FEF3C7;
+  --green:#16A34A; --green-l:#DCFCE7; --green-d:#166534; --red:#DC2626; --red-l:#FEE2E2;
+  --clay:#E0925A; --clay-d:#A8612F; --clay-l:#F4C99B;
+  --ink:#0F172A; --ink2:#3B4657; --muted:#64748B;
+  --grad:linear-gradient(135deg,#3B82F6 0%,#1E64D4 55%,#1854B8 100%);
+  --sans:'Noto Sans Sinhala',Inter,sans-serif;
+  --num:Inter,'Noto Sans Sinhala',sans-serif;
+}
+@page{size:A4;margin:0}
+html,body{margin:0;padding:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:var(--sans);color:var(--ink);font-size:11pt;line-height:1.6;font-synthesis:none;
+  overflow-wrap:normal;word-break:normal;hyphens:manual;-webkit-font-smoothing:antialiased}
+*,*::before,*::after{box-sizing:border-box}
+p,h1,h2,h3{margin:0}
+h1,h2,h3{text-wrap:balance;line-height:1.25}
+p{text-wrap:pretty}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+
+.page{width:210mm;height:297mm;position:relative;overflow:hidden;background:#fff;page-break-after:always;break-after:page}
+.page:last-child{page-break-after:auto;break-after:auto}
+.safe{position:absolute;inset:12mm}
+html.bleed .page{width:216mm;height:303mm}
+html.bleed .safe{inset:15mm}
+html.debug .safe{outline:0.3mm solid magenta}
+@media screen{ body{background:#c9d2e0} .page{margin:8mm auto;box-shadow:0 2mm 8mm rgba(0,0,0,.25)} }
+
+/* type */
+.kicker{font-size:11pt;font-weight:600;letter-spacing:.02em}
+.h-display{font-size:38pt;font-weight:700;line-height:1.2}
+.h1{font-size:27pt;font-weight:700}
+.h2{font-size:21pt;font-weight:700}
+.h3{font-size:12.5pt;font-weight:700;line-height:1.35}
+.intro{font-size:12pt;line-height:1.6}
+.body{font-size:10.5pt;line-height:1.65}
+.small{font-size:9.5pt;line-height:1.5}
+.cap{font-size:8pt;line-height:1.45}
+.white{color:#fff}
+.b100{color:var(--b100)} .b200{color:var(--b200)} .mut{color:var(--muted)} .ink2{color:var(--ink2)}
+
+/* atoms */
+.logo{display:inline-flex;align-items:center;gap:3mm}
+.logo img{width:14mm;height:14mm;border-radius:3.2mm;display:block}
+.logo .wm{font-family:var(--num);font-weight:800;font-size:19pt;letter-spacing:-.02em;line-height:1}
+.chip{display:inline-flex;align-items:center;gap:2mm;font-size:9.5pt;font-weight:600;line-height:1.4}
+.chip svg{width:5mm;height:5mm;flex:0 0 auto}
+.pill{display:inline-flex;align-items:center;gap:2.5mm;border-radius:99mm;padding:2mm 5mm;font-weight:600}
+.tick{width:5mm;height:5mm;border-radius:50%;background:var(--green);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.tick svg{width:3.2mm;height:3.2mm}
+.ico{width:9mm;height:9mm;border-radius:2.6mm;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.ico svg{width:5.4mm;height:5.4mm}
+.card{background:#fff;border-radius:4mm}
+
+/* ─── PAGE 1 ─── */
+.p1{background:var(--b900);color:#fff}
+.p1 .blob{position:absolute;right:-30mm;top:60mm;width:190mm;height:190mm;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(30,100,212,.55),rgba(30,100,212,0));}
+.p1 .topbar{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center}
+.p1 .wa{display:inline-flex;align-items:center;gap:2mm;font-size:9.5pt;color:var(--b200)}
+.p1 .wa svg{width:4.5mm;height:4.5mm}
+.p1 .wa b{color:#fff;font-family:var(--num);font-weight:600}
+.p1 .hero{position:absolute;left:0;top:26mm;width:118mm}
+.p1 .hero .kicker{color:var(--b200);margin-bottom:3mm}
+.p1 .hero .h-display{margin-bottom:5mm}
+.p1 .hero .intro{color:var(--b100);margin-bottom:5mm;font-size:12.5pt}
+.p1 .hero .body{color:rgba(255,255,255,.88);max-width:100mm}
+.p1 .scene{position:absolute;left:-6mm;right:-6mm;top:140mm;height:80mm}
+.p1 .scene svg{width:100%;height:100%;display:block}
+.p1 .lower{position:absolute;left:0;right:0;bottom:12mm}
+.p1 .lower .card{padding:6mm 7mm;color:var(--ink)}
+.p1 .lower .chips{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4mm}
+.p1 .lower .chip{align-items:flex-start;font-size:9.5pt;line-height:1.45}
+.p1 .lower .chip .tick{margin-top:.8mm}
+.p1 .lower .row2{display:flex;justify-content:space-between;align-items:center;gap:6mm;margin-top:5mm}
+.p1 .proof{background:var(--grad);color:#fff;font-size:10.5pt;padding:2.6mm 6mm;border-radius:99mm}
+.p1 .proof b{font-weight:700}
+.p1 .proof .n{font-family:var(--num);font-weight:800}
+.p1 .teaser{display:inline-flex;align-items:center;gap:2.5mm;font-size:9.5pt;color:var(--muted);white-space:nowrap}
+.p1 .teaser i{width:3mm;height:3mm;border-radius:50%;background:var(--purple);display:inline-block}
+.p1 .teaser b{color:var(--ink);font-weight:700}
+.p1 .tag{position:absolute;left:0;right:0;bottom:0;text-align:center;color:var(--b200);font-size:11.5pt;font-weight:600;letter-spacing:.06em}
+
+/* ─── PAGE 2 ─── */
+.p2 .head{position:absolute;left:0;top:0;width:112mm}
+.p2 .head .kicker{color:var(--sky);margin-bottom:2mm}
+.p2 .head .h1{margin-bottom:4mm}
+.p2 .head .intro{color:var(--ink2)}
+.p2 .phonewrap{position:absolute;right:0;top:0;width:62mm;height:118mm}
+.p2 .phone{height:116mm}
+.p2 .mcard{position:absolute;left:96mm;top:80mm;width:80mm}
+.p2 .feats{position:absolute;left:0;top:157mm;width:186mm;display:grid;grid-template-columns:1fr 1fr;gap:3.5mm 8mm}
+.p2 .feat{display:grid;grid-template-columns:9mm 1fr;gap:3.5mm;align-items:start}
+.p2 .feat .ico{background:#E6F6FD}
+.p2 .feat .ico svg{stroke:var(--sky)}
+.p2 .feat .h3{font-size:12pt;margin-bottom:.5mm}
+.p2 .feat p{font-size:9.3pt;line-height:1.5;color:var(--ink2)}
+.p2 .bottom{position:absolute;left:0;right:0;bottom:0}
+.p2 .elder{position:absolute;left:0;top:66mm;width:84mm}
+.p2 .elder svg{width:84mm;height:58mm;display:block}
+.p2 .elder .cap{margin-top:1mm;color:var(--muted);font-size:8.5pt;max-width:78mm}
+.p2 .start{background:var(--b100);border-radius:4mm;padding:5mm 6.5mm 4.5mm}
+.p2 .start .h3{font-size:12.5pt;margin-bottom:2.5mm}
+.p2 .start ol{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm}
+.p2 .start li{display:grid;grid-template-columns:6mm 1fr;gap:2.5mm;align-items:start;font-size:10pt;line-height:1.5}
+.p2 .start li i{width:6mm;height:6mm;border-radius:50%;background:var(--sky);color:#fff;font-family:var(--num);font-weight:800;font-size:8.5pt;display:inline-flex;align-items:center;justify-content:center;font-style:normal;margin-top:.6mm}
+.p2 .start .cap{margin-top:2.5mm;color:var(--muted)}
+
+/* phone mockup */
+.phone{position:relative;width:60mm;height:124mm;border-radius:7mm;background:var(--b900);padding:2mm;box-shadow:0 3mm 9mm rgba(15,23,42,.25)}
+.phone .scr{position:relative;width:100%;height:100%;border-radius:5.4mm;background:#F7F9FC;overflow:hidden;display:flex;flex-direction:column;font-size:6.5pt;line-height:1.45}
+.phone .sb{display:flex;justify-content:space-between;padding:1.6mm 3.2mm 0;font-family:var(--num);font-weight:600;font-size:6pt;color:var(--ink)}
+.phone .sb i{display:inline-block;width:4mm;height:1.8mm;border-radius:.6mm;background:var(--ink);opacity:.85;margin-left:1mm;vertical-align:middle}
+.phone .content{flex:1;padding:2.4mm 3.2mm;display:flex;flex-direction:column;gap:2mm;overflow:hidden}
+.phone .tabs{display:grid;grid-template-columns:repeat(6,1fr);border-top:.3mm solid #E5E9F0;background:#fff;padding:1.4mm 1mm 1.8mm;font-size:4.9pt;text-align:center;color:var(--muted);line-height:1.3}
+.phone .tabs span{display:flex;flex-direction:column;align-items:center;gap:.6mm}
+.phone .tabs span i{display:block;width:3mm;height:3mm;border-radius:.9mm;background:#CBD5E1}
+.phone .tabs span.on{color:var(--b500);font-weight:700}
+.phone .tabs span.on i{background:var(--b500)}
+.phone .greet{display:flex;justify-content:space-between;align-items:center}
+.phone .greet b{font-size:9pt;font-weight:700;display:block;line-height:1.3}
+.phone .greet small{font-size:5.6pt;color:var(--muted)}
+.phone .av{width:7mm;height:7mm;border-radius:50%;background:var(--grad);color:#fff;font-family:var(--num);font-weight:800;font-size:6.5pt;display:flex;align-items:center;justify-content:center}
+.phone .ok{background:var(--green-l);color:var(--green-d);border-radius:2mm;padding:1.6mm 2.4mm;font-weight:600;font-size:6.2pt}
+.phone .stats{display:grid;grid-template-columns:1fr 1fr;gap:2mm}
+.phone .stat{background:#fff;border:.3mm solid #E5E9F0;border-radius:2.2mm;padding:1.8mm 2.2mm}
+.phone .stat small{display:block;color:var(--muted);font-size:5.4pt}
+.phone .stat b{font-family:var(--num);font-weight:800;font-size:7.4pt;color:var(--b500)}
+.phone .sec{font-size:6pt;font-weight:700;color:var(--ink2);margin-top:.6mm}
+.phone .note{background:#fff;border:.3mm solid #E5E9F0;border-radius:2.2mm;padding:1.8mm 2.2mm}
+.phone .note .bd{display:inline-block;background:var(--b100);color:var(--b500);border-radius:99mm;padding:0 1.6mm;font-size:5pt;font-weight:700}
+.phone .note b{display:block;font-size:6.4pt;margin-top:.6mm}
+.phone .note small{color:var(--muted);font-size:5.4pt}
+.phone .tiles{display:grid;grid-template-columns:1fr 1fr;gap:1.6mm}
+.phone .tile{background:#fff;border:.3mm solid #E5E9F0;border-radius:2mm;padding:1.6mm 2mm;font-size:5.6pt;font-weight:600;display:flex;align-items:center;gap:1.6mm}
+.phone .tile i{width:3.2mm;height:3.2mm;border-radius:1mm;background:var(--b100);flex:0 0 auto}
+.phone .rows{display:grid;gap:1.2mm}
+.phone .row{background:#fff;border:.3mm solid #E5E9F0;border-radius:2mm;padding:1.4mm 2mm;display:flex;justify-content:space-between;font-size:5.6pt}
+.phone .row b{font-family:var(--num);font-weight:700;color:var(--green-d)}
+
+/* membership card mockup */
+.mcard .c{border-radius:3.5mm;overflow:hidden;background:#fff;box-shadow:0 3mm 10mm rgba(15,23,42,.22);border:.3mm solid #E5E9F0}
+.mcard .ch{background:var(--grad);color:#fff;padding:3.5mm 4.5mm 3mm}
+.mcard .ch small{font-size:6.5pt;opacity:.85;display:block}
+.mcard .ch b{font-size:11pt;font-weight:700;display:block;line-height:1.3;margin:.5mm 0 1mm}
+.mcard .ch .id{display:flex;align-items:center;gap:2mm;font-family:var(--num);font-weight:600;font-size:7pt}
+.mcard .ch .st{background:#BBF7D0;color:var(--green-d);border-radius:99mm;padding:0 2mm;font-family:var(--sans);font-size:6pt;font-weight:700}
+.mcard .cb{display:grid;grid-template-columns:1fr 22mm;gap:3mm;padding:3.5mm 4.5mm;align-items:center}
+.mcard .kv{display:grid;gap:1.2mm;font-size:6.5pt;color:var(--muted)}
+.mcard .kv b{display:block;color:var(--ink);font-family:var(--num);font-weight:600;font-size:7.5pt}
+.mcard .qr{background:#fff;border:.3mm solid #E5E9F0;border-radius:2mm;padding:1.5mm}
+.mcard .qr svg{width:100%;height:auto;display:block}
+.mcard .cap{text-align:center;color:var(--muted);margin-top:1.5mm}
+
+/* ─── PAGE 3 ─── */
+.p3{background:var(--b100)}
+.p3 .band{position:absolute;left:0;right:0;top:0;height:84mm;background:var(--b900)}
+.p3 .bandin{position:absolute;left:12mm;right:12mm;top:11mm;height:66mm;display:grid;grid-template-columns:104mm 1fr;gap:6mm}
+.p3 .bandin .kicker{color:var(--b200);margin-bottom:2mm}
+.p3 .bandin .h1{color:#fff;margin-bottom:3.5mm}
+.p3 .bandin .intro{color:var(--b100);font-size:10.8pt;line-height:1.55}
+.p3 .treas{position:relative}
+.p3 .treas svg{position:absolute;right:-4mm;bottom:-8mm;width:84mm;height:64mm}
+.p3 .pc{position:absolute;left:12mm;top:90mm;width:186mm}
+.p3 .mods{position:absolute;left:12mm;right:12mm;top:185mm;display:grid;grid-template-columns:1fr 1fr;gap:2.4mm 4mm}
+.p3 .mod{background:#fff;border-radius:3.2mm;padding:2.1mm 3.2mm;display:grid;grid-template-columns:9mm 1fr;gap:3mm;align-items:center}
+.p3 .mod .ico{background:var(--b100)}
+.p3 .mod .ico svg{stroke:var(--b500)}
+.p3 .mod .h3{font-size:10pt;line-height:1.3}
+.p3 .mod p{font-size:8.1pt;line-height:1.4;color:var(--ink2)}
+.p3 .trust{position:absolute;left:12mm;right:12mm;top:259mm;display:flex;flex-wrap:wrap;gap:1.4mm 3.5mm}
+.p3 .trust .chip{font-size:7.9pt;font-weight:600;color:var(--ink2)}
+.p3 .trust .tick{width:4.2mm;height:4.2mm}
+.p3 .trust .tick svg{width:2.6mm;height:2.6mm}
+.p3 .vig{position:absolute;left:12mm;right:12mm;bottom:10mm;height:12mm;display:flex;align-items:center;gap:4mm}
+.p3 .vig svg{width:28mm;height:13mm;flex:0 0 auto}
+.p3 .vig p{font-size:8.8pt;color:var(--ink2)}
+.p3 .vig b{color:var(--ink)}
+
+/* PC mockup */
+.pcm{position:relative;width:186mm}
+.pcm .bez{background:var(--b900);border-radius:3.5mm 3.5mm 2.5mm 2.5mm;padding:2.2mm 2.2mm 3mm}
+.pcm .disp{display:grid;grid-template-columns:34mm 1fr;height:80mm;border-radius:2mm;overflow:hidden;background:#F5F7FA;font-size:6.2pt;line-height:1.4}
+.pcm .side{background:var(--b900);color:#CBD5E1;padding:3mm 2.6mm;display:flex;flex-direction:column}
+.pcm .side .lg{display:flex;align-items:center;gap:1.8mm;margin-bottom:3.5mm}
+.pcm .side .lg img{width:6mm;height:6mm;border-radius:1.5mm}
+.pcm .side .lg b{color:#fff;font-family:var(--num);font-weight:800;font-size:8pt;display:block;line-height:1.1}
+.pcm .side .lg small{font-size:4.8pt;color:#94A3B8}
+.pcm .side ul{list-style:none;margin:0;padding:0;display:grid;gap:.5mm;font-size:6.2pt}
+.pcm .side li{padding:1.2mm 2mm;border-radius:1.6mm;display:flex;align-items:center;gap:1.8mm}
+.pcm .side li i{width:2.6mm;height:2.6mm;border-radius:.7mm;background:#334155;flex:0 0 auto}
+.pcm .side li.on{background:var(--b500);color:#fff;font-weight:700}
+.pcm .side li.on i{background:rgba(255,255,255,.7)}
+.pcm .side .foot{margin-top:auto;font-size:5.4pt;color:#94A3B8;border-top:.3mm solid #1E293B;padding-top:2mm}
+.pcm .side .foot b{color:#fff;font-family:var(--num)}
+.pcm .main{padding:3mm 3.5mm;display:flex;flex-direction:column;gap:2.2mm;overflow:hidden}
+.pcm .ttl b{font-size:9.5pt;font-weight:700;display:block;line-height:1.3}
+.pcm .ttl small{color:var(--muted);font-size:5.8pt}
+.pcm .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:2mm}
+.pcm .kpi{background:#fff;border:.3mm solid #E5E9F0;border-radius:2mm;padding:2mm 2.4mm;border-top:.9mm solid var(--b500)}
+.pcm .kpi small{display:block;color:var(--muted);font-size:5.6pt}
+.pcm .kpi b{display:block;font-family:var(--num);font-weight:800;font-size:8.2pt;color:var(--ink);margin:.4mm 0;white-space:nowrap}
+.pcm .kpi em{font-style:normal;font-size:5.2pt;color:var(--muted)}
+.pcm .kpi.g{border-top-color:var(--green)} .pcm .kpi.p{border-top-color:var(--purple)} .pcm .kpi.r{border-top-color:var(--red)}
+.pcm .kpi.g em{color:var(--green-d)} .pcm .kpi.r em{color:var(--red)}
+.pcm .alert{background:var(--amber-l);color:#92400E;border-radius:2mm;padding:1.6mm 2.4mm;font-size:6pt;font-weight:600;display:flex;gap:3mm;align-items:center}
+.pcm .alert b{font-family:var(--num);font-weight:800}
+.pcm .alert .wi{display:inline-block;width:2.6mm;height:2.6mm;border-radius:50%;background:var(--amber);margin-right:1.4mm;vertical-align:-0.3mm}
+.pcm .two{display:grid;grid-template-columns:1fr 1.15fr;gap:2.2mm;flex:1;min-height:0}
+.pcm .box{background:#fff;border:.3mm solid #E5E9F0;border-radius:2mm;padding:2mm 2.4mm;display:flex;flex-direction:column;gap:1.5mm;min-height:0}
+.pcm .box .bt{font-size:6.4pt;font-weight:700}
+.pcm .acts{display:grid;grid-template-columns:1fr 1fr;gap:1.4mm}
+.pcm .act{background:var(--b050);border-radius:1.6mm;padding:1.6mm 1.8mm;font-size:5.6pt;font-weight:600;display:flex;align-items:center;gap:1.4mm}
+.pcm .act i{width:3mm;height:3mm;border-radius:.9mm;background:var(--b500);opacity:.85;flex:0 0 auto}
+.pcm .chart{flex:1;display:flex;align-items:flex-end;gap:1.8mm;padding-top:1mm;min-height:14mm}
+.pcm .bar{flex:1;display:flex;gap:.6mm;align-items:flex-end;height:100%}
+.pcm .bar i{flex:1;border-radius:.6mm .6mm 0 0;display:block}
+.pcm .bar i.in{background:var(--green)} .pcm .bar i.out{background:var(--red);opacity:.75}
+.pcm .legend{display:flex;gap:3mm;font-size:5.2pt;color:var(--muted)}
+.pcm .legend i{display:inline-block;width:2.4mm;height:2.4mm;border-radius:.6mm;vertical-align:middle;margin-right:1mm}
+.pcm .stand{width:40mm;height:4mm;margin:0 auto;background:#1E293B;border-radius:0 0 2mm 2mm}
+.pcm .base{width:70mm;height:1.8mm;margin:0 auto;background:#334155;border-radius:1mm}
+
+/* ─── PAGE 4 ─── */
+.p4 .pk{position:absolute;left:12mm;top:12mm;width:114mm}
+.p4 .pk .kicker{color:var(--purple);margin-bottom:2mm}
+.p4 .pk .h2{margin-bottom:3.5mm}
+.p4 .pk .body{color:var(--ink2);margin-bottom:4mm}
+.p4 .pk .chips{display:flex;gap:2.5mm;flex-wrap:wrap;margin-bottom:5mm}
+.p4 .pk .chips span{background:var(--purple-l);color:#6D28D9;border-radius:99mm;padding:1.2mm 3.5mm;font-size:9pt;font-weight:700}
+.p4 .cats{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm 2mm}
+.p4 .cat{display:flex;flex-direction:column;align-items:center;gap:1.5mm;text-align:center;font-size:8pt;font-weight:600;color:var(--ink2);line-height:1.3}
+.p4 .cat i{width:11mm;height:11mm;border-radius:50%;background:var(--purple-l);display:flex;align-items:center;justify-content:center}
+.p4 .cat i svg{width:6mm;height:6mm}
+.p4 .pkphone{position:absolute;right:12mm;top:10mm;width:62mm}
+.p4 .steps{position:absolute;left:0;right:0;top:134mm;height:74mm;background:var(--b100)}
+.p4 .stepsin{position:absolute;left:12mm;right:12mm;top:6mm}
+.p4 .stepsin .h2{margin-bottom:5mm}
+.p4 .sgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6mm}
+.p4 .step{display:grid;grid-template-columns:9mm 1fr;gap:3mm;align-items:start}
+.p4 .step i{width:9mm;height:9mm;border-radius:50%;background:var(--amber);color:var(--b900);font-family:var(--num);font-weight:800;font-size:12pt;display:inline-flex;align-items:center;justify-content:center;font-style:normal}
+.p4 .step b{display:block;font-size:11pt;font-weight:700;line-height:1.35;margin-bottom:.6mm}
+.p4 .step p{font-size:9pt;line-height:1.5;color:var(--ink2)}
+.p4 .price{margin-top:3.5mm;font-size:9.4pt;color:var(--ink2);border-top:.3mm solid #CFDBEF;padding-top:3mm}
+.p4 .price b{color:var(--ink)}
+.p4 .foot{position:absolute;left:0;right:0;top:208mm;bottom:0;background:var(--b900);color:#fff}
+.p4 .footin{position:absolute;left:12mm;right:12mm;top:12mm;bottom:12mm;display:grid;grid-template-columns:1fr 60mm;gap:8mm}
+.p4 .cta .lbl{color:var(--b200);font-size:12pt;font-weight:600;margin-bottom:1.5mm}
+.p4 .cta .who{font-size:13pt;font-weight:600;margin-bottom:2mm}
+.p4 .cta .tel{font-family:var(--num);font-weight:800;font-size:33pt;letter-spacing:.01em;line-height:1.1;font-variant-numeric:tabular-nums;margin-bottom:4mm}
+.p4 .cta .pill{background:var(--green);color:#fff;font-size:10.5pt}
+.p4 .cta .pill svg{width:5mm;height:5mm}
+.p4 .cta .waline{margin-top:4mm;color:var(--b200);font-size:9.5pt;max-width:98mm}
+.p4 .brand{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;text-align:right}
+.p4 .brand .logo .wm{color:#fff}
+.p4 .brand .tag{color:var(--b200);font-size:9pt;line-height:1.55}
+.p4 .brand .tag b{color:#fff;font-weight:600}
+.p4 .legal{position:absolute;left:12mm;right:12mm;bottom:5mm;color:#64748B;font-size:7.5pt;text-align:center}
+</style>
+</head>
+<body>
+<!-- icon sprite: 24x24, stroke icons; Puruka glyphs are filled -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="g-brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3B82F6"/><stop offset=".55" stop-color="#1E64D4"/><stop offset="1" stop-color="#1854B8"/></linearGradient>
+    <radialGradient id="g-glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#9DBDF0" stop-opacity=".55"/><stop offset="1" stop-color="#9DBDF0" stop-opacity="0"/></radialGradient>
+    <symbol id="fig" viewBox="0 0 30 46"><rect x="2" y="19" width="26" height="27" rx="9" fill="var(--body,#fff)"/><circle cx="15" cy="9.5" r="8.5" fill="var(--skin,#E0925A)"/><path d="M6.5 9.5a8.5 8.5 0 0 1 17 0z" fill="var(--hair,#0F172A)"/><rect x="2" y="19" width="26" height="5" rx="2.5" fill="var(--band,transparent)"/></symbol>
+    <symbol id="figstand" viewBox="0 0 30 72"><rect x="8" y="46" width="6" height="26" rx="3" fill="var(--leg,#1854B8)"/><rect x="16" y="46" width="6" height="26" rx="3" fill="var(--leg,#1854B8)"/><rect x="3" y="18" width="24" height="32" rx="9" fill="var(--body,#fff)"/><circle cx="15" cy="9" r="8.5" fill="var(--skin,#E0925A)"/><path d="M6.5 9a8.5 8.5 0 0 1 17 0z" fill="var(--hair,#0F172A)"/></symbol>
+  </defs>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 7" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.7 13.6L3 21l4.5-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.6 8.8c.2-.6.5-.6.8-.6h.6c.2 0 .4.1.5.4l.8 1.9c.1.2 0 .4-.1.6l-.5.6c-.1.2-.2.3 0 .6.6 1 1.6 2 2.9 2.6.3.1.4.1.6-.1l.7-.8c.2-.2.4-.2.6-.1l1.9.9c.3.1.4.2.4.4 0 .3 0 1-.4 1.5-.4.5-1.3 1-2 1-.7 0-2.4-.2-4.4-2.2s-2.4-3.6-2.5-4.3c0-.7.1-1.7.1-2.4z" fill="currentColor"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z M9 8h6M9 12h6M9 16h4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-loan" viewBox="0 0 24 24"><path d="M3 12h4l3 5 4-10 3 5h4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M7 15h4M14 9h3v3h-3z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></symbol>
+  <symbol id="i-funds" viewBox="0 0 24 24"><path d="M3 10l9-5 9 5M5 10v8M12 10v8M19 10v8M3 20h18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-members" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M2.5 19a6.5 6.5 0 0 1 13 0M15 5a3 3 0 0 1 0 6M17 13a5.5 5.5 0 0 1 4.5 6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></symbol>
+  <symbol id="i-ledger" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M8 8h8M8 12h8M8 16h5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h13v3M3 7v11a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/><circle cx="16.5" cy="14" r="1.4" fill="currentColor"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3M7 12h10" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></symbol>
+  <symbol id="i-report" viewBox="0 0 24 24"><path d="M4 20h16M7 16V9M12 16V5M17 16v-6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h5v17H6a2 2 0 0 0-2 2zM20 5a2 2 0 0 0-2-2h-5v17h5a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></symbol>
+  <!-- Puruka glyphs (filled, purple) -->
+  <symbol id="k-pot" viewBox="0 0 24 24"><path d="M5 9h14l-1.5 9a3 3 0 0 1-3 2.5h-5a3 3 0 0 1-3-2.5z" fill="#8B5CF6"/><rect x="8" y="5" width="8" height="3" rx="1.5" fill="#8B5CF6"/></symbol>
+  <symbol id="k-tool" viewBox="0 0 24 24"><path d="M14 4l6 6-9 9-6-6z" fill="#8B5CF6"/><rect x="3" y="17" width="5" height="4" rx="1" fill="#6D28D9"/></symbol>
+  <symbol id="k-chair" viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="9" rx="2" fill="#8B5CF6"/><rect x="5" y="13" width="14" height="3" rx="1.5" fill="#6D28D9"/><rect x="6" y="16" width="2.5" height="5" fill="#8B5CF6"/><rect x="15.5" y="16" width="2.5" height="5" fill="#8B5CF6"/></symbol>
+  <symbol id="k-hoe" viewBox="0 0 24 24"><rect x="11" y="3" width="2.5" height="14" rx="1" fill="#6D28D9"/><path d="M5 15h14l-2 5H7z" fill="#8B5CF6"/></symbol>
+  <symbol id="k-bowl" viewBox="0 0 24 24"><path d="M3 11h18a9 9 0 0 1-18 0z" fill="#8B5CF6"/><ellipse cx="12" cy="10.5" rx="6" ry="2" fill="#6D28D9"/></symbol>
+  <symbol id="k-coco" viewBox="0 0 24 24"><circle cx="12" cy="15" r="6" fill="#8B5CF6"/><path d="M12 9C9 5 5 5 3 7c3 0 6 1 9 3zM12 9c3-4 7-4 9-2-3 0-6 1-9 3z" fill="#6D28D9"/></symbol>
+  <symbol id="k-hand" viewBox="0 0 24 24"><rect x="6" y="11" width="12" height="9" rx="4" fill="#8B5CF6"/><rect x="6" y="4" width="2.4" height="9" rx="1.2" fill="#6D28D9"/><rect x="9.5" y="3" width="2.4" height="10" rx="1.2" fill="#6D28D9"/><rect x="13" y="4" width="2.4" height="9" rx="1.2" fill="#6D28D9"/><rect x="16.5" y="6" width="2.4" height="7" rx="1.2" fill="#6D28D9"/></symbol>
+  <symbol id="k-key" viewBox="0 0 24 24"><circle cx="8" cy="12" r="4.5" fill="#8B5CF6"/><rect x="11" y="10.8" width="10" height="2.4" rx="1.2" fill="#6D28D9"/><rect x="17" y="13" width="2.4" height="3" fill="#6D28D9"/></symbol>
+</svg>
+
+<!-- ═══════════════════ PAGE 1 · FRONT COVER ═══════════════════ -->
+<section class="page p1">
+  <div class="blob"></div>
+  <div class="safe">
+    <div class="topbar">
+      <div class="logo"><img src="../../mobile/assets/images/icon.png" alt=""><span class="wm">eSamithi</span></div>
+      <div class="wa"><svg><use href="#i-wa"/></svg><span>WhatsApp</span><b class="num">+94 77 349 2658</b></div>
+    </div>
+
+    <div class="hero">
+      <p class="kicker">මරණාධාර හා සුභසාධක සමිති සඳහා</p>
+      <h1 class="h-display">අපේ සමිතිය,<br>දැන් හැමෝගේම අත්ලේ.</h1>
+      <p class="intro">දායක මුදල්, ණය, දැනුම්දීම්, රිසිට්පත් — කවුරුත් බලාගන්න පුළුවන් විදිහට, පැහැදිලිව.</p>
+      <p class="body">ගමේ සමිතියක් කියන්නේ විශ්වාසයයි. eSamithi කරන්නේ ඒ විශ්වාසය තව ශක්තිමත් කිරීමයි. කාර්යාලයේ පොත් පරිගණකයට. සාමාජිකයාගේ තොරතුරු ඔහුගේම දුරකථනයට.</p>
+    </div>
+
+    <!-- Scene A: the society meeting under a tree -->
+    <div class="scene" aria-hidden="true">
+      <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMax meet">
+        <ellipse cx="205" cy="186" rx="205" ry="16" fill="#1854B8" opacity=".45"/>
+        <ellipse cx="205" cy="184" rx="165" ry="10" fill="#1E64D4" opacity=".35"/>
+        <!-- tree -->
+        <path d="M78 178c2-30 0-58-2-86" stroke="#A8612F" stroke-width="12" stroke-linecap="round" fill="none"/>
+        <path d="M80 176c1-26 0-52-1-78" stroke="#E0925A" stroke-width="4" stroke-linecap="round" fill="none" opacity=".8"/>
+        <path d="M76 176c-6-4-12-2-18 4M80 176c8-6 16-4 22 2" stroke="#A8612F" stroke-width="7" stroke-linecap="round" fill="none"/>
+        <ellipse cx="70" cy="70" rx="60" ry="40" fill="#1854B8"/>
+        <ellipse cx="96" cy="52" rx="58" ry="36" fill="#1E64D4"/>
+        <ellipse cx="118" cy="66" rx="46" ry="30" fill="#3B82F6"/>
+        <ellipse cx="50" cy="88" rx="34" ry="22" fill="#1E64D4"/>
+        <ellipse cx="128" cy="44" rx="30" ry="18" fill="#9DBDF0"/>
+        <ellipse cx="150" cy="82" rx="8" ry="4.5" fill="#9DBDF0" transform="rotate(-25 150 82)"/>
+        <ellipse cx="22" cy="104" rx="7" ry="4" fill="#9DBDF0" transform="rotate(20 22 104)"/>
+        <ellipse cx="162" cy="104" rx="6" ry="3.5" fill="#9DBDF0" transform="rotate(-40 162 104)"/>
+        <!-- standing secretary with paper -->
+        <use href="#figstand" x="104" y="104" width="30" height="72" style="--body:#fff;--leg:#1854B8"/>
+        <rect x="128" y="130" width="14" height="18" rx="1.5" fill="#fff"/>
+        <path d="M131 136h8M131 140h8M131 144h5" stroke="#1E64D4" stroke-width="1.4" stroke-linecap="round"/>
+        <rect x="120" y="128" width="12" height="6" rx="3" fill="#E0925A"/>
+        <!-- seated arc of members -->
+        <use href="#fig" x="150" y="132" width="30" height="46" style="--body:#9DBDF0"/>
+        <use href="#fig" x="182" y="138" width="30" height="46" style="--body:#fff"/>
+        <use href="#fig" x="214" y="142" width="30" height="46" style="--body:#EBF2FC;--band:#1E64D4;--hair:#0F172A"/>
+        <use href="#fig" x="246" y="142" width="30" height="46" style="--body:#fff"/>
+        <use href="#fig" x="278" y="138" width="30" height="46" style="--body:#9DBDF0"/>
+        <use href="#fig" x="310" y="132" width="30" height="46" style="--body:#fff;--hair:#EBF2FC"/>
+        <use href="#fig" x="340" y="126" width="30" height="46" style="--body:#EBF2FC"/>
+        <!-- one member's glowing phone -->
+        <circle cx="262" cy="160" r="16" fill="url(#g-glow)"/>
+        <rect x="256" y="153" width="9" height="14" rx="1.6" fill="#0F172A"/>
+        <rect x="257.2" y="154.5" width="6.6" height="11" rx="1" fill="#EBF2FC"/>
+        <rect x="258.4" y="156" width="4.2" height="1.4" rx=".6" fill="#1E64D4"/>
+        <rect x="258.4" y="158.4" width="3" height="1.2" rx=".6" fill="#9DBDF0"/>
+        <!-- small table + laptop at right -->
+        <rect x="352" y="150" width="46" height="5" rx="2.5" fill="#E0925A"/>
+        <rect x="358" y="155" width="4" height="24" fill="#A8612F"/><rect x="386" y="155" width="4" height="24" fill="#A8612F"/>
+        <rect x="362" y="136" width="26" height="15" rx="2" fill="#0F172A"/>
+        <rect x="364" y="138" width="22" height="11" rx="1.2" fill="#EBF2FC"/>
+        <rect x="366" y="140" width="8" height="2" rx="1" fill="#1E64D4"/><rect x="366" y="143.5" width="14" height="1.6" rx=".8" fill="#9DBDF0"/><rect x="366" y="146.2" width="10" height="1.6" rx=".8" fill="#9DBDF0"/>
+      </svg>
+    </div>
+
+    <div class="lower">
+      <div class="card">
+        <div class="chips">
+          <div class="chip"><span class="tick"><svg><use href="#i-check"/></svg></span><span>සාමාජිකයන්ට යෙදුම <b>සම්පූර්ණයෙන්ම නොමිලේ</b></span></div>
+          <div class="chip"><span class="tick"><svg><use href="#i-check"/></svg></span><span><b>සම්පූර්ණයෙන්ම සිංහලෙන්</b> (ඉංග්‍රීසියෙන් ද)</span></div>
+          <div class="chip"><span class="tick"><svg><use href="#i-check"/></svg></span><span>දත්ත <b>ඔබේ සමිතියටම</b> අයිතියි</span></div>
+        </div>
+        <div class="row2">
+          <div class="proof"><b>මරණාධාර සමිතිය</b> — සාමාජිකයන් <span class="n">140</span>කට වැඩි දැනටමත් eSamithi සමඟ</div>
+          <div class="teaser"><i></i><span><b>පුරුක</b> — ඔබේ සමිතියේම වෙළඳපොළ · පිටුව 4</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="tag">සමාජය. සමගිය. සහයෝගය.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════ PAGE 2 · THE MEMBER'S SIDE ═══════════════════ -->
+<section class="page p2">
+  <div class="safe">
+    <div class="head">
+      <p class="kicker">සාමාජිකයාට</p>
+      <h1 class="h1">ඔබේ තොරතුරු, ඔබේම දුරකථනයේ.</h1>
+      <p class="intro">රැස්වීමට යන්න බැරි වුණත්, කාර්යාලයට යන්නේ නැතුව, ඔබේ සමිතියේ හැම දෙයක්ම බලාගන්න පුළුවන්. Google Play වෙතින් — <b>නොමිලේ.</b></p>
+    </div>
+
+    <!-- phone: the real home screen (demo values) -->
+    <div class="phonewrap">
+      <div class="phone"><div class="scr">
+        <div class="sb"><span>09:41</span><span><i style="width:2.5mm"></i><i style="width:2.5mm"></i><i></i></span></div>
+        <div class="content">
+          <div class="greet"><div><b>ආයුබෝවන්, කුමාරි</b><small class="num">2019-03-12 සිට සාමාජික · MS-0042</small></div><div class="av">කු</div></div>
+          <div class="ok">ඔබ යාවත්කාලීනයි. හිඟ මුදල් නොමැත!</div>
+          <div class="stats">
+            <div class="stat"><small>මුළු දායකත්වය</small><b>රු. 36,000.00</b></div>
+            <div class="stat"><small>ණය ශේෂය</small><b>රු. 0.00</b></div>
+          </div>
+          <div class="sec">නවතම දැනුම්දීම</div>
+          <div class="note"><span class="bd">රැස්වීම</span><b>2026 වාර්ෂික මහා සභා රැස්වීම</b><small>රැස්වීම් දිනය <span class="num">2026-10-04</span></small></div>
+          <div class="tiles">
+            <div class="tile"><i></i>සාමාජික කාඩ්පත</div><div class="tile"><i></i>අවධානය අවශ්‍යයි</div>
+            <div class="tile"><i></i>මගේ ඉල්ලීම්</div><div class="tile"><i></i>උදව් සහ තොරතුරු</div>
+          </div>
+          <div class="sec">මෑත ක්‍රියාකාරකම්</div>
+          <div class="rows">
+            <div class="row"><span>දායක මුදල · <span class="num">2026-09-01</span></span><b>රු. 500.00</b></div>
+            <div class="row"><span>දායක මුදල · <span class="num">2026-08-02</span></span><b>රු. 500.00</b></div>
+          </div>
+        </div>
+        <div class="tabs"><span class="on"><i></i>මුල් පිටුව</span><span><i></i>දායක මුදල්</span><span><i></i>ණය</span><span><i></i>දැනුම්දීම්</span><span><i></i>පුරුක</span><span><i></i>තවත්</span></div>
+      </div></div>
+    </div>
+
+    <!-- membership card, floated over the phone -->
+    <div class="mcard">
+      <div class="c">
+        <div class="ch"><small>මරණාධාර සමිතිය</small><b>කේ. ඒ. කුමාරි පෙරේරා</b><div class="id"><span>MS-0042</span><span class="st">සක්‍රීයයි</span></div></div>
+        <div class="cb">
+          <div class="kv"><span>ජා.හැ. අංකය<b>785612345V</b></span><span>සාමාජික වූ දිනය<b>2019-03-12</b></span><span>දුරකථනය<b>077 123 4567</b></span></div>
+          <div class="qr"><svg viewBox="0 0 21 21" shape-rendering="crispEdges"><path d="M0 0h1v1h-1z M1 0h1v1h-1z M2 0h1v1h-1z M3 0h1v1h-1z M4 0h1v1h-1z M5 0h1v1h-1z M6 0h1v1h-1z M8 0h1v1h-1z M10 0h1v1h-1z M11 0h1v1h-1z M12 0h1v1h-1z M14 0h1v1h-1z M15 0h1v1h-1z M16 0h1v1h-1z M17 0h1v1h-1z M18 0h1v1h-1z M19 0h1v1h-1z M20 0h1v1h-1z M0 1h1v1h-1z M6 1h1v1h-1z M11 1h1v1h-1z M12 1h1v1h-1z M14 1h1v1h-1z M20 1h1v1h-1z M0 2h1v1h-1z M2 2h1v1h-1z M3 2h1v1h-1z M4 2h1v1h-1z M6 2h1v1h-1z M10 2h1v1h-1z M12 2h1v1h-1z M14 2h1v1h-1z M16 2h1v1h-1z M17 2h1v1h-1z M18 2h1v1h-1z M20 2h1v1h-1z M0 3h1v1h-1z M2 3h1v1h-1z M3 3h1v1h-1z M4 3h1v1h-1z M6 3h1v1h-1z M11 3h1v1h-1z M14 3h1v1h-1z M16 3h1v1h-1z M17 3h1v1h-1z M18 3h1v1h-1z M20 3h1v1h-1z M0 4h1v1h-1z M2 4h1v1h-1z M3 4h1v1h-1z M4 4h1v1h-1z M6 4h1v1h-1z M9 4h1v1h-1z M11 4h1v1h-1z M14 4h1v1h-1z M16 4h1v1h-1z M17 4h1v1h-1z M18 4h1v1h-1z M20 4h1v1h-1z M0 5h1v1h-1z M6 5h1v1h-1z M9 5h1v1h-1z M11 5h1v1h-1z M12 5h1v1h-1z M14 5h1v1h-1z M20 5h1v1h-1z M0 6h1v1h-1z M1 6h1v1h-1z M2 6h1v1h-1z M3 6h1v1h-1z M4 6h1v1h-1z M5 6h1v1h-1z M6 6h1v1h-1z M8 6h1v1h-1z M10 6h1v1h-1z M12 6h1v1h-1z M14 6h1v1h-1z M15 6h1v1h-1z M16 6h1v1h-1z M17 6h1v1h-1z M18 6h1v1h-1z M19 6h1v1h-1z M20 6h1v1h-1z M11 7h1v1h-1z M1 8h1v1h-1z M2 8h1v1h-1z M4 8h1v1h-1z M5 8h1v1h-1z M6 8h1v1h-1z M9 8h1v1h-1z M15 8h1v1h-1z M18 8h1v1h-1z M19 8h1v1h-1z M0 9h1v1h-1z M1 9h1v1h-1z M7 9h1v1h-1z M9 9h1v1h-1z M10 9h1v1h-1z M13 9h1v1h-1z M16 9h1v1h-1z M18 9h1v1h-1z M20 9h1v1h-1z M0 10h1v1h-1z M3 10h1v1h-1z M4 10h1v1h-1z M6 10h1v1h-1z M8 10h1v1h-1z M9 10h1v1h-1z M12 10h1v1h-1z M14 10h1v1h-1z M17 10h1v1h-1z M18 10h1v1h-1z M3 11h1v1h-1z M4 11h1v1h-1z M5 11h1v1h-1z M8 11h1v1h-1z M10 11h1v1h-1z M12 11h1v1h-1z M14 11h1v1h-1z M19 11h1v1h-1z M20 11h1v1h-1z M0 12h1v1h-1z M1 12h1v1h-1z M3 12h1v1h-1z M5 12h1v1h-1z M6 12h1v1h-1z M7 12h1v1h-1z M10 12h1v1h-1z M11 12h1v1h-1z M12 12h1v1h-1z M13 12h1v1h-1z M14 12h1v1h-1z M18 12h1v1h-1z M19 12h1v1h-1z M20 12h1v1h-1z M8 13h1v1h-1z M10 13h1v1h-1z M11 13h1v1h-1z M13 13h1v1h-1z M17 13h1v1h-1z M18 13h1v1h-1z M19 13h1v1h-1z M20 13h1v1h-1z M0 14h1v1h-1z M1 14h1v1h-1z M2 14h1v1h-1z M3 14h1v1h-1z M4 14h1v1h-1z M5 14h1v1h-1z M6 14h1v1h-1z M9 14h1v1h-1z M11 14h1v1h-1z M12 14h1v1h-1z M13 14h1v1h-1z M14 14h1v1h-1z M16 14h1v1h-1z M18 14h1v1h-1z M0 15h1v1h-1z M6 15h1v1h-1z M10 15h1v1h-1z M17 15h1v1h-1z M18 15h1v1h-1z M0 16h1v1h-1z M2 16h1v1h-1z M3 16h1v1h-1z M4 16h1v1h-1z M6 16h1v1h-1z M8 16h1v1h-1z M9 16h1v1h-1z M10 16h1v1h-1z M12 16h1v1h-1z M13 16h1v1h-1z M15 16h1v1h-1z M19 16h1v1h-1z M20 16h1v1h-1z M0 17h1v1h-1z M2 17h1v1h-1z M3 17h1v1h-1z M4 17h1v1h-1z M6 17h1v1h-1z M8 17h1v1h-1z M9 17h1v1h-1z M11 17h1v1h-1z M13 17h1v1h-1z M15 17h1v1h-1z M18 17h1v1h-1z M0 18h1v1h-1z M2 18h1v1h-1z M3 18h1v1h-1z M4 18h1v1h-1z M6 18h1v1h-1z M8 18h1v1h-1z M9 18h1v1h-1z M11 18h1v1h-1z M12 18h1v1h-1z M14 18h1v1h-1z M18 18h1v1h-1z M19 18h1v1h-1z M20 18h1v1h-1z M0 19h1v1h-1z M6 19h1v1h-1z M9 19h1v1h-1z M12 19h1v1h-1z M13 19h1v1h-1z M16 19h1v1h-1z M0 20h1v1h-1z M1 20h1v1h-1z M2 20h1v1h-1z M3 20h1v1h-1z M4 20h1v1h-1z M5 20h1v1h-1z M6 20h1v1h-1z M9 20h1v1h-1z M11 20h1v1h-1z M18 20h1v1h-1z" fill="#0F172A"/></svg></div>
+        </div>
+      </div>
+      <p class="cap">මෙම කාඩ්පත සමිති කාර්යාලයේදී පෙන්වන්න</p>
+    </div>
+
+    <!-- Scene B: an elder reading the phone -->
+      <div class="elder" aria-hidden="true">
+        <svg viewBox="0 0 240 200" preserveAspectRatio="xMinYMax meet">
+          <rect x="150" y="10" width="80" height="90" rx="6" fill="#EBF2FC"/><rect x="158" y="18" width="64" height="74" rx="4" fill="#9DBDF0" opacity=".5"/>
+          <rect x="164" y="10" width="4" height="90" fill="#fff" opacity=".7"/><rect x="150" y="52" width="80" height="4" fill="#fff" opacity=".7"/>
+          <rect x="0" y="120" width="60" height="80" rx="10" fill="#A8612F"/>
+          <ellipse cx="110" cy="200" rx="110" ry="18" fill="#9DBDF0" opacity=".35"/>
+          <rect x="30" y="118" width="130" height="90" rx="30" fill="#1E64D4"/>
+          <path d="M75 118l20 22 20-22z" fill="#fff"/>
+          <ellipse cx="95" cy="118" rx="52" ry="14" fill="#1854B8"/>
+          <circle cx="95" cy="72" r="34" fill="#E0925A"/>
+          <path d="M61 72a34 34 0 0 1 68 0c-6-14-18-20-34-20s-28 6-34 20z" fill="#EBF2FC"/>
+          <ellipse cx="62" cy="76" rx="5" ry="7" fill="#A8612F"/>
+          <circle cx="82" cy="78" r="9" fill="none" stroke="#0F172A" stroke-width="2.4"/><circle cx="108" cy="78" r="9" fill="none" stroke="#0F172A" stroke-width="2.4"/><path d="M91 78h8M73 76l-8-3M117 76l8-3" stroke="#0F172A" stroke-width="2.4" stroke-linecap="round"/>
+          <rect x="128" y="120" width="54" height="30" rx="14" fill="#1E64D4"/>
+          <rect x="150" y="96" width="40" height="66" rx="6" fill="#0F172A" transform="rotate(-12 170 129)"/>
+          <rect x="154" y="101" width="32" height="56" rx="3.5" fill="#F7F9FC" transform="rotate(-12 170 129)"/>
+          <g transform="rotate(-12 170 129)"><rect x="158" y="107" width="14" height="4" rx="2" fill="#1E64D4"/><rect x="158" y="115" width="24" height="3" rx="1.5" fill="#9DBDF0"/><rect x="158" y="121" width="20" height="3" rx="1.5" fill="#9DBDF0"/><rect x="158" y="129" width="24" height="10" rx="2" fill="#DCFCE7"/><rect x="158" y="143" width="24" height="8" rx="2" fill="#EBF2FC"/></g>
+          <rect x="140" y="146" width="22" height="16" rx="8" fill="#E0925A"/><rect x="176" y="150" width="20" height="14" rx="7" fill="#E0925A"/>
+        </svg>
+        <p class="cap">වයස කීයක් වුණත් — විශාල අකුරු, සිංහලෙන්, පැහැදිලිව.</p>
+      </div>
+
+    <div class="feats">
+      <div class="feat"><span class="ico"><svg><use href="#i-receipt"/></svg></span><div><h3 class="h3">දායක මුදල් සහ රිසිට්පත්</h3><p>ගෙවපු හැම මුදලක්ම දිනය සමඟ. කාර්යාලයේ මුද්‍රණය කරන රිසිට්පතම දුරකථනයෙන්.</p></div></div>
+      <div class="feat"><span class="ico"><svg><use href="#i-loan"/></svg></span><div><h3 class="h3">ණය සහ ඇපවීම්</h3><p>ඉතිරි මුදල, පොලිය, ඊළඟ වාරිකය. ඔබ ඇප වී සිටින ණය ද.</p></div></div>
+      <div class="feat"><span class="ico"><svg><use href="#i-bell"/></svg></span><div><h3 class="h3">දැනුම්දීම්</h3><p>රැස්වීම්, මරණ දැනුම්දීම් දුරකථනයට කෙලින්ම. එකක්වත් මඟ හැරෙන්නේ නැහැ.</p></div></div>
+      <div class="feat"><span class="ico"><svg><use href="#i-card"/></svg></span><div><h3 class="h3">සාමාජික කාඩ්පත</h3><p>QR කේතය සහිත ඩිජිටල් කාඩ්පතක්. රැස්වීමේදී පෙන්වන්න, WhatsApp වලින් බෙදාගන්න.</p></div></div>
+      <div class="feat"><span class="ico"><svg><use href="#i-funds"/></svg></span><div><h3 class="h3">සමිතියේ අරමුදල්</h3><p>සමිතියේ මුළු මුදල, ස්ථාවර තැන්පතු — හැම සාමාජිකයෙකුටම විවෘතව.</p></div></div>
+      <div class="feat"><span class="ico"><svg><use href="#i-send"/></svg></span><div><h3 class="h3">ඉල්ලීම්</h3><p>ණය ඉල්ලීමක්, තොරතුරු නිවැරදි කිරීමක් — දුරකථනයෙන්ම යවන්න.</p></div></div>
+    </div>
+
+    <div class="bottom">
+<div class="start">
+        <h3 class="h3">පටන් ගන්නේ මෙහෙමයි</h3>
+        <ol>
+          <li><i>1</i><span>සමිතියෙන් <b>සමිති කේතය</b> ලබාගන්න.</span></li>
+          <li><i>2</i><span>ජා.හැ. අංකය සහ උපන් දිනය ඇතුළත් කරන්න.</span></li>
+          <li><i>3</i><span>PIN අංකයක් තෝරන්න. එච්චරයි.</span></li>
+        </ol>
+        <p class="cap">eSamithi භාවිත කරන සමිතියක ලියාපදිංචි සාමාජිකයන්ට පමණයි. ඔබේ තොරතුරු පෙනෙන්නේ ඔබට සහ සමිති නිලධාරීන්ට පමණයි.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ PAGE 3 · THE OFFICE / COMMITTEE SIDE ═══════════════════ -->
+<section class="page p3">
+  <div class="band"></div>
+  <div class="bandin">
+    <div>
+      <p class="kicker">කමිටුවට සහ කාර්යාලයට</p>
+      <h1 class="h1">පොත් ගොඩ වෙනුවට,<br>එක තිරයක්.</h1>
+      <p class="intro">සභාපති, ලේකම්, භාණ්ඩාගාරික — ඔබේ වැඩ ලේසි කරන්න, වැරදි අඩු කරන්න, හැම සතයක්ම පැහැදිලි කරන්න. Windows පරිගණකයක් සහ අන්තර්ජාලය තිබුණාම ඇති.</p>
+    </div>
+    <div class="treas" aria-hidden="true">
+      <svg viewBox="0 0 300 230" preserveAspectRatio="xMaxYMax meet">
+        <ellipse cx="160" cy="222" rx="140" ry="8" fill="#1E64D4" opacity=".35"/>
+        <rect x="20" y="150" width="260" height="10" rx="5" fill="#E0925A"/><rect x="20" y="160" width="260" height="5" fill="#A8612F"/>
+        <rect x="40" y="165" width="8" height="55" fill="#A8612F"/><rect x="252" y="165" width="8" height="55" fill="#A8612F"/>
+        <rect x="34" y="120" width="52" height="10" rx="2" fill="#9DBDF0"/><rect x="38" y="110" width="52" height="10" rx="2" fill="#EBF2FC"/><rect x="42" y="100" width="52" height="10" rx="2" fill="#fff"/>
+        <rect x="34" y="120" width="6" height="10" fill="#A8612F"/><rect x="38" y="110" width="6" height="10" fill="#A8612F"/><rect x="42" y="100" width="6" height="10" fill="#A8612F"/>
+        <path d="M98 112c26-30 50-38 78-40" stroke="#9DBDF0" stroke-width="3" fill="none" stroke-dasharray="6 5" stroke-linecap="round"/>
+        <path d="M170 66l10 6-11 5z" fill="#9DBDF0"/>
+        <rect x="150" y="40" width="130" height="86" rx="6" fill="#0F172A"/>
+        <rect x="156" y="46" width="118" height="72" rx="3" fill="#F5F7FA"/>
+        <rect x="156" y="46" width="26" height="72" fill="#0F172A" opacity=".9"/>
+        <rect x="188" y="52" width="24" height="16" rx="2" fill="#1E64D4"/><rect x="216" y="52" width="24" height="16" rx="2" fill="#16A34A"/><rect x="244" y="52" width="24" height="16" rx="2" fill="#D97706"/>
+        <rect x="188" y="74" width="80" height="4" rx="2" fill="#9DBDF0"/><rect x="188" y="82" width="64" height="4" rx="2" fill="#9DBDF0"/><rect x="188" y="90" width="72" height="4" rx="2" fill="#9DBDF0"/>
+        <rect x="188" y="100" width="6" height="12" fill="#16A34A"/><rect x="198" y="96" width="6" height="16" fill="#16A34A"/><rect x="208" y="102" width="6" height="10" fill="#16A34A"/><rect x="218" y="94" width="6" height="18" fill="#16A34A"/>
+        <rect x="206" y="126" width="18" height="16" fill="#1E293B"/><rect x="190" y="142" width="50" height="6" rx="3" fill="#334155"/>
+        <rect x="110" y="132" width="16" height="18" rx="3" fill="#fff"/><path d="M126 137a5 5 0 0 1 0 10" stroke="#fff" stroke-width="3" fill="none"/>
+        <rect x="262" y="128" width="14" height="22" rx="2" fill="#A8612F"/><ellipse cx="262" cy="120" rx="8" ry="5" fill="#1E64D4" transform="rotate(-30 262 120)"/><ellipse cx="276" cy="118" rx="8" ry="5" fill="#3B82F6" transform="rotate(30 276 118)"/><ellipse cx="269" cy="112" rx="6" ry="9" fill="#1E64D4"/>
+        <rect x="96" y="150" width="14" height="70" rx="6" fill="#1854B8"/><rect x="60" y="120" width="44" height="60" rx="16" fill="#1854B8"/>
+        <rect x="70" y="104" width="52" height="56" rx="18" fill="#fff"/>
+        <rect x="112" y="128" width="36" height="14" rx="7" fill="#fff"/><rect x="140" y="132" width="16" height="12" rx="6" fill="#E0925A"/>
+        <circle cx="98" cy="82" r="22" fill="#E0925A"/><path d="M76 82a22 22 0 0 1 44 0c-4-10-12-14-22-14s-18 4-22 14z" fill="#0F172A"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="pc">
+    <div class="pcm">
+      <div class="bez"><div class="disp">
+        <aside class="side">
+          <div class="lg"><img src="../../mobile/assets/images/icon.png" alt=""><div><b>eSamithi</b><small>සුබසාධක සමිති වේදිකාව</small></div></div>
+          <ul>
+            <li class="on"><i></i>මුල් පිටුව</li><li><i></i>සාමාජික ලේඛනය</li><li><i></i>ආදායම්</li><li><i></i>වියදම්</li><li><i></i>ණය</li>
+            <li><i></i>මූල්‍ය මධ්‍යස්ථානය</li><li><i></i>පැමිණීම</li><li><i></i>වාර්තා</li><li><i></i>පණිවිඩ</li><li><i></i>සැකසුම්</li>
+          </ul>
+          <div class="foot">සක්‍රීය ණය <b>12</b></div>
+        </aside>
+        <div class="main">
+          <div class="ttl"><b>දළ විශ්ලේෂණය</b><small class="num">2026-09-08 • ලියාපදිංචි සාමාජිකයන් 148</small></div>
+          <div class="kpis">
+            <div class="kpi g"><small>සක්‍රීය සාමාජිකයන්</small><b>148</b><em>• ලියාපදිංචිය සම්පූර්ණයි</em></div>
+            <div class="kpi"><small>මුළු මුදල් ශේෂය</small><b>රු. 1,284,500.00</b><em>සක්‍රීය මුදල් පසුම්බි</em></div>
+            <div class="kpi p"><small>ස්ථාවර තැන්පතු</small><b>රු. 2,000,000.00</b><em>ආයෝජිත ප්‍රාග්ධනය</em></div>
+            <div class="kpi r"><small>හිඟ ණය ශේෂය</small><b>රු. 415,250.00</b><em>අයවිය යුතු මුදල්</em></div>
+          </div>
+          <div class="alert"><span><i class="wi"></i>අවධානය අවශ්‍යයි</span><span><b>2</b> ප්‍රමාද වූ ණය</span><span><b>1</b> දින 30ක් තුළ කල් පිරෙන ස්ථාවර තැන්පතු</span></div>
+          <div class="two">
+            <div class="box"><div class="bt">ක්ෂණික ක්‍රියාමාර්ග</div><div class="acts"><div class="act"><i></i>ආදායමක් සටහන් කරන්න</div><div class="act"><i></i>වියදමක් ගෙවන්න</div><div class="act"><i></i>ණයක් නිකුත් කරන්න</div><div class="act"><i></i>සාමාජික ලේඛනය</div></div></div>
+            <div class="box"><div class="bt">මාසික මුදල් ප්‍රවාහය · <span class="num" style="font-weight:600;color:var(--muted)">2026</span></div>
+              <div class="chart">
+                <div class="bar"><i class="in" style="height:55%"></i><i class="out" style="height:30%"></i></div><div class="bar"><i class="in" style="height:70%"></i><i class="out" style="height:38%"></i></div><div class="bar"><i class="in" style="height:62%"></i><i class="out" style="height:44%"></i></div>
+                <div class="bar"><i class="in" style="height:82%"></i><i class="out" style="height:36%"></i></div><div class="bar"><i class="in" style="height:76%"></i><i class="out" style="height:50%"></i></div><div class="bar"><i class="in" style="height:100%"></i><i class="out" style="height:42%"></i></div>
+              </div>
+              <div class="legend"><span><i style="background:var(--green)"></i>ආදායම</span><span><i style="background:var(--red);opacity:.75"></i>වියදම්</span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <div class="stand"></div><div class="base"></div>
+    </div>
+  </div>
+
+  <div class="mods">
+    <div class="mod"><span class="ico"><svg><use href="#i-members"/></svg></span><div><h3 class="h3">සාමාජික ලේඛනය</h3><p>සාමාජිකයන් සහ පවුලේ විස්තර එක තැනක.</p></div></div>
+    <div class="mod"><span class="ico"><svg><use href="#i-ledger"/></svg></span><div><h3 class="h3">ආදායම් හා වියදම්</h3><p>හැම ගනුදෙනුවකටම සිංහල හෝ ඉංග්‍රීසි රිසිට්පතක්.</p></div></div>
+    <div class="mod"><span class="ico"><svg><use href="#i-loan"/></svg></span><div><h3 class="h3">ණය</h3><p>ඇපකරුවන්, පොලිය, දඩ මුදල්, ණය සීමාව — තනිවම ගණනය වෙනවා.</p></div></div>
+    <div class="mod"><span class="ico"><svg><use href="#i-wallet"/></svg></span><div><h3 class="h3">මූල්‍ය මධ්‍යස්ථානය</h3><p>අතේ මුදල්, බැංකු ගිණුම්, ස්ථාවර තැන්පතු, වත්කම්.</p></div></div>
+    <div class="mod"><span class="ico"><svg><use href="#i-scan"/></svg></span><div><h3 class="h3">පැමිණීමේ ලේඛනය</h3><p>රැස්වීම්වලදී, අවමංගල්‍යවලදී කාඩ්පත ස්කෑන් කළාම තත්පරයෙන් සටහන්. (USB ස්කෑනරයකින්)</p></div></div>
+    <div class="mod"><span class="ico"><svg><use href="#i-report"/></svg></span><div><h3 class="h3">වාර්තා</h3><p>මාසික සාරාංශය, වාර්ෂික ප්‍රකාශනය, හිඟ මුදල් — මුද්‍රණයට සූදානම්.</p></div></div>
+    <div class="mod"><span class="ico"><svg><use href="#i-msg"/></svg></span><div><h3 class="h3">පණිවිඩ</h3><p>දැනුම්දීමක් පළ කළ ගමන් සාමාජිකයන්ගේ දුරකථනවලට. සාමාජික ඉල්ලීම් ද මෙතැනින්.</p></div></div>
+    <div class="mod"><span class="ico"><svg><use href="#i-book"/></svg></span><div><h3 class="h3">පැරණි පොත් ගෙන ඒම</h3><p>දැනට ඉන්න සාමාජිකයන්, ශේෂ, ණය එලෙසම ඇතුළත් කරන්න.</p></div></div>
+  </div>
+
+  <div class="trust">
+    <span class="chip"><span class="tick"><svg><use href="#i-check"/></svg></span>රාත්‍රියේ හැම දිනකම වෙනම තැනක උපස්ථ</span>
+    <span class="chip"><span class="tick"><svg><use href="#i-check"/></svg></span>ඔබේ සමිතියට වෙනම දත්ත ගබඩාවක්</span>
+    <span class="chip"><span class="tick"><svg><use href="#i-check"/></svg></span>ආරක්ෂිත සම්බන්ධතාව (HTTPS)</span>
+    <span class="chip"><span class="tick"><svg><use href="#i-check"/></svg></span>යාවත්කාලීන තනිවම</span>
+    <span class="chip"><span class="tick"><svg><use href="#i-check"/></svg></span>සිංහල / ඉංග්‍රීසි</span>
+    <span class="chip"><span class="tick"><svg><use href="#i-check"/></svg></span>ආලෝක / අඳුරු පෙනුම</span>
+  </div>
+
+  <div class="vig">
+    <svg viewBox="0 0 170 80" aria-hidden="true">
+      <path d="M50 80V26a30 30 0 0 1 60 0v54z" fill="#9DBDF0"/><path d="M58 80V28a22 22 0 0 1 44 0v52z" fill="#EBF2FC"/>
+      <ellipse cx="85" cy="78" rx="80" ry="5" fill="#9DBDF0" opacity=".5"/>
+      <use href="#figstand" x="14" y="10" width="30" height="70" style="--body:#fff;--leg:#1854B8"/>
+      <rect x="40" y="40" width="16" height="6" rx="3" fill="#E0925A"/>
+      <rect x="52" y="34" width="22" height="14" rx="1.5" fill="#fff"/><rect x="52" y="34" width="22" height="4" fill="#1E64D4"/>
+      <rect x="72" y="41" width="14" height="6" rx="3" fill="#E0925A"/>
+      <use href="#figstand" x="86" y="10" width="30" height="70" style="--body:#EBF2FC;--leg:#1E64D4"/>
+      <rect x="89" y="30" width="24" height="7" rx="3.5" fill="#1E64D4"/>
+      <use href="#fig" x="116" y="36" width="24" height="44" style="--body:#9DBDF0"/>
+    </svg>
+    <p><b>අවශ්‍ය වෙලාවට, පමා නොවී.</b> ප්‍රතිලාභය ගෙවූ බව, කීයද, කවදාද — සියල්ල සටහන්.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════ PAGE 4 · PURUKA · START · CONTACT ═══════════════════ -->
+<section class="page p4">
+  <div class="pk">
+    <p class="kicker">සාමාජිකයන්ට තවත් දෙයක්</p>
+    <h2 class="h2">පුරුක — අපේ දේ, අපි අතර.</h2>
+    <p class="body">ඔබේ සමිතියේ සාමාජිකයන්ට පමණක් වූ කුඩා වෙළඳපොළක්. නාඳුනන අය නෙවෙයි — රැස්වීමේදී ළඟින් ඉන්න මිනිස්සුමයි. විකුණන්න, කුලියට දෙන්න, "අවශ්‍යයි" කියලා දැන්වීමක් දාන්න. කතා කරන්නේ කෙලින්ම — දුරකථනයෙන් හෝ WhatsApp වලින්. ගනුදෙනුව මුහුණට මුහුණ.</p>
+    <div class="chips"><span>ගාස්තු නැත</span><span>කොමිස් නැත</span><span>ඔන්ලයින් ගෙවීම් නැත</span></div>
+    <div class="cats">
+      <div class="cat"><i><svg><use href="#k-pot"/></svg></i>ගෘහස්ථ භාණ්ඩ</div><div class="cat"><i><svg><use href="#k-tool"/></svg></i>උපකරණ</div>
+      <div class="cat"><i><svg><use href="#k-chair"/></svg></i>ගෘහ භාණ්ඩ</div><div class="cat"><i><svg><use href="#k-hoe"/></svg></i>ගොවිතැන් උපකරණ</div>
+      <div class="cat"><i><svg><use href="#k-bowl"/></svg></i>ආහාර</div><div class="cat"><i><svg><use href="#k-coco"/></svg></i>අස්වැන්න</div>
+      <div class="cat"><i><svg><use href="#k-hand"/></svg></i>සේවාවන්</div><div class="cat"><i><svg><use href="#k-key"/></svg></i>කුලියට</div>
+    </div>
+  </div>
+
+  <div class="pkphone">
+    <div class="phone" style="height:118mm"><div class="scr">
+      <div class="sb"><span>09:41</span><span><i style="width:2.5mm"></i><i style="width:2.5mm"></i><i></i></span></div>
+      <div class="content" style="gap:1.8mm">
+        <div class="greet"><div><b>පුරුක</b><small>අපේ දේ, අපි අතර</small></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:#fff;border:.3mm solid #E5E9F0;border-radius:99mm;padding:.6mm;font-size:5.6pt;text-align:center;font-weight:700;color:var(--muted)"><span style="background:var(--purple);color:#fff;border-radius:99mm;padding:.6mm 0">සියල්ල</span><span style="padding:.6mm 0">විකිණීමට</span><span style="padding:.6mm 0">අවශ්‍යයි</span></div>
+        <div style="background:#fff;border:.3mm solid #E5E9F0;border-radius:2mm;padding:1.4mm 2.2mm;color:var(--muted);font-size:5.8pt">පුරුක සොයන්න…</div>
+        <div style="display:flex;gap:1.2mm;font-size:5.2pt;font-weight:600;overflow:hidden"><span style="background:var(--purple);color:#fff;border-radius:99mm;padding:.5mm 2mm;white-space:nowrap">සියල්ල</span><span style="background:#fff;border:.3mm solid #E5E9F0;border-radius:99mm;padding:.5mm 2mm;white-space:nowrap">ගෘහස්ථ භාණ්ඩ</span><span style="background:#fff;border:.3mm solid #E5E9F0;border-radius:99mm;padding:.5mm 2mm;white-space:nowrap">උපකරණ</span><span style="background:#fff;border:.3mm solid #E5E9F0;border-radius:99mm;padding:.5mm 2mm;white-space:nowrap">ආහාර</span></div>
+        <div class="rows" style="gap:1.6mm">
+          <div class="note" style="display:grid;grid-template-columns:13mm 1fr;gap:2mm;align-items:center;padding:1.6mm"><div style="height:13mm;border-radius:1.6mm;background:var(--purple-l);display:flex;align-items:center;justify-content:center"><svg style="width:6mm;height:6mm"><use href="#k-pot"/></svg></div><div><b style="margin:0">බත් කුකරයක්, අඩුවෙන් භාවිත කළ</b><span class="num" style="display:block;font-weight:800;color:var(--purple);font-size:6.6pt">රු. 4,500.00</span><small>ගාල්ල පාර · පළ කළේ: නිමල්</small></div></div>
+          <div class="note" style="display:grid;grid-template-columns:13mm 1fr;gap:2mm;align-items:center;padding:1.6mm"><div style="height:13mm;border-radius:1.6mm;background:var(--purple-l);display:flex;align-items:center;justify-content:center"><svg style="width:6mm;height:6mm"><use href="#k-coco"/></svg></div><div><b style="margin:0">පොල් ගෙඩි 200ක්</b><span style="display:block;font-weight:700;color:var(--purple);font-size:6.2pt">සාකච්ඡා කළ හැක</span><small>ගමමැද · පළ කළේ: සුනිල්</small></div></div>
+          <div class="note" style="display:grid;grid-template-columns:13mm 1fr;gap:2mm;align-items:center;padding:1.6mm"><div style="height:13mm;border-radius:1.6mm;background:var(--b100);display:flex;align-items:center;justify-content:center;color:var(--b500);font-weight:800;font-size:6pt">අවශ්‍යයි</div><div><b style="margin:0">ළදරු ඇඳක් අවශ්‍යයි</b><span class="num" style="display:block;font-weight:700;color:var(--b500);font-size:6.2pt">මුදල් සීමාව රු. 8,000.00</span><small>ඉල්ලුම්කරු: චමරි</small></div></div>
+        </div>
+        <div style="margin-top:auto;align-self:flex-end;background:var(--purple);color:#fff;border-radius:99mm;padding:1.6mm 3.4mm;font-size:6pt;font-weight:700;box-shadow:0 1mm 3mm rgba(109,40,217,.35)">+ යමක් පළ කරන්න</div>
+      </div>
+      <div class="tabs"><span><i></i>මුල් පිටුව</span><span><i></i>දායක මුදල්</span><span><i></i>ණය</span><span><i></i>දැනුම්දීම්</span><span class="on" style="color:var(--purple)"><i style="background:var(--purple)"></i>පුරුක</span><span><i></i>තවත්</span></div>
+    </div></div>
+  </div>
+
+  <div class="steps"><div class="stepsin">
+    <h2 class="h2">පටන් ගන්න මිනිත්තු කිහිපයයි.</h2>
+    <div class="sgrid">
+      <div class="step"><i>1</i><div><b>අපට කතා කරන්න.</b><p>ඔබේ සමිතිය ගැන කියන්න. සාමාජිකයන් කී දෙනෙක්ද, දැනට පොත් තබන්නේ කොහොමද.</p></div></div>
+      <div class="step"><i>2</i><div><b>අපි සමිතිය සකසා දෙනවා.</b><p>Windows පරිගණකයක් සහ අන්තර්ජාලය ඇති. QR ස්කෑනරයක් ඕන නම් — ලාභයි, විකල්පයි.</p></div></div>
+      <div class="step"><i>3</i><div><b>සාමාජිකයන් යෙදුම බාගන්නවා.</b><p>Google Play වෙතින්, නොමිලේ. සමිති කේතය, ජා.හැ. අංකය, PIN — එච්චරයි.</p></div></div>
+    </div>
+    <p class="price">මිල ගණන් සමිතියේ ප්‍රමාණය අනුව. කතා කරලා දැනගන්න — බැඳීමක් නැහැ. <b>සාමාජික යෙදුම හැම සාමාජිකයෙකුටම සැම විටම නොමිලේ.</b></p>
+  </div></div>
+
+  <div class="foot"><div class="footin">
+    <div class="cta">
+      <p class="lbl">අදම කතා කරන්න</p>
+      <p class="who">eSamithi කණ්ඩායම</p>
+      <p class="tel">+94 77 349 2658</p>
+      <span class="pill"><svg><use href="#i-wa"/></svg>ඇමතුමක් හෝ WhatsApp පණිවිඩයක්</span>
+      <p class="waline">ඔබේ සමිතියේ නම සහ ගම WhatsApp කරන්න. අපි ඔබට ගැළපෙන විදිහට පෙන්වන්නම්.</p>
+    </div>
+    <div class="brand">
+      <div class="logo"><img src="../../mobile/assets/images/icon.png" alt=""><span class="wm">eSamithi</span></div>
+      <p class="tag"><b>Azyntra Technologies</b> විසින්<br>Google Play හි <b>“eSamithi”</b> සොයන්න<br>නවීන තාක්ෂණයෙන් ගම්මාන සුබසාධක සමිති ශක්තිමත් කිරීම</p>
+    </div>
+  </div>
+  <p class="legal">esamithi.com · සමාජය. සමගිය. සහයෝගය.</p></div>
+</section>
+
+<script>
+(function(){
+  var q=new URLSearchParams(location.search), h=document.documentElement;
+  if(q.get('bleed')==='1'){h.classList.add('bleed');var s=document.createElement('style');s.textContent='@page{size:216mm 303mm;margin:0}';document.head.appendChild(s);}
+  if(q.get('debug')==='1')h.classList.add('debug');
+  var only=q.get('only');
+  if(only){document.querySelectorAll('.page').forEach(function(p,i){ if(String(i+1)!==only)p.style.display='none'; else p.style.margin='0'; });document.body.style.background='#fff';}
+  function check(){var bad=[];document.querySelectorAll('.page').forEach(function(p,i){
+    if(p.style.display==='none')return;
+    p.querySelectorAll('*').forEach(function(el){var r=el.getBoundingClientRect(),pr=p.getBoundingClientRect();
+      if(el.closest('.scene,.treas,.elder,.vig,.blob'))return;
+      if(r.width>0&&(r.right>pr.right+1||r.bottom>pr.bottom+1))bad.push((i+1)+':'+(el.className||el.tagName));});});
+    document.title=bad.length?('OVERFLOW '+bad.slice(0,6).join(' | ')):'eSamithi leaflet OK';}
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){setTimeout(check,50)});else setTimeout(check,300);
+})();
+</script>
+</body>
+</html>

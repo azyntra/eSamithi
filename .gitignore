@@ -42,3 +42,6 @@ mobile/fcm-service-account.json
 *.aab
 *firebase-adminsdk*.json
 *.jks
+
+# leaflet build outputs (regenerate with store-assets/leaflet/build.sh)
+store-assets/leaflet/out/
