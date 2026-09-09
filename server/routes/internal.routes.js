@@ -1,14 +1,13 @@
 const express = require('express');
-const crypto = require('crypto');
 const { getPool } = require('../db');
+const passwords = require('../lib/passwords');
+const sessions = require('../lib/staffSessions');
 const { migrateTenant } = require('../migrations/runner');
 const { sendPushToAllMembers } = require('../lib/push');
 const { internalAuth } = require('../middleware/internal');
 
-// Staff passwords are sha256 (matches auth.routes.js / provision-tenant.js)
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
-}
+// Staff passwords go through lib/passwords.js (legacy sha256 / bcrypt once
+// PASSWORD_REHASH=on) — the single hashing site shared with auth.routes.js.
 
 // Platform stats pull (super-admin panel §4.3). Tenant is resolved by the
 // normal X-Samithi middleware; internalAuth gates it to platform-api.
@@ -142,7 +141,7 @@ router.post('/users', async (req, res, next) => {
     if (dupe.length) return res.status(409).json({ error: 'Username already exists' });
     const [r] = await pool.query(
       'INSERT INTO users (username, password, full_name, role, is_active) VALUES (?, ?, ?, ?, 1)',
-      [username, hashPassword(password), full_name, role]
+      [username, await passwords.hash(password), full_name, role]
     );
     res.json({ success: true, id: r.insertId });
   } catch (err) { next(err); }
@@ -170,6 +169,8 @@ router.patch('/users/:id', async (req, res, next) => {
     }
     if (!Object.keys(fields).length) return res.status(400).json({ error: 'Nothing to update' });
     await pool.query('UPDATE users SET ? WHERE id = ?', [fields, id]);
+    // A disabled login must not keep a live web session
+    if (fields.is_active === 0) await sessions.revokeUser(pool, id, 'disabled');
     res.json({ success: true });
   } catch (err) { next(err); }
 });
@@ -180,8 +181,12 @@ router.post('/users/:id/reset-password', async (req, res, next) => {
     const id = parseInt(req.params.id, 10);
     const { password } = req.body || {};
     if (!password) return res.status(400).json({ error: 'password required' });
-    const [r] = await getPool().query('UPDATE users SET password = ? WHERE id = ?', [hashPassword(password), id]);
+    const [r] = await getPool().query(
+      'UPDATE users SET password = ?, password_changed_at = NOW(), must_change_password = 1, failed_attempts = 0, locked_until = NULL WHERE id = ?',
+      [await passwords.hash(password), id]
+    );
     if (!r.affectedRows) return res.status(404).json({ error: 'Unknown user' });
+    await sessions.revokeUser(getPool(), id, 'admin');
     res.json({ success: true });
   } catch (err) { next(err); }
 });
@@ -217,7 +222,7 @@ router.post('/provision', async (req, res, next) => {
       `INSERT INTO users (username, password, full_name, role, is_active)
        VALUES ('admin', ?, 'Administrator', 'admin', 1)
        ON DUPLICATE KEY UPDATE username = username`,
-      [hashPassword(password)]
+      [await passwords.hash(password)]
     );
     res.json({ success: true, migrations_applied: applied });
   } catch (err) { next(err); }

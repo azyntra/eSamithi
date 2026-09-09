@@ -71,13 +71,13 @@ function fail(msg) {
   await migrateTenant(pool, slug);
   console.log('✓ migrations applied');
 
-  // Seed admin staff user (staff passwords are sha256 — see auth.routes.js)
+  // Seed admin staff user (hashing shared with the API — see lib/passwords.js)
   const password = crypto.randomBytes(9).toString('base64url');
   await pool.query(
     `INSERT INTO users (username, password, full_name, role)
      VALUES ('admin', ?, 'Administrator', 'admin')
      ON DUPLICATE KEY UPDATE username = username`,
-    [crypto.createHash('sha256').update(password).digest('hex')]
+    [await require('../lib/passwords').hash(password)]
   );
   console.log('✓ admin user seeded');
 

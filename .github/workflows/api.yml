@@ -34,10 +34,10 @@ jobs:
         working-directory: server
         run: npm ci
 
-      - name: Tenant isolation unit tests (no DB)
+      - name: Unit tests — tenant isolation + staff auth (no DB)
         working-directory: server
-        # explicit file: node 20's --test has no glob support (node 21+)
-        run: node --test test/isolation.test.js
+        # explicit files: node 20's --test has no glob support (node 21+)
+        run: node --test test/isolation.test.js test/staffAuth.test.js
 
       - name: Migration runner from zero (two fake tenants)
         working-directory: server
@@ -50,6 +50,17 @@ jobs:
           mysql -h127.0.0.1 -uroot -pcitest -e \
             "CREATE DATABASE IF NOT EXISTS esamithi_ci1; CREATE DATABASE IF NOT EXISTS esamithi_ci2;"
           node migrate.js
+
+      - name: Staff session integration tests (real MySQL)
+        working-directory: server
+        env:
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASSWORD: citest
+          JWT_SECRET: ci-test-secret
+          DEFAULT_TENANT: ci1
+          TENANTS_FILE: ${{ github.workspace }}/server/test/fixtures/tenants.ci.json
+        run: node --test test/staffAuth.db.test.js
 
       - name: End-to-end cross-tenant smoke (real API + MySQL)
         run: bash server/test/ci-e2e.sh

@@ -1,10 +1,11 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const { initPool, getPool, getTenants } = require('./db');
 const { tenantMiddleware } = require('./middleware/tenant');
+const { corsMiddleware } = require('./lib/cors');
 const API_VERSION = require('./package.json').version;
 
 // Route imports
@@ -39,8 +40,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ── Middleware ────────────────────────────────────────────────
+// One proxy hop (the nginx container) sets X-Forwarded-For / -Proto. Without
+// this every request shares nginx's own IP, so per-IP rate limits collapse
+// into one bucket and Secure cookies cannot tell they are behind HTTPS.
+app.set('trust proxy', 1);
 app.use(helmet());
-app.use(cors());
+app.use(corsMiddleware());
+app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(morgan('short'));
@@ -60,7 +66,7 @@ app.use('/api/v1/uploads', (req, res, next) => {
 // samithi shows up without affecting the others (multi-samithi plan §3.5).
 app.get('/api/v1/health', async (req, res) => {
   if (req.query.deep === undefined) {
-    return res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    return res.json({ status: 'ok', api_version: API_VERSION, timestamp: new Date().toISOString() });
   }
   const tenants = {};
   for (const [slug, tenant] of Object.entries(getTenants())) {

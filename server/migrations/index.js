@@ -292,6 +292,62 @@ async function loanAccrualDay(pool) {
   }
 }
 
+// 014 — web staff sessions (requirements §6.6): rotating refresh tokens, one
+// family per sign-in, plus lockout / password-change bookkeeping on users.
+// Inert for the desktop and mobile apps; all columns nullable or defaulted.
+async function staffSessions(pool) {
+  await pool.query(`CREATE TABLE IF NOT EXISTS staff_refresh_tokens (
+    id                  INT PRIMARY KEY AUTO_INCREMENT,
+    user_id             INT          NOT NULL,
+    family_id           CHAR(32)     NOT NULL,
+    token_hash          CHAR(64)     NOT NULL,
+    client              VARCHAR(20)  NOT NULL DEFAULT 'web',
+    ip                  VARCHAR(45)  DEFAULT NULL,
+    user_agent          VARCHAR(255) DEFAULT NULL,
+    created_at          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    last_used_at        TIMESTAMP    NULL DEFAULT NULL,
+    expires_at          TIMESTAMP    NOT NULL,
+    absolute_expires_at TIMESTAMP    NOT NULL,
+    revoked_at          TIMESTAMP    NULL DEFAULT NULL,
+    revoke_reason       VARCHAR(30)  DEFAULT NULL,
+    replaced_by         INT          DEFAULT NULL,
+    UNIQUE KEY uq_srt_hash (token_hash),
+    KEY idx_srt_user (user_id, revoked_at),
+    KEY idx_srt_family (family_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  const [cols] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'failed_attempts'`
+  );
+  if (cols.length === 0) {
+    await pool.query(`ALTER TABLE users
+      ADD COLUMN failed_attempts      INT       NOT NULL DEFAULT 0,
+      ADD COLUMN locked_until         TIMESTAMP NULL DEFAULT NULL,
+      ADD COLUMN password_changed_at  TIMESTAMP NULL DEFAULT NULL,
+      ADD COLUMN must_change_password TINYINT   NOT NULL DEFAULT 0`);
+  }
+}
+
+// 015 — staff sign-in forensic trail behind the Sessions UI and lockout
+// tuning (login_ok / login_fail / locked / refresh_reuse / logout /
+// password_change / password_reset). No FK: events outlive deleted users.
+async function staffAuthEvents(pool) {
+  await pool.query(`CREATE TABLE IF NOT EXISTS staff_auth_events (
+    id         INT PRIMARY KEY AUTO_INCREMENT,
+    user_id    INT          DEFAULT NULL,
+    username   VARCHAR(100) DEFAULT NULL,
+    event      VARCHAR(30)  NOT NULL,
+    client     VARCHAR(20)  DEFAULT NULL,
+    ip         VARCHAR(45)  DEFAULT NULL,
+    user_agent VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_sae_user (user_id, created_at),
+    KEY idx_sae_created (created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+}
+
 module.exports = [
   { id: '000_base_schema', up: baseSchema },
   { id: '004_loan_payment_wallet', up: loanPaymentWallet },
@@ -303,5 +359,7 @@ module.exports = [
   { id: '010_client_errors', up: clientErrors },
   { id: '011_puruka_wanted', up: purukaWanted },
   { id: '012_loan_accrual_day', up: loanAccrualDay },
-  { id: '013_attendance_mode', up: attendanceMode }
+  { id: '013_attendance_mode', up: attendanceMode },
+  { id: '014_staff_sessions', up: staffSessions },
+  { id: '015_staff_auth_events', up: staffAuthEvents }
 ];
