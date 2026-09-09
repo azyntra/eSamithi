@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Info, WifiOff } from 'lucide-react'
+import { Info, Wrench, WifiOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { apiBase } from '@/lib/api/samithi'
 import { useSession } from '@/lib/api/session'
+import { useMigrationMode } from '@/features/settings/queries'
 import { useT } from '@/lib/i18n'
 
 function useOnline(): [boolean, () => Promise<void>] {
@@ -45,6 +46,7 @@ export function BannerStack() {
   }, [online, t])
 
   const maintenance = samithi?.maintenance?.message
+  const migration = useMigrationMode()
 
   return (
     <div className="relative z-20">
@@ -64,6 +66,14 @@ export function BannerStack() {
               <Button size="sm" variant="outline" onClick={() => void retry()}>
                 {t('banner.retry')}
               </Button>
+            </div>
+          </motion.div>
+        )}
+        {migration === true && (
+          <motion.div key="migration" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+            <div className="flex items-start gap-3 bg-warning-soft px-4 py-2 text-sm text-warning md:px-6">
+              <Wrench className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <span>{t('banner.migration')}</span>
             </div>
           </motion.div>
         )}
