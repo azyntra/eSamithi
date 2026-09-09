@@ -1,0 +1,24 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { z } from 'zod'
+import { MembersPage } from '@/features/members/MembersPage'
+
+const searchSchema = z.object({
+  q: z.string().optional().catch(undefined),
+  page: z.coerce.number().int().min(1).optional().catch(undefined),
+  size: z.coerce
+    .number()
+    .int()
+    .refine((n) => [15, 30, 50].includes(n))
+    .optional()
+    .catch(undefined)
+})
+
+export const Route = createFileRoute('/_app/members/')({
+  validateSearch: (search) => searchSchema.parse(search),
+  component: MembersRoute
+})
+
+function MembersRoute() {
+  const { q, page, size } = Route.useSearch()
+  return <MembersPage q={q ?? ''} page={page ?? 1} size={size ?? 15} />
+}

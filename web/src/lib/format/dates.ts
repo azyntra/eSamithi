@@ -29,3 +29,23 @@ export function formatDateTime(value: string | Date | null | undefined, lang: La
   const mm = String(d.getMinutes()).padStart(2, '0')
   return `${formatDate(d, lang)} ${hh}:${mm}`
 }
+
+// First ten characters when the value is ISO-like; empty otherwise. Used to
+// feed <input type="date"> without a timezone shift.
+export function toDateInput(value: string | null | undefined): string {
+  if (!value) return ''
+  const m = String(value).match(/^(\d{4}-\d{2}-\d{2})/)
+  return m ? m[1]! : ''
+}
+
+// Whole years between a YYYY-MM-DD birth date and today ("" when unknown)
+export function calculateAge(dob: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dob || '')
+  if (!m) return ''
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  const today = new Date()
+  let age = today.getFullYear() - y
+  const monthDiff = today.getMonth() + 1 - mo
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < d)) age--
+  return age >= 0 ? String(age) : ''
+}

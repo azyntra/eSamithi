@@ -17,11 +17,12 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppExpensesRouteImport } from './routes/_app/expenses'
 import { Route as AppIncomesRouteImport } from './routes/_app/incomes'
 import { Route as AppLoansRouteImport } from './routes/_app/loans'
-import { Route as AppMembersRouteImport } from './routes/_app/members'
 import { Route as AppMessagesRouteImport } from './routes/_app/messages'
 import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppWalletRouteImport } from './routes/_app/wallet'
+import { Route as AppMembersIndexRouteImport } from './routes/_app/members.index'
+import { Route as AppMembersMemberIdRouteImport } from './routes/_app/members.$memberId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -62,11 +63,6 @@ const AppLoansRoute = AppLoansRouteImport.update({
   path: '/loans',
   getParentRoute: () => AppRoute,
 } as any)
-const AppMembersRoute = AppMembersRouteImport.update({
-  id: '/members',
-  path: '/members',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppMessagesRoute = AppMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
@@ -87,6 +83,16 @@ const AppWalletRoute = AppWalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMembersIndexRoute = AppMembersIndexRouteImport.update({
+  id: '/members/',
+  path: '/members/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMembersMemberIdRoute = AppMembersMemberIdRouteImport.update({
+  id: '/members/$memberId',
+  path: '/members/$memberId',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,11 +102,12 @@ export interface FileRoutesByFullPath {
   '/expenses': typeof AppExpensesRoute
   '/incomes': typeof AppIncomesRoute
   '/loans': typeof AppLoansRoute
-  '/members': typeof AppMembersRoute
   '/messages': typeof AppMessagesRoute
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
   '/wallet': typeof AppWalletRoute
+  '/members/$memberId': typeof AppMembersMemberIdRoute
+  '/members/': typeof AppMembersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,11 +117,12 @@ export interface FileRoutesByTo {
   '/expenses': typeof AppExpensesRoute
   '/incomes': typeof AppIncomesRoute
   '/loans': typeof AppLoansRoute
-  '/members': typeof AppMembersRoute
   '/messages': typeof AppMessagesRoute
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
   '/wallet': typeof AppWalletRoute
+  '/members/$memberId': typeof AppMembersMemberIdRoute
+  '/members': typeof AppMembersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -126,11 +134,12 @@ export interface FileRoutesById {
   '/_app/expenses': typeof AppExpensesRoute
   '/_app/incomes': typeof AppIncomesRoute
   '/_app/loans': typeof AppLoansRoute
-  '/_app/members': typeof AppMembersRoute
   '/_app/messages': typeof AppMessagesRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/wallet': typeof AppWalletRoute
+  '/_app/members/$memberId': typeof AppMembersMemberIdRoute
+  '/_app/members/': typeof AppMembersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,11 +151,12 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/incomes'
     | '/loans'
-    | '/members'
     | '/messages'
     | '/reports'
     | '/settings'
     | '/wallet'
+    | '/members/$memberId'
+    | '/members/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -156,11 +166,12 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/incomes'
     | '/loans'
-    | '/members'
     | '/messages'
     | '/reports'
     | '/settings'
     | '/wallet'
+    | '/members/$memberId'
+    | '/members'
   id:
     | '__root__'
     | '/'
@@ -171,11 +182,12 @@ export interface FileRouteTypes {
     | '/_app/expenses'
     | '/_app/incomes'
     | '/_app/loans'
-    | '/_app/members'
     | '/_app/messages'
     | '/_app/reports'
     | '/_app/settings'
     | '/_app/wallet'
+    | '/_app/members/$memberId'
+    | '/_app/members/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -242,13 +254,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLoansRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/members': {
-      id: '/_app/members'
-      path: '/members'
-      fullPath: '/members'
-      preLoaderRoute: typeof AppMembersRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/messages': {
       id: '/_app/messages'
       path: '/messages'
@@ -277,6 +282,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWalletRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/members/': {
+      id: '/_app/members/'
+      path: '/members'
+      fullPath: '/members/'
+      preLoaderRoute: typeof AppMembersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/members/$memberId': {
+      id: '/_app/members/$memberId'
+      path: '/members/$memberId'
+      fullPath: '/members/$memberId'
+      preLoaderRoute: typeof AppMembersMemberIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -286,11 +305,12 @@ interface AppRouteChildren {
   AppExpensesRoute: typeof AppExpensesRoute
   AppIncomesRoute: typeof AppIncomesRoute
   AppLoansRoute: typeof AppLoansRoute
-  AppMembersRoute: typeof AppMembersRoute
   AppMessagesRoute: typeof AppMessagesRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppWalletRoute: typeof AppWalletRoute
+  AppMembersMemberIdRoute: typeof AppMembersMemberIdRoute
+  AppMembersIndexRoute: typeof AppMembersIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -299,11 +319,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppExpensesRoute: AppExpensesRoute,
   AppIncomesRoute: AppIncomesRoute,
   AppLoansRoute: AppLoansRoute,
-  AppMembersRoute: AppMembersRoute,
   AppMessagesRoute: AppMessagesRoute,
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppWalletRoute: AppWalletRoute,
+  AppMembersMemberIdRoute: AppMembersMemberIdRoute,
+  AppMembersIndexRoute: AppMembersIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
