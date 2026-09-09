@@ -1,0 +1,42 @@
+// Dev helper: signs in and screenshots the shell (dashboard) in light/dark,
+// English/Sinhala, expanded/collapsed sidebar and a tablet viewport.
+//   E2E_SAMITHI_CODE=… node scripts/shoot-app.mjs <outDir>
+import { chromium } from '@playwright/test'
+const out = process.argv[2]
+const code = process.env.E2E_SAMITHI_CODE
+const browser = await chromium.launch({ channel: 'chrome', headless: true })
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+const errors = []
+page.on('pageerror', (e) => errors.push('pageerror: ' + e.message))
+page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()) })
+await page.goto('http://localhost:5173/login', { waitUntil: 'networkidle' })
+await page.getByLabel(/samithi code/i).fill(code)
+await page.getByRole('button', { name: /find samithi/i }).click()
+await page.getByLabel(/username/i).fill(process.env.E2E_USER || 'admin')
+await page.getByLabel(/^password/i).fill(process.env.E2E_PASS || 'admin123')
+await page.getByRole('button', { name: /^sign in$/i }).click()
+await page.getByRole('heading', { name: /overview/i }).waitFor()
+await page.waitForTimeout(900)
+await page.screenshot({ path: `${out}/dash-en-light.png` })
+await page.getByRole('button', { name: /collapse sidebar/i }).click()
+await page.waitForTimeout(400)
+await page.screenshot({ path: `${out}/dash-collapsed.png` })
+await page.getByRole('button', { name: /expand sidebar/i }).click()
+await page.getByRole('button', { name: 'සිං' }).first().click()
+await page.getByRole('button', { name: /dark mode/i }).click()
+await page.waitForTimeout(500)
+await page.screenshot({ path: `${out}/dash-si-dark.png` })
+await page.getByRole('button', { name: /light mode/i }).click()
+await page.getByRole('button', { name: 'EN' }).first().click()
+await page.getByRole('button', { name: /administrator|admin/i }).first().click()
+await page.waitForTimeout(300)
+await page.screenshot({ path: `${out}/dash-usermenu.png` })
+await page.keyboard.press('Escape')
+await page.setViewportSize({ width: 820, height: 1000 })
+await page.waitForTimeout(400)
+await page.screenshot({ path: `${out}/dash-tablet.png` })
+await page.getByRole('button', { name: /open navigation/i }).click()
+await page.waitForTimeout(500)
+await page.screenshot({ path: `${out}/dash-tablet-nav.png` })
+console.log('errors:', errors.length ? errors : 'none')
+await browser.close()

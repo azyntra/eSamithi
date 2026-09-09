@@ -1,0 +1,87 @@
+name: Web
+
+on:
+  push:
+    branches: [main]
+    paths: ['web/**', '.github/workflows/web.yml', 'src/renderer/src/i18n/**']
+  pull_request:
+    paths: ['web/**', '.github/workflows/web.yml', 'src/renderer/src/i18n/**']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install
+        working-directory: web
+        run: npm ci
+
+      - name: Dictionaries in sync with the desktop source
+        working-directory: web
+        run: |
+          npm run sync:i18n
+          npm run check:i18n
+          git diff --exit-code -- src/lib/i18n/generated || (echo "::error::run 'npm run sync:i18n' in web/ and commit the generated dictionaries" && exit 1)
+
+      - name: Lint
+        working-directory: web
+        run: npm run lint
+
+      - name: Unit tests
+        working-directory: web
+        run: npm test
+
+      - name: Build (QA host, base /app/)
+        working-directory: web
+        run: npx vite build --mode testbed && npm run typecheck
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+          retention-days: 7
+
+  deploy-testbed:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: testbed
+    concurrency: testbed-web-deploy
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: dist
+
+      - name: Install SSH key
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.TESTBED_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Publish to https://console.esamithi.com/app/
+        # /opt/esamithi/app is bind-mounted into nginx: never replace the
+        # directory itself (the mount follows the inode) — flip a symlink inside it.
+        run: |
+          tar -C dist -cf - . | ssh -o StrictHostKeyChecking=accept-new root@212.227.103.150 '
+            set -e
+            base=/opt/esamithi/app
+            rel=$base/releases/${{ github.sha }}
+            mkdir -p "$rel" && tar -C "$rel" -xf -
+            ln -sfn "releases/${{ github.sha }}" "$base/current.tmp" && mv -Tf "$base/current.tmp" "$base/current"
+            ls -dt "$base"/releases/* | tail -n +4 | xargs -r rm -rf
+            readlink "$base/current"
+          '
+
+      - name: Smoke
+        run: |
+          curl -sfI https://console.esamithi.com/app/ | grep -i "cache-control: no-cache"
+          curl -sf https://console.esamithi.com/app/ | grep -q "eSamithi"
+          curl -sf https://console.esamithi.com/api/v1/health

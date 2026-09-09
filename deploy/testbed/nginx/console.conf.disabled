@@ -51,6 +51,34 @@ server {
         add_header Cache-Control "no-cache";
     }
 
+    # eSamithi Web — the office application's QA host (requirements §6.4).
+    # Built with VITE_BASE=/app/; the API and directory stay at the root so
+    # the SPA is same-origin with them and the session cookie can exist.
+    # /srv/app is a stable bind mount; releases live in /srv/app/releases/<sha>
+    # behind a relative `current` symlink (atomic flip, instant rollback).
+    location /app/assets/ {
+        alias /srv/app/current/assets/;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+    location = /app/manifest.webmanifest {
+        alias /srv/app/current/manifest.webmanifest;
+        default_type application/manifest+json;
+        add_header Cache-Control "no-cache";
+    }
+    location = /app/sw.js {
+        alias /srv/app/current/sw.js;
+        add_header Cache-Control "no-cache";
+        add_header Service-Worker-Allowed "/app/";
+    }
+    location /app/ {
+        alias /srv/app/current/;
+        try_files $uri $uri/ /app/index.html;
+        add_header Cache-Control "no-cache";
+        add_header X-Content-Type-Options "nosniff";
+        add_header Referrer-Policy "strict-origin-when-cross-origin";
+        add_header X-Frame-Options "DENY";
+    }
+
     # Platform operator API
     location /pa/ {
         proxy_pass $platform_upstream;

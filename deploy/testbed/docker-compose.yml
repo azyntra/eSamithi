@@ -14,6 +14,7 @@ services:
       - ./updates:/srv/updates:ro
       - ./admin:/srv/admin:ro
       - ./workspace:/srv/workspace:ro
+      - ./app:/srv/app:ro
       - ./certbot-www:/var/www/certbot:ro
       - certs:/etc/letsencrypt:ro
     depends_on:
