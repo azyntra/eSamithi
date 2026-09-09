@@ -24,6 +24,12 @@ server {
 
     client_max_body_size 20m;
 
+    # Text compression for the SPAs (console, workspace, web app)
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript text/javascript application/json application/manifest+json image/svg+xml text/plain;
+
     location = / { return 302 /admin/; }
 
     # Hashed build assets: cache forever. HTML entry points: always

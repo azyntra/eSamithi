@@ -29,7 +29,7 @@
   --secondary-foreground: #0F172A;
   --muted: #F1F5F9;
   --muted-foreground: #475569;
-  --subtle-foreground: #94A3B8;
+  --subtle-foreground: #5F6F86; /* ≥4.5:1 on white and on the page background (AA for hints/placeholders) */
   --accent: #EEF4FE;
   --accent-foreground: #143B7C;
   --destructive: #DC2626;
@@ -79,7 +79,7 @@
   --secondary-foreground: #E2E8F0;
   --muted: #1E293B;
   --muted-foreground: #94A3B8;
-  --subtle-foreground: #64748B;
+  --subtle-foreground: #8493A9; /* ≥5:1 on every dark surface */
   --accent: rgba(76, 141, 246, 0.14);
   --accent-foreground: #B3CDF8;
   --destructive: #EF4444;
