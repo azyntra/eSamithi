@@ -96,8 +96,6 @@
   "notFound.body": "The page you are looking for does not exist or has moved.",
   "notFound.home": "Go to dashboard",
   "notFound.title": "Page not found",
-  "placeholder.body": "This module is being rebuilt for the browser (phase {phase}). Until then, keep using the desktop application for it.",
-  "placeholder.title": "Coming soon to the web",
   "print.previewHint": "Check the details, then print. Enter also prints.",
   "role.admin": "Administrator",
   "role.user": "Staff",
