@@ -24,6 +24,12 @@ export function parseCurrency(value: string): number {
   return Math.round(num * 100)
 }
 
+// Grouped rupees WITHOUT the "Rs." prefix — for strings that already carry it
+// (e.g. "Available headroom: Rs. {max}"), which the desktop printed unformatted.
+export function formatRupees(cents: number | null | undefined): string {
+  return ((Number(cents) || 0) / 100).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
 export function formatNumber(n: number | null | undefined): string {
   return (Number(n) || 0).toLocaleString('en-LK')
 }

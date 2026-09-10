@@ -16,11 +16,12 @@ import { Route as AppAttendanceRouteImport } from './routes/_app/attendance'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppExpensesRouteImport } from './routes/_app/expenses'
 import { Route as AppIncomesRouteImport } from './routes/_app/incomes'
-import { Route as AppLoansRouteImport } from './routes/_app/loans'
 import { Route as AppMessagesRouteImport } from './routes/_app/messages'
 import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppWalletRouteImport } from './routes/_app/wallet'
+import { Route as AppLoansIndexRouteImport } from './routes/_app/loans.index'
+import { Route as AppLoansLoanIdRouteImport } from './routes/_app/loans.$loanId'
 import { Route as AppMembersIndexRouteImport } from './routes/_app/members.index'
 import { Route as AppMembersMemberIdRouteImport } from './routes/_app/members.$memberId'
 
@@ -58,11 +59,6 @@ const AppIncomesRoute = AppIncomesRouteImport.update({
   path: '/incomes',
   getParentRoute: () => AppRoute,
 } as any)
-const AppLoansRoute = AppLoansRouteImport.update({
-  id: '/loans',
-  path: '/loans',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppMessagesRoute = AppMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
@@ -83,6 +79,16 @@ const AppWalletRoute = AppWalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLoansIndexRoute = AppLoansIndexRouteImport.update({
+  id: '/loans/',
+  path: '/loans/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLoansLoanIdRoute = AppLoansLoanIdRouteImport.update({
+  id: '/loans/$loanId',
+  path: '/loans/$loanId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMembersIndexRoute = AppMembersIndexRouteImport.update({
   id: '/members/',
   path: '/members/',
@@ -101,12 +107,13 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/expenses': typeof AppExpensesRoute
   '/incomes': typeof AppIncomesRoute
-  '/loans': typeof AppLoansRoute
   '/messages': typeof AppMessagesRoute
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
   '/wallet': typeof AppWalletRoute
+  '/loans/$loanId': typeof AppLoansLoanIdRoute
   '/members/$memberId': typeof AppMembersMemberIdRoute
+  '/loans/': typeof AppLoansIndexRoute
   '/members/': typeof AppMembersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -116,12 +123,13 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/expenses': typeof AppExpensesRoute
   '/incomes': typeof AppIncomesRoute
-  '/loans': typeof AppLoansRoute
   '/messages': typeof AppMessagesRoute
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
   '/wallet': typeof AppWalletRoute
+  '/loans/$loanId': typeof AppLoansLoanIdRoute
   '/members/$memberId': typeof AppMembersMemberIdRoute
+  '/loans': typeof AppLoansIndexRoute
   '/members': typeof AppMembersIndexRoute
 }
 export interface FileRoutesById {
@@ -133,12 +141,13 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/expenses': typeof AppExpensesRoute
   '/_app/incomes': typeof AppIncomesRoute
-  '/_app/loans': typeof AppLoansRoute
   '/_app/messages': typeof AppMessagesRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/wallet': typeof AppWalletRoute
+  '/_app/loans/$loanId': typeof AppLoansLoanIdRoute
   '/_app/members/$memberId': typeof AppMembersMemberIdRoute
+  '/_app/loans/': typeof AppLoansIndexRoute
   '/_app/members/': typeof AppMembersIndexRoute
 }
 export interface FileRouteTypes {
@@ -150,12 +159,13 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/incomes'
-    | '/loans'
     | '/messages'
     | '/reports'
     | '/settings'
     | '/wallet'
+    | '/loans/$loanId'
     | '/members/$memberId'
+    | '/loans/'
     | '/members/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -165,12 +175,13 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/incomes'
-    | '/loans'
     | '/messages'
     | '/reports'
     | '/settings'
     | '/wallet'
+    | '/loans/$loanId'
     | '/members/$memberId'
+    | '/loans'
     | '/members'
   id:
     | '__root__'
@@ -181,12 +192,13 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/expenses'
     | '/_app/incomes'
-    | '/_app/loans'
     | '/_app/messages'
     | '/_app/reports'
     | '/_app/settings'
     | '/_app/wallet'
+    | '/_app/loans/$loanId'
     | '/_app/members/$memberId'
+    | '/_app/loans/'
     | '/_app/members/'
   fileRoutesById: FileRoutesById
 }
@@ -247,13 +259,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIncomesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/loans': {
-      id: '/_app/loans'
-      path: '/loans'
-      fullPath: '/loans'
-      preLoaderRoute: typeof AppLoansRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/messages': {
       id: '/_app/messages'
       path: '/messages'
@@ -282,6 +287,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWalletRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/loans/': {
+      id: '/_app/loans/'
+      path: '/loans'
+      fullPath: '/loans/'
+      preLoaderRoute: typeof AppLoansIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/loans/$loanId': {
+      id: '/_app/loans/$loanId'
+      path: '/loans/$loanId'
+      fullPath: '/loans/$loanId'
+      preLoaderRoute: typeof AppLoansLoanIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/members/': {
       id: '/_app/members/'
       path: '/members'
@@ -304,12 +323,13 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppExpensesRoute: typeof AppExpensesRoute
   AppIncomesRoute: typeof AppIncomesRoute
-  AppLoansRoute: typeof AppLoansRoute
   AppMessagesRoute: typeof AppMessagesRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppWalletRoute: typeof AppWalletRoute
+  AppLoansLoanIdRoute: typeof AppLoansLoanIdRoute
   AppMembersMemberIdRoute: typeof AppMembersMemberIdRoute
+  AppLoansIndexRoute: typeof AppLoansIndexRoute
   AppMembersIndexRoute: typeof AppMembersIndexRoute
 }
 
@@ -318,12 +338,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppExpensesRoute: AppExpensesRoute,
   AppIncomesRoute: AppIncomesRoute,
-  AppLoansRoute: AppLoansRoute,
   AppMessagesRoute: AppMessagesRoute,
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppWalletRoute: AppWalletRoute,
+  AppLoansLoanIdRoute: AppLoansLoanIdRoute,
   AppMembersMemberIdRoute: AppMembersMemberIdRoute,
+  AppLoansIndexRoute: AppLoansIndexRoute,
   AppMembersIndexRoute: AppMembersIndexRoute,
 }
 

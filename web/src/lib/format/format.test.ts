@@ -24,3 +24,13 @@ describe('formatters', () => {
     expect(formatDate(null)).toBe('—')
   })
 })
+
+describe('rupee grouping without a prefix', () => {
+  it('groups thousands and keeps two decimals', async () => {
+    const { formatRupees } = await import('./currency')
+    expect(formatRupees(90_000_000)).toBe('900,000.00')
+    expect(formatRupees(0)).toBe('0.00')
+    expect(formatRupees(null)).toBe('0.00')
+    expect(formatRupees(-2550)).toBe('-25.50')
+  })
+})

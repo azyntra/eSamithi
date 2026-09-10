@@ -46,9 +46,14 @@ export function DataTable<T>({ columns, data, loading = false, skeletonRows = 6,
               const dir = header.column.getIsSorted()
               const meta = header.column.columnDef.meta as { align?: 'right' | 'center'; width?: string } | undefined
               return (
-                <TableHead key={header.id} style={meta?.width ? { width: meta.width } : undefined} className={cn(meta?.align === 'right' && 'text-right', meta?.align === 'center' && 'text-center')}>
+                <TableHead
+                  key={header.id}
+                  style={meta?.width ? { width: meta.width } : undefined}
+                  aria-sort={canSort ? (dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none') : undefined}
+                  className={cn(meta?.align === 'right' && 'text-right', meta?.align === 'center' && 'text-center')}
+                >
                   {header.isPlaceholder ? null : canSort ? (
-                    <button type="button" onClick={header.column.getToggleSortingHandler()} className={cn('inline-flex items-center gap-1 rounded hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring', dir && 'text-foreground')} aria-sort={dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none'}>
+                    <button type="button" onClick={header.column.getToggleSortingHandler()} className={cn('inline-flex items-center gap-1 rounded hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring', dir && 'text-foreground')}>
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       {dir === 'asc' ? <ArrowUp className="size-3.5" /> : dir === 'desc' ? <ArrowDown className="size-3.5" /> : <ArrowUpDown className="size-3.5 opacity-50" />}
                     </button>
