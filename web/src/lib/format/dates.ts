@@ -30,6 +30,15 @@ export function formatDateTime(value: string | Date | null | undefined, lang: La
   return `${formatDate(d, lang)} ${hh}:${mm}`
 }
 
+// Clock time only, 24-hour and zero-padded so a column of them lines up.
+// The attendance register shows when each card was scanned.
+export function formatTime(value: string | Date | null | undefined): string {
+  if (!value) return '—'
+  const d = value instanceof Date ? value : new Date(String(value))
+  if (Number.isNaN(d.getTime())) return '—'
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
 // First ten characters when the value is ISO-like; empty otherwise. Used to
 // feed <input type="date"> without a timezone shift.
 export function toDateInput(value: string | null | undefined): string {

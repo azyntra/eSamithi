@@ -18,5 +18,7 @@ export const qk = {
   users: ['users'] as const,
   loans: ['loans'] as const,
   reports: (kind: string, params: object) => ['reports', kind, params] as const,
-  loan: (id: number) => ['loan', id] as const
+  loan: (id: number) => ['loan', id] as const,
+  events: ['events'] as const,
+  eventAttendance: (id: number) => ['event-attendance', id] as const
 }
