@@ -40,6 +40,16 @@ server {
     index index.html;
     client_max_body_size 50m;
 
+    # The bundle is text and the office is often on a mobile connection: a cold
+    # load is about 900 KB of JS and CSS uncompressed and under 300 KB gzipped.
+    # gzip_vary matters because /assets/ is served immutable.
+    gzip on;
+    gzip_vary on;
+    gzip_comp_level 6;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_types text/css application/javascript text/javascript application/json application/manifest+json image/svg+xml text/plain;
+
     include /etc/nginx/conf.d/app-headers.inc;
 
     # Tenant API, same origin as the SPA. Not behind the preview gate: this is
@@ -62,11 +72,16 @@ server {
         proxy_read_timeout 15s;
     }
 
-    # Hashed filenames: safe to cache forever
+    # Hashed filenames: safe to cache forever, and safe to keep. Assets are
+    # served from a pool that every release adds to, never from the release
+    # directory itself: a tab open across a deploy still asks for the chunks
+    # its index.html named, and they are still there. Content hashes mean two
+    # releases can never disagree about a filename.
     location /assets/ {
+        root /var/www/certbot/app/pool;
         include /etc/nginx/conf.d/app-headers.inc;
-        # add_header only — "expires" would emit a second Cache-Control
-        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        # No "always": a 404 must not be cached for a year
+        add_header Cache-Control "public, max-age=31536000, immutable";
         try_files $uri =404;
     }
 

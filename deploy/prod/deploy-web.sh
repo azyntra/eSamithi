@@ -49,6 +49,15 @@ else
     sudo chmod -R a+rX '$BASE'"
 fi
 
+say "Adding this release's assets to the pool (older releases keep working)"
+run "${SSH[@]}" "set -e
+  sudo mkdir -p '$BASE/pool/assets'
+  sudo cp -an '$BASE/releases/$SHA/assets/.' '$BASE/pool/assets/' 2>/dev/null || true
+  sudo chmod -R a+rX '$BASE/pool'
+  # A chunk nobody has asked for in 30 days belongs to a release nobody is on
+  sudo find '$BASE/pool/assets' -type f -mtime +30 -delete
+  sudo sh -c \"ls '$BASE/pool/assets' | wc -l | xargs echo 'assets in pool:'\""
+
 say "Flipping the symlink"
 run "${SSH[@]}" "set -e
   sudo ln -sfn 'releases/$SHA' '$BASE/current.tmp'

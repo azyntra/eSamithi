@@ -37,7 +37,7 @@ export function SamithiStep({ initialCode = '', onResolved }: { initialCode?: st
     <motion.form key="code" onSubmit={submit} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.22, ease: [0.2, 0, 0, 1] }} className="grid gap-5">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">{t('setup.title')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('setup.intro')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('setup.introWeb')}</p>
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="samithi-code">{t('setup.codeLabel')}</Label>
