@@ -30,8 +30,13 @@ echo "── Enabling the API vhost"
 cp nginx/api.conf.disabled nginx/api.conf
 sudo docker compose up -d --force-recreate nginx   # picks up new mounts/conf reliably
 
-echo "── Renewal cron (twice daily; restarts nginx after renew)"
-CRON="41 2,14 * * * cd /opt/esamithi-stack && docker run --rm -v esamithi-stack_certs:/etc/letsencrypt -v /opt/esamithi-stack/certbot-www:/var/www/certbot certbot/certbot renew --webroot -w /var/www/certbot --quiet && docker compose restart nginx"
+echo "── Renewal cron (twice daily; reloads nginx only when a certificate changed)"
+# The old form restarted nginx on every run, renewal or not, which dropped
+# every in-flight request twice a day. certbot runs the deploy hook only when
+# a certificate is actually renewed, and the hook writes a flag into the
+# webroot, which is a host bind mount, so the cron outside the container can
+# see it and reload. A reload keeps existing connections alive.
+CRON="41 2,14 * * * cd /opt/esamithi-stack && docker run --rm -v esamithi-stack_certs:/etc/letsencrypt -v /opt/esamithi-stack/certbot-www:/var/www/certbot certbot/certbot renew --webroot -w /var/www/certbot --quiet --deploy-hook \"touch /var/www/certbot/.renewed\"; if [ -f /opt/esamithi-stack/certbot-www/.renewed ]; then docker exec esamithi-stack-nginx-1 nginx -s reload && rm -f /opt/esamithi-stack/certbot-www/.renewed; fi"
 ( sudo crontab -l 2>/dev/null | grep -v 'certbot/certbot renew' ; echo "$CRON" ) | sudo crontab -
 
 sleep 3
