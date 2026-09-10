@@ -15,6 +15,10 @@ export function loginErrorKey(err: unknown): { key: TranslationKey; vars?: TVars
       return { key: 'login.locked', vars: { minutes: Math.max(1, Math.ceil(secs / 60)) } }
     }
     if (err.status === 403) return /suspended/i.test(err.message) ? { key: 'login.suspended' } : { key: 'login.disabled' }
+    // The endpoint itself is missing: this samithi's server predates the web
+    // app. An unknown or suspended samithi answers 403, not 404, so this can
+    // only mean the API has not been upgraded yet.
+    if (err.status === 404 || err.status === 501) return { key: 'login.serverOutdated' }
     if (err.status === 0) return { key: 'login.network' }
   }
   if (err instanceof TypeError) return { key: 'login.network' }

@@ -71,6 +71,7 @@
   "login.otherServer": "{name} is hosted on another eSamithi server. Taking you there…",
   "login.otherServerLink": "Open it now",
   "login.rememberedHint": "This browser remembers your samithi.",
+  "login.serverOutdated": "This samithi's server does not support the web application yet. Please keep using the desktop application until it is updated.",
   "login.suspended": "This samithi is suspended. Please contact eSamithi support.",
   "login.webTitle": "Sign in to your samithi",
   "members.appAdminOnly": "Only administrators can change mobile app access.",

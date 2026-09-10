@@ -69,6 +69,7 @@ E2E_BASE_URL=https://console.esamithi.com/app/ E2E_SAMITHI_CODE=TES-5155 \
   E2E_BASIC_USER=esamithi E2E_BASIC_PASS=… PW_CHANNEL=chrome npm run test:e2e
 ```
 
-Both deployed hosts sit behind an HTTP basic-auth preview gate until the pilot opens them up, hence
-`E2E_BASIC_USER` / `E2E_BASIC_PASS`. The gate lives in one `location` block per host: remove those two lines and
-reload nginx to open the app.
+`app.esamithi.com` is open to anyone: it is a login screen, and every route behind it is refused without a
+session. The QA host stays behind an HTTP basic-auth gate because it carries a real samithi and is not meant for
+the public, hence `E2E_BASIC_USER` / `E2E_BASIC_PASS` when pointing the suite at it. That gate is two lines in
+one `location` block of the QA host's nginx config.

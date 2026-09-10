@@ -69,7 +69,6 @@ if [ "${ENABLE_VHOST:-0}" = "1" ]; then
       sudo cp /tmp/app-headers.inc '$CONF_DIR/app-headers.inc'
       sudo cp /tmp/app.conf.disabled '$CONF_DIR/app.conf'
       rm -f /tmp/app-headers.inc /tmp/app.conf.disabled
-      test -f '$CONF_DIR/app.htpasswd' || { echo 'app.htpasswd missing — the preview gate needs it'; exit 1; }
       sudo docker exec esamithi-stack-nginx-1 nginx -t
       sudo docker exec esamithi-stack-nginx-1 nginx -s reload
       echo 'nginx reloaded'"
@@ -79,6 +78,6 @@ fi
 say "Smoke"
 if [ "${DRY_RUN:-0}" = "1" ]; then echo "DRY: curl $URL"; exit 0; fi
 code=$(curl -s -o /dev/null -w '%{http_code}' "$URL/" || true)
-echo "GET $URL/            -> $code   (401 is correct while the preview gate is on)"
+echo "GET $URL/            -> $code"
 echo "GET $URL/api/v1/health -> $(curl -s -o /dev/null -w '%{http_code}' "$URL/api/v1/health" || true)"
 echo "GET https://api.esamithi.com/api/v1/health -> $(curl -s -o /dev/null -w '%{http_code}' https://api.esamithi.com/api/v1/health || true)   (must stay 200)"
