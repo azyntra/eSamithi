@@ -29,11 +29,11 @@ export function DashboardPage() {
 
   const attention = data?.attention
   const attentionItems = attention
-    ? [
-        { count: attention.overdueLoans, label: t('dash.overdueLoansItem') },
-        { count: attention.fdsMaturingSoon, label: t('dash.fdsMaturingItem') },
-        ...(attention.membersWithoutFee === null ? [] : [{ count: attention.membersWithoutFee, label: t('dash.withoutFeeItem') }])
-      ].filter((i) => i.count > 0)
+    ? ([
+        { count: attention.overdueLoans, label: t('dash.overdueLoansItem'), tab: 'overdue' as const },
+        { count: attention.fdsMaturingSoon, label: t('dash.fdsMaturingItem'), tab: 'fds' as const },
+        ...(attention.membersWithoutFee === null ? [] : [{ count: attention.membersWithoutFee, label: t('dash.withoutFeeItem'), tab: 'members' as const }])
+      ].filter((i) => i.count > 0))
     : []
 
   return (
@@ -86,16 +86,20 @@ export function DashboardPage() {
                 ) : (
                   <ul className="grid gap-2">
                     {attentionItems.map((item) => (
-                      <li key={item.label} className="flex items-center gap-3 text-sm">
-                        <span className="tnum grid min-w-9 place-items-center rounded-md bg-warning-soft px-2 py-1 text-[13px] font-semibold text-warning">{formatNumber(item.count)}</span>
-                        <span>{item.label}</span>
+                      <li key={item.label}>
+                        <Link to="/reports" search={{ tab: 'arrears', arrears: item.tab, year: undefined, month: undefined }} className="flex items-center gap-3 rounded-lg px-1 py-1 text-sm transition-colors hover:bg-accent">
+                          <span className="tnum grid min-w-9 place-items-center rounded-md bg-warning-soft px-2 py-1 text-[13px] font-semibold text-warning">{formatNumber(item.count)}</span>
+                          <span>{item.label}</span>
+                        </Link>
                       </li>
                     ))}
                   </ul>
                 )}
                 {attentionItems.length > 0 && (
                   <Button asChild variant="link" size="sm" className="mt-3 h-auto px-0">
-                    <Link to="/reports">{t('dash.openArrears')} →</Link>
+                    <Link to="/reports" search={{ tab: 'arrears', arrears: undefined, year: undefined, month: undefined }}>
+                      {t('dash.openArrears')} →
+                    </Link>
                   </Button>
                 )}
               </CardContent>
