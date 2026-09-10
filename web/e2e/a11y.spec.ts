@@ -28,6 +28,9 @@ async function scan(page: Page) {
 
 test.describe('accessibility', () => {
   test.skip(!CODE, 'set E2E_SAMITHI_CODE to run against a real API')
+  // Ten routes, each waiting for the network and the animations before axe
+  // runs, does not fit the default per-test budget.
+  test.describe.configure({ timeout: 180_000 })
   // Entrance animations run opacity from 0, which axe reads as failing
   // contrast mid-flight. The app honours prefers-reduced-motion, so asking for
   // it makes every scan deterministic — and checks that path too.
