@@ -21,7 +21,10 @@ const MAP: Record<string, { key: TranslationKey; variant: Variant }> = {
   Bank: { key: 'status.bank', variant: 'info' },
   Member: { key: 'common.member', variant: 'default' },
   Guest: { key: 'status.guest', variant: 'neutral' },
-  Vendor: { key: 'status.vendor', variant: 'neutral' }
+  Vendor: { key: 'status.vendor', variant: 'neutral' },
+  Sold: { key: 'status.sold', variant: 'info' },
+  Removed: { key: 'status.removed', variant: 'danger' },
+  Deleted: { key: 'status.deleted', variant: 'neutral' }
 }
 
 export function StatusPill({ value, className, override }: { value: string | null | undefined; className?: string; override?: Partial<Record<string, Variant>> }) {

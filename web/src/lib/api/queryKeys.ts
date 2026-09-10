@@ -20,5 +20,9 @@ export const qk = {
   reports: (kind: string, params: object) => ['reports', kind, params] as const,
   loan: (id: number) => ['loan', id] as const,
   events: ['events'] as const,
-  eventAttendance: (id: number) => ['event-attendance', id] as const
+  eventAttendance: (id: number) => ['event-attendance', id] as const,
+  announcements: ['announcements'] as const,
+  memberRequests: (status?: string) => (status ? (['member-requests', status] as const) : (['member-requests'] as const)),
+  purukaPosts: (filters?: object) => (filters ? (['puruka-posts', filters] as const) : (['puruka-posts'] as const)),
+  purukaCategories: ['puruka-categories'] as const
 }
