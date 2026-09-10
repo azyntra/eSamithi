@@ -10,8 +10,11 @@ const ROUTES = ['dashboard', 'members', 'incomes', 'expenses', 'loans', 'wallet'
 // faded label really does fail contrast — so wait for the page to settle
 // before judging it.
 async function settle(page: Page) {
+  // Over a real network the data arrives after first paint and restarts the
+  // entrance animations, so wait for the requests to stop before the frames.
+  await page.waitForLoadState('networkidle').catch(() => undefined)
   await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))))
-  await page.waitForTimeout(250)
+  await page.waitForTimeout(300)
 }
 
 async function scan(page: Page) {
@@ -60,6 +63,8 @@ test.describe('accessibility', () => {
 
   test('the command palette and a form sheet are clean', async ({ page }) => {
     await signIn(page)
+    // The palette loads on demand: wait for the shell that owns the shortcut
+    await expect(page.getByRole('button', { name: /^search/i }).first()).toBeVisible()
     await page.keyboard.press('ControlOrMeta+k')
     await expect(page.getByPlaceholder(/search members, pages and actions/i)).toBeVisible()
     expect(await scan(page), 'command palette').toEqual([])
