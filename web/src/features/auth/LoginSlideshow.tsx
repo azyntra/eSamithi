@@ -71,23 +71,24 @@ export function LoginHero() {
         />
       </AnimatePresence>
 
-      {/* Readability first: white text sits over a photograph, so the scrim is
-          darkest exactly where the brand, the headline and the caption land. */}
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,18,0.92)_0%,rgba(6,10,18,0.62)_30%,rgba(6,10,18,0.74)_62%,rgba(6,10,18,0.96)_100%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(6,10,18,0.88)_0%,rgba(6,10,18,0.62)_42%,rgba(6,10,18,0.18)_100%)]" />
+      {/* Two bands rather than a wash: dark where words sit, almost clear across
+          the middle so the photograph is actually visible. */}
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,9,16,0.95)_0%,rgba(5,9,16,0.9)_22%,rgba(5,9,16,0.8)_30%,rgba(5,9,16,0.2)_43%,rgba(5,9,16,0.1)_54%,rgba(5,9,16,0.12)_66%,rgba(5,9,16,0.5)_79%,rgba(5,9,16,0.9)_91%,rgba(5,9,16,0.96)_100%)]" />
 
-      <div className="relative flex items-center gap-3">
-        <BrandMark size={44} />
-        <div className="leading-tight">
-          <div className="text-lg font-bold tracking-tight">eSamithi</div>
-          <div className="text-xs text-white/70">{t('login.platform')}</div>
+      <div className="relative">
+        <div className="flex items-center gap-3">
+          <BrandMark size={44} />
+          <div className="leading-tight">
+            <div className="text-lg font-bold tracking-tight">eSamithi</div>
+            <div className="text-xs text-white/70">{t('login.platform')}</div>
+          </div>
         </div>
-      </div>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0, 0, 0, 1] }} className="relative max-w-md">
-        <h2 className="text-3xl leading-tight font-bold tracking-tight text-white xl:text-4xl">{t('login.tagline')}</h2>
-        <p className="mt-3 text-[15px] leading-relaxed text-white/80">{t('login.taglineSub')}</p>
-      </motion.div>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0, 0, 0, 1] }} className="mt-8 max-w-md">
+          <h2 className="text-3xl leading-tight font-bold tracking-tight text-white xl:text-4xl">{t('login.tagline')}</h2>
+          <p className="mt-2.5 text-[15px] leading-relaxed text-white/85">{t('login.taglineSub')}</p>
+        </motion.div>
+      </div>
 
       <div className="relative grid gap-5">
         <div className="flex items-end justify-between gap-6">
