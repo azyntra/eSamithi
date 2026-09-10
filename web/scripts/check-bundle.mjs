@@ -19,7 +19,10 @@ if (refs.length === 0) {
   process.exit(1)
 }
 
-const gz = (p) => gzipSync(readFileSync(join(DIST, p.replace(/^\//, '')))).length
+// Paths in index.html carry the deploy base ("/" or "/app/"); on disk every
+// asset lives under dist/assets, so keep only the tail.
+const onDisk = (ref) => join(DIST, 'assets', ref.split('assets/').pop())
+const gz = (ref) => gzipSync(readFileSync(onDisk(ref))).length
 const js = refs.filter((r) => r.endsWith('.js'))
 const css = refs.filter((r) => r.endsWith('.css'))
 const initialJs = js.reduce((n, f) => n + gz(f), 0)

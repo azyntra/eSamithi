@@ -22,6 +22,7 @@ The dev proxy makes the app same-origin with the API, so the HttpOnly refresh co
 | `npm run typecheck`, `lint`, `test` | gates run by CI (`.github/workflows/web.yml`) |
 | `npm run test:e2e` | Playwright; set `E2E_SAMITHI_CODE` (and `E2E_BASE_URL` for a deployed host) |
 | `npm run sync:i18n` / `check:i18n` | regenerate dictionaries from `src/renderer/src/i18n` / parity gate |
+| `npm run check:bundle` | first-load budget after a build (250 KB JS gzip, 60 KB CSS, 350 KB fonts) |
 | `npm run fonts:build` | rebuild woff2 from `mobile/assets/fonts` |
 | `node scripts/shoot.mjs <dir>` | login screenshots (needs Google Chrome) |
 
@@ -38,3 +39,31 @@ src/styles     globals.css — design tokens (@theme), fonts, base rules
 
 Rules: every user-visible string goes through `t()`; money is integer cents at the boundary; the SPA only calls
 `${origin}/api/v1` and `${origin}/directory/`; no token is ever written to web storage.
+
+## First load
+
+Only the shell is in the first load: 164 KB of JavaScript gzipped, plus 11 KB of CSS. Everything else arrives
+with the route that needs it. Two rules keep it that way, and `npm run check:bundle` fails the build if they slip:
+
+- **A route file must not import anything from its page module except the component.** A route's `validateSearch`
+  runs on every navigation, so anything it touches is in the first load — a tab list exported from the page used to
+  drag the whole page, its dialogs and its forms along with it. Shared constants live in leaf modules (`tabs.ts`).
+- **Search params are validated by the small parsers in `lib/router/search.ts`, not by Zod.** Zod loads with the
+  forms that use it. The parsers return `undefined` for anything unexpected, so a hand-edited URL degrades to the
+  default view instead of crashing.
+
+Both dictionaries ship in the first load; the command palette and cmdk load when it is first opened. Sinhala was
+split out for a while and it saved about 19 KB gzipped, but `translate()` is synchronous and the receipt builders
+call it, so a receipt printed before the chunk arrived came out in English.
+
+## Testing
+
+`npm test` covers formatters, receipt numbering, the loan and fixed-deposit rules, the session manager and
+dictionary parity — including a test that the web receipt HTML is byte-identical to the desktop's in both
+languages. Playwright covers every module against a real API, plus accessibility (axe, WCAG 2.1 AA on every
+route in both languages and themes) and layout at tablet and phone widths.
+
+```bash
+E2E_SAMITHI_CODE=TES-5155 PW_CHANNEL=chrome npm run test:e2e             # against npm run dev
+E2E_BASE_URL=https://console.esamithi.com/app/ E2E_SAMITHI_CODE=TES-5155 PW_CHANNEL=chrome npm run test:e2e
+```
