@@ -45,3 +45,7 @@ mobile/fcm-service-account.json
 
 # leaflet build outputs (regenerate with store-assets/leaflet/build.sh)
 store-assets/leaflet/out/
+
+# Playwright output when specs are run from the repo root
+test-results/
+playwright-report/
