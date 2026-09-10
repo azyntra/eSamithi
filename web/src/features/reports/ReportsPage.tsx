@@ -23,10 +23,8 @@ import { buildReportHtml, type ReportSection } from './print'
 import { useAnnualReport, useArrearsReport, useMonthlyReport } from './queries'
 import type { CategoryRow, Summary } from './types'
 
-export const REPORT_TABS = ['monthly', 'annual', 'arrears'] as const
-export const ARREARS_TABS = ['overdue', 'fds', 'members'] as const
-export type ReportTab = (typeof REPORT_TABS)[number]
-export type ArrearsTab = (typeof ARREARS_TABS)[number]
+import type { ArrearsTab, ReportTab } from './tabs'
+export type { ArrearsTab, ReportTab }
 
 const THIS_YEAR = new Date().getFullYear()
 const YEARS = Array.from({ length: 10 }, (_, i) => THIS_YEAR - i)

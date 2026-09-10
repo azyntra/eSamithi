@@ -1,17 +1,23 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { z } from 'zod'
-import { ARREARS_TABS, REPORT_TABS, ReportsPage } from '@/features/reports/ReportsPage'
+import { ReportsPage } from '@/features/reports/ReportsPage'
+import { ARREARS_TABS, REPORT_TABS } from '@/features/reports/tabs'
+import { int, oneOf } from '@/lib/router/search'
 
 const now = new Date()
-const searchSchema = z.object({
-  tab: z.enum(REPORT_TABS).optional().catch(undefined),
-  arrears: z.enum(ARREARS_TABS).optional().catch(undefined),
-  year: z.coerce.number().int().min(2000).max(2100).optional().catch(undefined),
-  month: z.coerce.number().int().min(1).max(12).optional().catch(undefined)
-})
+const tabOf = oneOf(REPORT_TABS)
+const arrearsOf = oneOf(ARREARS_TABS)
 
 export const Route = createFileRoute('/_app/reports')({
-  validateSearch: (search) => searchSchema.parse(search),
+  validateSearch: (search: Record<string, unknown>): { tab?: (typeof REPORT_TABS)[number]; arrears?: (typeof ARREARS_TABS)[number]; year?: number; month?: number } => {
+    const year = int(search.year, 2000)
+    const month = int(search.month, 1)
+    return {
+      tab: tabOf(search.tab),
+      arrears: arrearsOf(search.arrears),
+      year: year !== undefined && year <= 2100 ? year : undefined,
+      month: month !== undefined && month <= 12 ? month : undefined
+    }
+  },
   component: ReportsRoute
 })
 

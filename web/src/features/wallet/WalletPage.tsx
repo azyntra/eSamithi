@@ -28,8 +28,8 @@ import { WalletFormSheet } from './components/WalletFormSheet'
 import { fdDisplayStatus, isNearingMaturity } from './fd'
 import { useAssets, useDeleteAsset, useDeleteWallet, useFixedDeposits, useToggleWallet, useWallets, useWithdrawFixedDeposit } from './queries'
 
-export const WALLET_TABS = ['liquid', 'investments', 'assets'] as const
-export type WalletTab = (typeof WALLET_TABS)[number]
+import type { WalletTab } from './tabs'
+export type { WalletTab }
 
 export function WalletPage({ tab, onTabChange }: { tab: WalletTab; onTabChange: (tab: WalletTab) => void }) {
   const { t, lang } = useT()

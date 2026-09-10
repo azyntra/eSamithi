@@ -1,15 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { z } from 'zod'
-import { MEMBER_TABS, MemberPage } from '@/features/members/MemberPage'
+import { MemberPage } from '@/features/members/MemberPage'
+import { MEMBER_TABS } from '@/features/members/tabs'
+import { oneOf } from '@/lib/router/search'
 
-const searchSchema = z.object({ tab: z.enum(MEMBER_TABS).optional().catch(undefined) })
+const tabOf = oneOf(MEMBER_TABS)
 
 export const Route = createFileRoute('/_app/members/$memberId')({
   params: {
     parse: (raw) => ({ memberId: Number(raw.memberId) }),
     stringify: (p) => ({ memberId: String(p.memberId) })
   },
-  validateSearch: (search) => searchSchema.parse(search),
+  validateSearch: (search: Record<string, unknown>): { tab?: (typeof MEMBER_TABS)[number] } => ({ tab: tabOf(search.tab) }),
   component: MemberRoute
 })
 

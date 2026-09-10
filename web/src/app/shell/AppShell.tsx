@@ -1,12 +1,15 @@
-import { useCallback, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useState, type ReactNode } from 'react'
 import { useLocation } from '@tanstack/react-router'
 import { motion } from 'motion/react'
-import { CommandPalette, useCommandPalette } from '@/components/CommandPalette'
+import { useCommandPalette } from '@/components/useCommandPalette'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 import { BannerStack } from './BannerStack'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
+
+// cmdk and the member index only load when the palette is first opened
+const CommandPalette = lazy(() => import('@/components/CommandPalette').then((m) => ({ default: m.CommandPalette })))
 
 const COLLAPSE_KEY = 'esamithi-sidebar-collapsed'
 
@@ -58,7 +61,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
       </div>
 
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      {paletteOpen && (
+        <Suspense fallback={null}>
+          <CommandPalette open onOpenChange={setPaletteOpen} />
+        </Suspense>
+      )}
     </div>
   )
 }

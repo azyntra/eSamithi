@@ -1,4 +1,4 @@
-import { useT, type Lang } from '@/lib/i18n'
+import { ensureSinhala, useT, type Lang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
 // "EN | සිං" pill — same affordance as the desktop sidebar and login page
@@ -9,6 +9,8 @@ export function LangSwitcher({ className, tone = 'light' }: { className?: string
       key={code}
       type="button"
       onClick={() => setLang(code)}
+      onPointerEnter={code === 'si' ? () => void ensureSinhala() : undefined}
+      onFocus={code === 'si' ? () => void ensureSinhala() : undefined}
       aria-pressed={lang === code}
       lang={code}
       className={cn(

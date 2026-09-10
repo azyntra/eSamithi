@@ -1,15 +1,13 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { z } from 'zod'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { ensureSession, isAuthenticated } from '@/lib/api/session'
 
 // The router parses search values as JSON, so a numeric-looking code arrives
-// as a number — coerce before validating.
-const str = z.preprocess((v) => (v === undefined || v === null ? undefined : String(v)), z.string().optional())
-const searchSchema = z.object({ code: str, redirect: str })
+// as a number — stringify before using it.
+const text = (v: unknown): string | undefined => (v === undefined || v === null || v === '' ? undefined : String(v))
 
 export const Route = createFileRoute('/login')({
-  validateSearch: (search) => searchSchema.parse(search),
+  validateSearch: (search: Record<string, unknown>): { code?: string; redirect?: string } => ({ code: text(search.code), redirect: text(search.redirect) }),
   beforeLoad: async () => {
     await ensureSession()
     if (isAuthenticated()) throw redirect({ to: '/dashboard' })

@@ -42,6 +42,10 @@ jobs:
         working-directory: web
         run: npx vite build --mode testbed && npm run typecheck
 
+      - name: First-load budget
+        working-directory: web
+        run: npm run check:bundle
+
       - uses: actions/upload-artifact@v4
         with:
           name: web-dist

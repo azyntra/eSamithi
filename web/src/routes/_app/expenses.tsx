@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { LedgerPage } from '@/features/ledger/LedgerPage'
-import { ledgerSearchSchema } from '@/features/ledger/filters'
+import { parseLedgerSearch } from '@/features/ledger/filters'
 
 export const Route = createFileRoute('/_app/expenses')({
-  validateSearch: (search) => ledgerSearchSchema.parse(search),
+  validateSearch: parseLedgerSearch,
   component: ExpensesRoute
 })
 

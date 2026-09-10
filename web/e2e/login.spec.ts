@@ -41,7 +41,7 @@ test.describe('sign-in with a samithi code', () => {
     // Sinhala applies to the shell, including the toggle's own label
     await page.getByRole('button', { name: 'සිං' }).first().click()
     await expect(page.locator('html')).toHaveAttribute('lang', 'si')
-    await expect(page.getByRole('button', { name: /dark mode/i })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /අඳුරු ප්‍රකාරයට/ })).toBeVisible()
     await page.getByRole('button', { name: 'EN' }).first().click()
 
     // Sign out returns to the credentials step with the samithi remembered

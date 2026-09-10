@@ -1,19 +1,18 @@
 import { useCallback } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { z } from 'zod'
 import { AttendancePage } from '@/features/attendance/AttendancePage'
 import type { AttendanceMode } from '@/features/attendance/types'
-import { flagSchema } from '@/lib/router/flags'
+import { flag, int, oneOf, str } from '@/lib/router/search'
 
-const searchSchema = z.object({
-  event: z.coerce.number().int().positive().optional().catch(undefined),
-  view: z.enum(['present', 'absent']).optional().catch(undefined),
-  q: z.string().optional().catch(undefined),
-  create: flagSchema
-})
+const viewOf = oneOf(['present', 'absent'] as const)
 
 export const Route = createFileRoute('/_app/attendance')({
-  validateSearch: (search) => searchSchema.parse(search),
+  validateSearch: (search: Record<string, unknown>): { event?: number; view?: AttendanceMode; q?: string; create?: 1 } => ({
+    event: int(search.event),
+    view: viewOf(search.view),
+    q: str(search.q),
+    create: flag(search.create)
+  }),
   component: AttendanceRoute
 })
 

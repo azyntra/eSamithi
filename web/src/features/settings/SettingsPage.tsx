@@ -28,8 +28,8 @@ import { TypeDialog } from './components/TypeDialog'
 import { AddUserDialog, ResetPasswordDialog } from './components/UserDialogs'
 import { useDeleteExpenseType, useDeleteIncomeType, useDeleteUser, useExpenseTypes, useIncomeTypes, useSaveExpenseType, useSaveIncomeType, useSettings, useSystemUsers, useUpdateSettings } from './queries'
 
-export const SETTINGS_TABS = ['general', 'loans', 'income', 'expense', 'users', 'security', 'about'] as const
-export type SettingsTab = (typeof SETTINGS_TABS)[number]
+import type { SettingsTab } from './tabs'
+export type { SettingsTab }
 
 export function SettingsPage({ tab, onTabChange }: { tab: SettingsTab; onTabChange: (tab: SettingsTab) => void }) {
   const { t } = useT()

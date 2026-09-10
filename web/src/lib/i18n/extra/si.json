@@ -112,6 +112,8 @@
   "notFound.home": "උපකරණ පුවරුවට යන්න",
   "notFound.title": "පිටුව හමු නොවීය",
   "print.previewHint": "විස්තර පරීක්ෂා කර මුද්‍රණය කරන්න. Enter යතුරෙන් ද මුද්‍රණය වේ.",
+  "pwa.install": "යෙදුම ස්ථාපනය කරන්න",
+  "pwa.installed": "eSamithi ස්ථාපනය කරන ලදී",
   "role.admin": "පරිපාලක",
   "role.user": "කාර්ය මණ්ඩලය",
   "role.viewer": "බැලීමට පමණි",

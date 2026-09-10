@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { z } from 'zod'
-import { SETTINGS_TABS, SettingsPage } from '@/features/settings/SettingsPage'
+import { SettingsPage } from '@/features/settings/SettingsPage'
+import { SETTINGS_TABS } from '@/features/settings/tabs'
+import { oneOf } from '@/lib/router/search'
 
-const searchSchema = z.object({ tab: z.enum(SETTINGS_TABS).optional().catch(undefined) })
+const tabOf = oneOf(SETTINGS_TABS)
 
 export const Route = createFileRoute('/_app/settings')({
-  validateSearch: (search) => searchSchema.parse(search),
+  validateSearch: (search: Record<string, unknown>): { tab?: (typeof SETTINGS_TABS)[number] } => ({ tab: tabOf(search.tab) }),
   component: SettingsRoute
 })
 

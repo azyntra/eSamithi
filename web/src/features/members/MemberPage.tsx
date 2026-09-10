@@ -22,8 +22,8 @@ import { MemberFormSheet } from './components/MemberForm'
 import { useMember, useMemberStatement, useSetAppAccess } from './queries'
 import { isAppEnabled, isMemberActive, type MemberStatement, type MemberWithDependents } from './types'
 
-export const MEMBER_TABS = ['overview', 'statement', 'dependents', 'app'] as const
-export type MemberTab = (typeof MEMBER_TABS)[number]
+import type { MemberTab } from './tabs'
+export type { MemberTab }
 
 const GENDER: Record<string, TranslationKey> = { Male: 'mform.male', Female: 'mform.female' }
 const MARITAL: Record<string, TranslationKey> = { Single: 'mform.single', Married: 'mform.married', Widowed: 'mform.widowed' }

@@ -10,7 +10,7 @@ import { useMembersSlim } from '@/features/members/queries'
 import { errorMessage } from '@/lib/api/errors'
 import { signOut, useSession } from '@/lib/api/session'
 import { useT } from '@/lib/i18n'
-import { FLAG_ON } from '@/lib/router/flags'
+import { FLAG_ON } from '@/lib/router/search'
 import { useTheme } from '@/lib/theme'
 
 interface QuickAction {
@@ -32,21 +32,6 @@ const ACTIONS: QuickAction[] = [
   { id: 'notice', labelKey: 'cmd.newAnnouncement', icon: Megaphone, run: (go) => void go({ to: '/messages', search: { create: FLAG_ON } }) },
   { id: 'event', labelKey: 'cmd.newEvent', icon: CalendarPlus, run: (go) => void go({ to: '/attendance', search: { create: FLAG_ON } }) }
 ]
-
-export function useCommandPalette(): [boolean, (open: boolean) => void] {
-  const [open, setOpen] = useState(false)
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setOpen((v) => !v)
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-  return [open, setOpen]
-}
 
 export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { t, lang, setLang } = useT()

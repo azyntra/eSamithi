@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { z } from 'zod'
-import { WALLET_TABS, WalletPage } from '@/features/wallet/WalletPage'
+import { WalletPage } from '@/features/wallet/WalletPage'
+import { WALLET_TABS } from '@/features/wallet/tabs'
+import { oneOf } from '@/lib/router/search'
 
-const searchSchema = z.object({ tab: z.enum(WALLET_TABS).optional().catch(undefined) })
+const tabOf = oneOf(WALLET_TABS)
 
 export const Route = createFileRoute('/_app/wallet')({
-  validateSearch: (search) => searchSchema.parse(search),
+  validateSearch: (search: Record<string, unknown>): { tab?: (typeof WALLET_TABS)[number] } => ({ tab: tabOf(search.tab) }),
   component: WalletRoute
 })
 

@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "sync:i18n": "node --experimental-strip-types scripts/sync-i18n.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
-    "fonts:build": "bash scripts/build-fonts.sh"
+    "fonts:build": "bash scripts/build-fonts.sh",
+    "check:bundle": "node scripts/check-bundle.mjs dist"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -1,16 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { z } from 'zod'
 import { MessagesPage } from '@/features/messages/MessagesPage'
-import { flagSchema } from '@/lib/router/flags'
+import { flag, oneOf } from '@/lib/router/search'
 
-const searchSchema = z.object({
-  tab: z.enum(['announcements', 'requests', 'puruka']).optional().catch(undefined),
-  status: z.enum(['pending', 'all']).optional().catch(undefined),
-  create: flagSchema
-})
+const tabOf = oneOf(['announcements', 'requests', 'puruka'] as const)
+const statusOf = oneOf(['pending', 'all'] as const)
 
 export const Route = createFileRoute('/_app/messages')({
-  validateSearch: (search) => searchSchema.parse(search),
+  validateSearch: (search: Record<string, unknown>): { tab?: 'announcements' | 'requests' | 'puruka'; status?: 'pending' | 'all'; create?: 1 } => ({
+    tab: tabOf(search.tab),
+    status: statusOf(search.status),
+    create: flag(search.create)
+  }),
   component: MessagesRoute
 })
 

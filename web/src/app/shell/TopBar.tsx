@@ -1,11 +1,12 @@
 import { useRouter } from '@tanstack/react-router'
-import { ChevronDown, LogOut, Menu, MonitorSmartphone, Search } from 'lucide-react'
+import { ChevronDown, Download, LogOut, Menu, MonitorSmartphone, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { LangSwitcher } from '@/components/LangSwitcher'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { useInstallPrompt } from '@/lib/pwa/install'
 import { signOut, useSession, type Role } from '@/lib/api/session'
 import { useT, type TranslationKey } from '@/lib/i18n'
 import { errorMessage } from '@/lib/api/errors'
@@ -25,6 +26,7 @@ export function TopBar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () 
   const { t } = useT()
   const { user, samithi } = useSession()
   const router = useRouter()
+  const { canInstall, install } = useInstallPrompt()
 
   const leave = async (all: boolean) => {
     try {
@@ -92,6 +94,17 @@ export function TopBar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () 
                 <LangSwitcher />
               </div>
               <DropdownMenuSeparator />
+              {canInstall && (
+                <DropdownMenuItem
+                  onSelect={() =>
+                    void install().then((outcome) => {
+                      if (outcome === 'accepted') toast.success(t('pwa.installed'))
+                    })
+                  }
+                >
+                  <Download /> {t('pwa.install')}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onSelect={() => void leave(false)}>
                 <LogOut /> {t('sidebar.signOut')}
               </DropdownMenuItem>

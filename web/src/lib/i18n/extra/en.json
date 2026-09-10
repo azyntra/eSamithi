@@ -112,6 +112,8 @@
   "notFound.home": "Go to dashboard",
   "notFound.title": "Page not found",
   "print.previewHint": "Check the details, then print. Enter also prints.",
+  "pwa.install": "Install app",
+  "pwa.installed": "eSamithi installed",
   "role.admin": "Administrator",
   "role.user": "Staff",
   "role.viewer": "View only",
