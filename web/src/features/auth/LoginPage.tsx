@@ -56,10 +56,10 @@ export function LoginPage({ code, redirect }: { code?: string; redirect?: string
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+    <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_500px] xl:grid-cols-[minmax(0,1fr)_560px]">
       <LoginHero />
 
-      <main className="flex flex-col items-center justify-center px-5 py-10">
+      <main className="flex flex-col items-center justify-center px-5 py-10 lg:px-8">
         <div className="mb-8 flex items-center gap-3 lg:hidden">
           <BrandMark size={40} />
           <div className="leading-tight">

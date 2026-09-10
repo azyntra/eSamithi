@@ -73,9 +73,14 @@ export function LoginHero() {
 
       {/* Two bands rather than a wash: dark where words sit, almost clear across
           the middle so the photograph is actually visible. */}
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,9,16,0.95)_0%,rgba(5,9,16,0.9)_22%,rgba(5,9,16,0.8)_30%,rgba(5,9,16,0.2)_43%,rgba(5,9,16,0.1)_54%,rgba(5,9,16,0.12)_66%,rgba(5,9,16,0.5)_79%,rgba(5,9,16,0.9)_91%,rgba(5,9,16,0.96)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,9,16,0.9)_0%,rgba(5,9,16,0.78)_9%,rgba(5,9,16,0.3)_17%,rgba(5,9,16,0.08)_25%,rgba(5,9,16,0.08)_60%,rgba(5,9,16,0.45)_77%,rgba(5,9,16,0.88)_91%,rgba(5,9,16,0.95)_100%)]" />
+      {/* Only the corner the right-hand line sits in, so the rest of the
+          picture keeps its light. */}
+      <div className="absolute inset-0 bg-[radial-gradient(120%_58%_at_100%_0%,rgba(5,9,16,0.66)_0%,rgba(5,9,16,0.34)_42%,rgba(5,9,16,0)_72%)]" />
 
-      <div className="relative">
+      {/* One slim row of words at the top: the brand on the left, the line about
+          what this is on the right. Everything below it is the photograph. */}
+      <div className="relative flex items-start justify-between gap-8">
         <div className="flex items-center gap-3">
           <BrandMark size={44} />
           <div className="leading-tight">
@@ -84,10 +89,14 @@ export function LoginHero() {
           </div>
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0, 0, 0, 1] }} className="mt-8 max-w-md">
-          <h2 className="text-3xl leading-tight font-bold tracking-tight text-white xl:text-4xl">{t('login.tagline')}</h2>
-          <p className="mt-2.5 text-[15px] leading-relaxed text-white/85">{t('login.taglineSub')}</p>
-        </motion.div>
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0, 0, 0, 1] }}
+          className="max-w-[15rem] pt-1 text-right text-[13.5px] leading-relaxed text-white"
+        >
+          {t('login.taglineSub')}
+        </motion.p>
       </div>
 
       <div className="relative grid gap-5">
