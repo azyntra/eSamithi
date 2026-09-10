@@ -108,5 +108,12 @@
   "ledger.voucherPrintAfterSave": "Print voucher",
   "ledger.recordedFor": "Recorded for {name}",
   "ledger.voidReasonShort": "Reason: {reason}",
-  "ledger.exporting": "Preparing export…"
+  "ledger.exporting": "Preparing export…",
+  "wallet.maturingSoon": "Matures within 30 days",
+  "wallet.tabTitle": "Financial Hub",
+  "wallet.balanceHint": "Available: {amount}",
+  "wallet.walletDeleteBlocked": "This wallet still holds funds",
+  "wallet.noWallets": "No wallets yet — create the first one to start recording money",
+  "wform.fdFunded": "Funded from {name}",
+  "wform.fdNotFunded": "Entered from paper records (no wallet deducted)"
 }

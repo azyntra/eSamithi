@@ -108,5 +108,12 @@
   "ledger.voucherPrintAfterSave": "වවුචරය මුද්‍රණය කරන්න",
   "ledger.recordedFor": "{name} සඳහා සටහන් කළා",
   "ledger.voidReasonShort": "හේතුව: {reason}",
-  "ledger.exporting": "අපනයනය සූදානම් කරමින්…"
+  "ledger.exporting": "අපනයනය සූදානම් කරමින්…",
+  "wallet.maturingSoon": "දින 30ක් ඇතුළත කල් පිරේ",
+  "wallet.tabTitle": "මූල්‍ය මධ්‍යස්ථානය",
+  "wallet.balanceHint": "ලබා ගත හැකි: {amount}",
+  "wallet.walletDeleteBlocked": "මෙම පසුම්බියේ තවමත් මුදල් ඇත",
+  "wallet.noWallets": "තවම පසුම්බි නැත — මුදල් සටහන් කිරීම ආරම්භ කිරීමට පළමු පසුම්බිය සාදන්න",
+  "wform.fdFunded": "{name} වෙතින් අරමුදල් සපයන ලදී",
+  "wform.fdNotFunded": "කඩදාසි වාර්තාවලින් ඇතුළත් කළා (පසුම්බියෙන් අඩු නොකෙරේ)"
 }
