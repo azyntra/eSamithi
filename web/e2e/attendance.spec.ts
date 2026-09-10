@@ -35,7 +35,12 @@ test.describe('attendance', () => {
     const row = await firstDataRow(page)
     const societyId = (await row.locator('td').first().innerText()).trim()
     const name = (await row.locator('td').nth(1).innerText()).trim()
-    await row.getByRole('button', { name: new RegExp(`^mark: ${name}`, 'i') }).click()
+    // Wait for the write itself: the row moves optimistically, so a scan sent
+    // before the POST lands would be a first mark rather than a duplicate
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/attendance') && r.request().method() === 'POST'),
+      row.getByRole('button', { name: new RegExp(`^mark: ${name}`, 'i') }).click()
+    ])
     await expect.poll(() => countOf(presentTab)).toBe(1)
     await expect.poll(() => countOf(absentTab)).toBe(roster - 1)
 
@@ -48,13 +53,22 @@ test.describe('attendance', () => {
     // Undo the mark, then record the same member by scanning instead
     await presentTab.click()
     const presentRow = await firstDataRow(page)
-    await presentRow.getByRole('button', { name: new RegExp(`^remove from list: ${name}`, 'i') }).click()
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/attendance') && r.request().method() === 'DELETE'),
+      presentRow.getByRole('button', { name: new RegExp(`^remove from list: ${name}`, 'i') }).click()
+    ])
     await expect.poll(() => countOf(presentTab)).toBe(0)
     await page.getByRole('textbox', { name: /scan a card/i }).fill(societyId)
     await page.keyboard.press('Enter')
     await expect(page.locator('[data-scan-feedback="ok"]')).toContainText(new RegExp(`${name}`, 'i'))
     await expect.poll(() => countOf(presentTab)).toBe(1)
     await expect(page.getByText(/1 scanned here/i)).toBeVisible()
+
+    // Scan-anywhere: typing with the caret outside the box still lands in it
+    await page.getByRole('heading', { name: title }).click()
+    await page.keyboard.type('ZZ9')
+    await expect(page.getByRole('textbox', { name: /scan a card/i })).toHaveValue('ZZ9')
+    await page.getByRole('textbox', { name: /scan a card/i }).fill('')
 
     // An unknown card is refused
     await page.getByRole('textbox', { name: /scan a card/i }).fill('NOSUCHID')
@@ -101,7 +115,10 @@ test.describe('attendance', () => {
     // Everyone counts as present until someone is marked absent
     const row = await firstDataRow(page)
     const name = (await row.locator('td').nth(1).innerText()).trim()
-    await row.getByRole('button', { name: new RegExp(`^mark absent: ${name}`, 'i') }).click()
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/attendance') && r.request().method() === 'POST'),
+      row.getByRole('button', { name: new RegExp(`^mark absent: ${name}`, 'i') }).click()
+    ])
     await expect.poll(() => countOf(presentTab)).toBe(roster - 1)
     await expect.poll(() => countOf(absentTab)).toBe(1)
 

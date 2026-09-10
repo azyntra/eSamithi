@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { CheckCircle2, ScanLine, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
+import { useScanSink } from '@/lib/hooks/useScanSink'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { useScanCard } from '../queries'
@@ -28,6 +29,14 @@ export function ScanPanel({ eventId, mode, onModeRequest }: { eventId: number; m
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [session, setSession] = useState(0)
   const byAbsence = mode === 'absent'
+
+  // Scan anywhere: a card swiped while the caret sits in a table still lands
+  // in the box (requirements §7 P2).
+  const sink = useCallback((char: string) => {
+    setValue((v) => v + char)
+    inputRef.current?.focus()
+  }, [])
+  useScanSink(!scan.isPending, sink)
 
   // A different event, or a different method, is a fresh count.
   useEffect(() => {

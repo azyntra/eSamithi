@@ -26,10 +26,11 @@ interface Props {
   eventId: number | null
   view: AttendanceMode
   search: string
+  create?: boolean
   onNavigate: (next: { event?: number | null; view?: AttendanceMode; q?: string }) => void
 }
 
-export function AttendancePage({ eventId, view, search, onNavigate }: Props) {
+export function AttendancePage({ eventId, view, search, create = false, onNavigate }: Props) {
   const { t, lang } = useT()
   const events = useEvents()
   const detail = useEventDetail(eventId)
@@ -42,6 +43,13 @@ export function AttendancePage({ eventId, view, search, onNavigate }: Props) {
   const [pendingMode, setPendingMode] = useState<AttendanceMode | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<SocietyEvent | null>(null)
   const [busyMember, setBusyMember] = useState<number | null>(null)
+
+  // Quick action from the command palette: /attendance?create=1
+  useEffect(() => {
+    if (!create) return
+    setShowCreate(true)
+    onNavigate({})
+  }, [create]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Land on the newest event so a counter that opens the page can start
   // scanning without picking anything first.

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CalendarDays, Eye, EyeOff, Flower2, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -21,7 +21,7 @@ const TYPE_META: Record<AnnouncementType, { icon: typeof Megaphone; tone: string
   general: { icon: Megaphone, tone: 'bg-success-soft text-success', variant: 'success' }
 }
 
-export function AnnouncementsTab() {
+export function AnnouncementsTab({ create = false, onCreateHandled }: { create?: boolean; onCreateHandled?: () => void }) {
   const { t, lang } = useT()
   const list = useAnnouncements()
   const toggle = useToggleAnnouncement()
@@ -34,6 +34,14 @@ export function AnnouncementsTab() {
     setEditing(null)
     setSheetOpen(true)
   }
+
+  // Quick action from the command palette: /messages?create=1
+  useEffect(() => {
+    if (!create) return
+    setEditing(null)
+    setSheetOpen(true)
+    onCreateHandled?.()
+  }, [create]) // eslint-disable-line react-hooks/exhaustive-deps
   function openEdit(a: Announcement) {
     setEditing(a)
     setSheetOpen(true)

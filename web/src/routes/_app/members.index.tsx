@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { MembersPage } from '@/features/members/MembersPage'
+import { flagSchema } from '@/lib/router/flags'
 
 const searchSchema = z.object({
   q: z.string().optional().catch(undefined),
@@ -10,7 +11,9 @@ const searchSchema = z.object({
     .int()
     .refine((n) => [15, 30, 50].includes(n))
     .optional()
-    .catch(undefined)
+    .catch(undefined),
+  create: flagSchema,
+  scan: flagSchema
 })
 
 export const Route = createFileRoute('/_app/members/')({
@@ -19,6 +22,6 @@ export const Route = createFileRoute('/_app/members/')({
 })
 
 function MembersRoute() {
-  const { q, page, size } = Route.useSearch()
-  return <MembersPage q={q ?? ''} page={page ?? 1} size={size ?? 15} />
+  const { q, page, size, create, scan } = Route.useSearch()
+  return <MembersPage q={q ?? ''} page={page ?? 1} size={size ?? 15} create={Boolean(create)} scan={Boolean(scan)} />
 }

@@ -1,6 +1,7 @@
 import { useCallback, useState, type ReactNode } from 'react'
 import { useLocation } from '@tanstack/react-router'
 import { motion } from 'motion/react'
+import { CommandPalette, useCommandPalette } from '@/components/CommandPalette'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 import { BannerStack } from './BannerStack'
@@ -20,6 +21,7 @@ function readCollapsed(): boolean {
 export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useCommandPalette()
   const { pathname } = useLocation()
 
   const toggle = useCallback(() => {
@@ -47,7 +49,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </Sheet>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar onMenu={() => setMobileOpen(true)} />
+        <TopBar onMenu={() => setMobileOpen(true)} onSearch={() => setPaletteOpen(true)} />
         <BannerStack />
         <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
           <motion.div key={pathname} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: [0, 0, 0, 1] }} className="mx-auto w-full max-w-[1400px]">
@@ -55,6 +57,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </motion.div>
         </main>
       </div>
+
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </div>
   )
 }

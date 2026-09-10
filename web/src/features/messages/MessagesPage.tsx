@@ -8,7 +8,21 @@ import { RequestsTab } from './components/RequestsTab'
 
 export type MessagesTab = 'announcements' | 'requests' | 'puruka'
 
-export function MessagesPage({ tab, pendingOnly, onTabChange, onFilterChange }: { tab: MessagesTab; pendingOnly: boolean; onTabChange: (t: MessagesTab) => void; onFilterChange: (pending: boolean) => void }) {
+export function MessagesPage({
+  tab,
+  pendingOnly,
+  create = false,
+  onTabChange,
+  onFilterChange,
+  onCreateHandled
+}: {
+  tab: MessagesTab
+  pendingOnly: boolean
+  create?: boolean
+  onTabChange: (t: MessagesTab) => void
+  onFilterChange: (pending: boolean) => void
+  onCreateHandled?: () => void
+}) {
   const { t } = useT()
 
   return (
@@ -29,7 +43,7 @@ export function MessagesPage({ tab, pendingOnly, onTabChange, onFilterChange }: 
         </TabsList>
 
         <TabsContent value="announcements">
-          <AnnouncementsTab />
+          <AnnouncementsTab create={create} onCreateHandled={onCreateHandled} />
         </TabsContent>
         <TabsContent value="requests">
           <RequestsTab pendingOnly={pendingOnly} onFilterChange={onFilterChange} />

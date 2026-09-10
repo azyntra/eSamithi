@@ -31,12 +31,17 @@ test.describe('sign-in with a samithi code', () => {
     await page.reload()
     await expect(page.getByRole('heading', { name: /overview/i })).toBeVisible()
 
-    // Sinhala + dark mode toggles apply to the shell
-    await page.getByRole('button', { name: 'සිං' }).first().click()
-    await expect(page.locator('html')).toHaveAttribute('lang', 'si')
+    // Dark mode first, in English: the toggle's label is translated, so after
+    // the language switch it no longer reads "dark mode"
     await page.getByRole('button', { name: /dark mode/i }).click()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await page.getByRole('button', { name: /light mode/i }).click()
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+
+    // Sinhala applies to the shell, including the toggle's own label
+    await page.getByRole('button', { name: 'සිං' }).first().click()
+    await expect(page.locator('html')).toHaveAttribute('lang', 'si')
+    await expect(page.getByRole('button', { name: /dark mode/i })).toHaveCount(0)
     await page.getByRole('button', { name: 'EN' }).first().click()
 
     // Sign out returns to the credentials step with the samithi remembered

@@ -25,9 +25,11 @@ interface MembersPageProps {
   q: string
   page: number
   size: number
+  create?: boolean
+  scan?: boolean
 }
 
-export function MembersPage({ q, page, size }: MembersPageProps) {
+export function MembersPage({ q, page, size, create = false, scan = false }: MembersPageProps) {
   const { t } = useT()
   const navigate = useNavigate({ from: '/members/' })
   const [text, setText] = useState(q)
@@ -36,6 +38,17 @@ export function MembersPage({ q, page, size }: MembersPageProps) {
   const [editId, setEditId] = useState<number | null>(null)
   const [scanOpen, setScanOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null)
+
+  // Quick actions arrive as links: /members?create=1 and /members?scan=1
+  useEffect(() => {
+    if (!create && !scan) return
+    if (create) {
+      setEditId(null)
+      setFormOpen(true)
+    }
+    if (scan) setScanOpen(true)
+    void navigate({ search: (prev) => ({ ...prev, create: undefined, scan: undefined }), replace: true })
+  }, [create, scan]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Search text lives in the URL (shareable, back-button friendly); typing is debounced
   useEffect(() => {

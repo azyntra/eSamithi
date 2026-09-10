@@ -26,7 +26,7 @@ import { RepayLoanDialog } from './components/RepayLoanDialog'
 import { useDeleteLoan, useLoans } from './queries'
 import { balanceOf, isOpen, type Loan } from './types'
 
-export function LoansPage({ q, sort, dir }: { q: string; sort: string; dir: 'asc' | 'desc' }) {
+export function LoansPage({ q, sort, dir, create = false }: { q: string; sort: string; dir: 'asc' | 'desc'; create?: boolean }) {
   const { t, lang } = useT()
   const navigate = useNavigate({ from: '/loans/' })
   const loans = useLoans()
@@ -35,6 +35,13 @@ export function LoansPage({ q, sort, dir }: { q: string; sort: string; dir: 'asc
   const [text, setText] = useState(q)
   const debounced = useDebouncedValue(text.trim(), 300)
   const [entry, setEntry] = useState<LoanKind | null>(null)
+
+  // Quick action from the command palette: /loans?create=1
+  useEffect(() => {
+    if (!create) return
+    setEntry('new')
+    void navigate({ search: (prev) => ({ ...prev, create: undefined }), replace: true })
+  }, [create]) // eslint-disable-line react-hooks/exhaustive-deps
   const [repaying, setRepaying] = useState<Loan | null>(null)
   const [deleting, setDeleting] = useState<Loan | null>(null)
 

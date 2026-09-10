@@ -66,6 +66,13 @@ export function LedgerPage({ kind, search, onSearchChange }: LedgerPageProps) {
     }
   }, [income, search.member]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Quick action from the command palette: /incomes?create=1
+  useEffect(() => {
+    if (!search.create) return
+    setFormOpen(true)
+    onSearchChange({ create: undefined })
+  }, [search.create]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const societyName = settings.data?.society_name || 'eSamithi'
   const types = useMemo(() => ((income ? incomeTypes.data : expenseTypes.data) ?? []).filter((x) => Number(x.is_active) === 1).map((x) => ({ id: x.id, name: x.name })), [income, incomeTypes.data, expenseTypes.data])
   const rows = (list.data?.transactions ?? []) as LedgerTx[]

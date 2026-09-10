@@ -3,11 +3,13 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { z } from 'zod'
 import { AttendancePage } from '@/features/attendance/AttendancePage'
 import type { AttendanceMode } from '@/features/attendance/types'
+import { flagSchema } from '@/lib/router/flags'
 
 const searchSchema = z.object({
   event: z.coerce.number().int().positive().optional().catch(undefined),
   view: z.enum(['present', 'absent']).optional().catch(undefined),
-  q: z.string().optional().catch(undefined)
+  q: z.string().optional().catch(undefined),
+  create: flagSchema
 })
 
 export const Route = createFileRoute('/_app/attendance')({
@@ -16,7 +18,7 @@ export const Route = createFileRoute('/_app/attendance')({
 })
 
 function AttendanceRoute() {
-  const { event, view, q } = Route.useSearch()
+  const { event, view, q, create } = Route.useSearch()
   const navigate = useNavigate()
 
   // Event, tab and search all live in the URL so a counter can be reopened
@@ -28,7 +30,8 @@ function AttendanceRoute() {
         search: (prev: { event?: number; view?: AttendanceMode; q?: string }) => ({
           event: next.event === null ? undefined : (next.event ?? prev.event),
           view: next.view ?? prev.view,
-          q: next.q !== undefined ? next.q || undefined : prev.q
+          q: next.q !== undefined ? next.q || undefined : prev.q,
+          create: undefined
         }),
         replace: true
       })
@@ -36,5 +39,5 @@ function AttendanceRoute() {
     [navigate]
   )
 
-  return <AttendancePage eventId={event ?? null} view={view ?? 'present'} search={q ?? ''} onNavigate={onNavigate} />
+  return <AttendancePage eventId={event ?? null} view={view ?? 'present'} search={q ?? ''} create={Boolean(create)} onNavigate={onNavigate} />
 }

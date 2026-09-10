@@ -1,5 +1,5 @@
 import { useRouter } from '@tanstack/react-router'
-import { ChevronDown, LogOut, Menu, MonitorSmartphone } from 'lucide-react'
+import { ChevronDown, LogOut, Menu, MonitorSmartphone, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { LangSwitcher } from '@/components/LangSwitcher'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -21,7 +21,7 @@ function initials(name: string): string {
     .join('')
 }
 
-export function TopBar({ onMenu }: { onMenu: () => void }) {
+export function TopBar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () => void }) {
   const { t } = useT()
   const { user, samithi } = useSession()
   const router = useRouter()
@@ -51,6 +51,19 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
+        {/* Same affordance as ⌘K, for anyone who never learns the shortcut */}
+        <button
+          type="button"
+          onClick={onSearch}
+          className="mr-1 hidden items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none md:flex"
+        >
+          <Search className="size-4" />
+          <span>{t('cmd.open')}</span>
+          <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-sans text-[11px] font-medium">⌘K</kbd>
+        </button>
+        <Button variant="ghost" size="icon" className="md:hidden" aria-label={t('cmd.open')} onClick={onSearch}>
+          <Search />
+        </Button>
         <LangSwitcher className="hidden sm:inline-flex" />
         <ThemeToggle />
         {user && (

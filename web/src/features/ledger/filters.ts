@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { flagSchema } from '@/lib/router/flags'
 
 export const PAGE_SIZES = [25, 50, 100] as const
 export type Preset = 'all' | 'this_month' | 'last_month' | 'this_year'
@@ -48,6 +49,7 @@ export const ledgerSearchSchema = z.object({
     .refine((n) => (PAGE_SIZES as readonly number[]).includes(n))
     .optional()
     .catch(undefined),
-  member: optNum // record-payment handoff (incomes)
+  member: optNum, // record-payment handoff (incomes)
+  create: flagSchema // open the record form straight from a link
 })
 export type LedgerSearch = z.infer<typeof ledgerSearchSchema>
