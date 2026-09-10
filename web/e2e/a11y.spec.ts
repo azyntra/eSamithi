@@ -16,7 +16,10 @@ async function settle(page: Page) {
 
 async function scan(page: Page) {
   await settle(page)
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
+  // Disabled controls are excluded: WCAG 1.4.3 puts inactive user-interface
+  // components outside the contrast requirement, and our disabled style is a
+  // 50% fade of an otherwise passing colour.
+  const results = await new AxeBuilder({ page }).exclude('[disabled]').withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
   return results.violations.map((v) => `${v.id} (${v.nodes.length}) — ${v.help}`)
 }
 

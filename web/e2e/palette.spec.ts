@@ -6,6 +6,8 @@ test.describe('command palette', () => {
 
   test('opens with the keyboard, jumps to a page and finds a member', async ({ page }) => {
     await signIn(page)
+    // Wait for the shell before using its shortcut
+    await expect(page.getByRole('button', { name: /^search/i }).first()).toBeVisible()
 
     // ⌘K / Ctrl+K from anywhere
     await page.keyboard.press('ControlOrMeta+k')
@@ -36,6 +38,7 @@ test.describe('command palette', () => {
 
   test('quick actions are links a page honours', async ({ page }) => {
     await signIn(page)
+    await expect(page.getByRole('button', { name: /^search/i }).first()).toBeVisible()
 
     // Straight to the URL a quick action produces
     await page.goto('incomes?create=1')
@@ -52,6 +55,7 @@ test.describe('command palette', () => {
     await page.keyboard.press('Escape')
 
     // And through the palette itself
+    await expect(page.getByRole('button', { name: /^search/i }).first()).toBeVisible()
     await page.keyboard.press('ControlOrMeta+k')
     await page.getByPlaceholder(/search members, pages and actions/i).fill('announcement')
     await page.getByRole('option', { name: /new announcement/i }).click()

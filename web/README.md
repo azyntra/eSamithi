@@ -65,5 +65,10 @@ route in both languages and themes) and layout at tablet and phone widths.
 
 ```bash
 E2E_SAMITHI_CODE=TES-5155 PW_CHANNEL=chrome npm run test:e2e             # against npm run dev
-E2E_BASE_URL=https://console.esamithi.com/app/ E2E_SAMITHI_CODE=TES-5155 PW_CHANNEL=chrome npm run test:e2e
+E2E_BASE_URL=https://console.esamithi.com/app/ E2E_SAMITHI_CODE=TES-5155 \
+  E2E_BASIC_USER=esamithi E2E_BASIC_PASS=… PW_CHANNEL=chrome npm run test:e2e
 ```
+
+Both deployed hosts sit behind an HTTP basic-auth preview gate until the pilot opens them up, hence
+`E2E_BASIC_USER` / `E2E_BASIC_PASS`. The gate lives in one `location` block per host: remove those two lines and
+reload nginx to open the app.

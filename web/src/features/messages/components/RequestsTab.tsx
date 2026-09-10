@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { errorMessage } from '@/lib/api/errors'
 import { formatCurrency } from '@/lib/format/currency'
@@ -50,6 +50,10 @@ export function RequestsTab({ pendingOnly, onFilterChange }: { pendingOnly: bool
           <TabsTrigger value="pending">{t('msg.requestsPending')}</TabsTrigger>
           <TabsTrigger value="all">{t('msg.requestsAll')}</TabsTrigger>
         </TabsList>
+        {/* Declared so each trigger's aria-controls resolves; the queue itself
+            renders below, identical for both filters. */}
+        <TabsContent value="pending" />
+        <TabsContent value="all" />
       </Tabs>
 
       {list.isPending ? (

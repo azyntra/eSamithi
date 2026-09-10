@@ -1,0 +1,87 @@
+# app.esamithi.com — the office web application.
+#
+# Enabled by copying to app.conf next to it and reloading nginx (deploy-web.sh
+# does both). Kept .disabled in the repo because nginx refuses to start when a
+# referenced certificate is missing, and the certificate is issued separately
+# by enable-app-tls.sh.
+#
+# The SPA and the API are deliberately the same origin: the refresh cookie is
+# SameSite=Strict and scoped to /api/v1/auth, so it only works if the browser
+# sees one host. The SPA therefore only ever calls ${origin}/api/v1 and
+# ${origin}/directory/ — never api.esamithi.com directly.
+#
+# Static files live under /var/www/certbot/app/current, a symlink into a
+# release directory. That mount already exists in the nginx container (it is
+# the ACME webroot), so publishing the app needs no compose change and no
+# container recreate — the live client's API never goes down for a deploy.
+# Only /.well-known/acme-challenge/ is served from that mount by the other
+# vhosts, so nothing here is reachable through them. The dedicated
+# /srv/app mount can replace this the next time the stack is recreated.
+
+server {
+    listen 80;
+    server_name app.esamithi.com;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 301 https://$host$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name app.esamithi.com;
+
+    ssl_certificate     /etc/letsencrypt/live/app.esamithi.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/app.esamithi.com/privkey.pem;
+
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $api_upstream http://api:3000;
+
+    root /var/www/certbot/app/current;
+    index index.html;
+    client_max_body_size 50m;
+
+    include /etc/nginx/conf.d/app-headers.inc;
+
+    # Tenant API, same origin as the SPA. Not behind the preview gate: this is
+    # the same API already public on api.esamithi.com, and an XHR carrying a
+    # basic-auth prompt would be a worse failure than none.
+    location /api/ {
+        proxy_pass $api_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+    }
+
+    # Samithi join-code resolution — the registry lives on the platform server
+    location /directory/ {
+        proxy_pass http://212.227.103.150/directory/;
+        proxy_set_header Host $host;
+        proxy_read_timeout 15s;
+    }
+
+    # Hashed filenames: safe to cache forever
+    location /assets/ {
+        include /etc/nginx/conf.d/app-headers.inc;
+        auth_basic off;
+        # add_header only — "expires" would emit a second Cache-Control
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    # The shell, the service worker and the manifest must never be cached, or
+    # a released fix would sit behind a stale index.html for a day.
+    location = /index.html { include /etc/nginx/conf.d/app-headers.inc; add_header Cache-Control "no-cache" always; }
+    location = /sw.js     { include /etc/nginx/conf.d/app-headers.inc; add_header Cache-Control "no-cache" always; }
+    location = /manifest.webmanifest { include /etc/nginx/conf.d/app-headers.inc; add_header Cache-Control "no-cache" always; }
+    location = /boot.js   { include /etc/nginx/conf.d/app-headers.inc; add_header Cache-Control "no-cache" always; }
+
+    # Preview gate. Remove these two lines (and reload) to open the app up.
+    location / {
+        auth_basic "eSamithi preview";
+        auth_basic_user_file /etc/nginx/conf.d/app.htpasswd;
+        try_files $uri $uri/ /index.html;
+    }
+}

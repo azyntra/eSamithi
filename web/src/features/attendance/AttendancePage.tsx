@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { errorMessage } from '@/lib/api/errors'
 import { downloadCsv, toCsv } from '@/lib/format/csv'
 import { formatDate, formatTime } from '@/lib/format/dates'
@@ -186,19 +186,25 @@ export function AttendancePage({ eventId, view, search, create = false, onNaviga
                       {t('att.absent')} <span className="tnum ml-1 text-muted-foreground">({absent.length})</span>
                     </TabsTrigger>
                   </TabsList>
-                </Tabs>
 
-                <RosterTable
-                  rows={rows}
-                  mode={mode}
-                  view={view}
-                  search={search}
-                  onSearch={(q) => onNavigate({ q })}
-                  loading={detail.isFetching && !detail.data}
-                  busyMember={busyMember}
-                  onMark={(r) => void runMark(r, true)}
-                  onUnmark={(r) => void runMark(r, false)}
-                />
+                  {/* Both sides are declared so each trigger's aria-controls
+                      actually resolves; Radix mounts only the active one. */}
+                  {(['present', 'absent'] as const).map((side) => (
+                    <TabsContent key={side} value={side}>
+                      <RosterTable
+                        rows={side === 'present' ? present : absent}
+                        mode={mode}
+                        view={side}
+                        search={search}
+                        onSearch={(q) => onNavigate({ q })}
+                        loading={detail.isFetching && !detail.data}
+                        busyMember={busyMember}
+                        onMark={(r) => void runMark(r, true)}
+                        onUnmark={(r) => void runMark(r, false)}
+                      />
+                    </TabsContent>
+                  ))}
+                </Tabs>
               </>
             )}
           </CardContent>
