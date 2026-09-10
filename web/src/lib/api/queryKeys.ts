@@ -15,6 +15,7 @@ export const qk = {
   fds: ['fds'] as const,
   assets: ['assets'] as const,
   settings: ['settings'] as const,
+  users: ['users'] as const,
   loans: ['loans'] as const,
   reports: (kind: string, params: object) => ['reports', kind, params] as const,
   loan: (id: number) => ['loan', id] as const
