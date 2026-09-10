@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { CODE, firstDataRow, signIn, uniqueSuffix } from './helpers'
+import { CODE, firstDataRow, fundFirstWallet, signIn, uniqueSuffix } from './helpers'
 
 // The member picker is a combobox with a searchable list
 async function pickMember(page: Page, label: RegExp, name: string) {
@@ -44,6 +44,9 @@ test.describe('loans', () => {
 
   test('issue, inspect, repay, print and delete a loan', async ({ page }) => {
     await signIn(page)
+    // Give the wallet we are about to disburse from a float of its own: the
+    // testbed's balances are whatever earlier runs left behind.
+    const wallet = await fundFirstWallet(page)
     await page.goto('loans')
     await firstDataRow(page)
     // Tag this run's loan so a leftover from an earlier run can never match
@@ -66,7 +69,7 @@ test.describe('loans', () => {
     await pickMember(page, /guarantor 2/i, 'Test Member')
 
     await sheet.getByLabel(/principal amount/i).fill('10')
-    await sheet.getByLabel(/disbursement wallet/i).selectOption({ index: 1 })
+    await sheet.getByLabel(/disbursement wallet/i).selectOption({ label: wallet })
     await sheet.getByLabel(/purpose of loan/i).fill(tag)
     await expect(sheet.getByText(/available headroom/i)).toBeVisible()
     await sheet.getByRole('button', { name: /issue loan & disburse/i }).click()

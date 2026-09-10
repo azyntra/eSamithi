@@ -1,29 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { CODE, firstDataRow, signIn } from './helpers'
-
-// Picks the "other" type when present (no member / one-time constraints), else the last option
-async function chooseType(page: Page, label: RegExp) {
-  const select = page.getByRole('dialog').getByLabel(label)
-  // Types load asynchronously; the select is disabled (aria-busy) until then
-  await expect(select).toBeEnabled()
-  await expect(select.locator('option').nth(1)).toBeAttached()
-  const options = (await select.locator('option').allTextContents()).map((o) => o.trim())
-  const other = options.find((o) => /^other\b/i.test(o)) ?? options[options.length - 1]!
-  await select.selectOption({ label: other })
-  return other
-}
-
-async function chooseFundedWallet(page: Page, label: RegExp) {
-  const select = page.getByRole('dialog').getByLabel(label)
-  await expect(select.locator('option').nth(1)).toBeAttached()
-  const options = (await select.locator('option').allTextContents()).map((o) => o.trim())
-  // "Name · Rs. 1,234.00" → pick the richest wallet
-  const funded = options
-    .map((o) => ({ o, v: Number((o.match(/Rs\.\s*([\d,]+\.\d{2})/)?.[1] ?? '0').replace(/,/g, '')) }))
-    .filter((x) => x.o.trim())
-    .sort((a, b) => b.v - a.v)[0]!
-  await select.selectOption({ label: funded.o })
-}
+import { chooseFundedWallet, chooseType, CODE, firstDataRow, signIn, uniqueSuffix } from './helpers'
 
 test.describe('ledger', () => {
   test.skip(!CODE, 'set E2E_SAMITHI_CODE to run against a real API')
