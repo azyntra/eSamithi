@@ -85,7 +85,15 @@ jobs:
           '
 
       - name: Smoke
+        # The app sits behind a basic-auth preview gate until the pilot, so the
+        # shell answers 401 here. Proving the release landed therefore means
+        # checking an asset from THIS build, which the gate deliberately does
+        # not cover, plus the gate itself and the API behind it.
         run: |
-          curl -sfI https://console.esamithi.com/app/ | grep -i "cache-control: no-cache"
-          curl -sf https://console.esamithi.com/app/ | grep -q "eSamithi"
-          curl -sf https://console.esamithi.com/api/v1/health
+          set -euo pipefail
+          asset=$(ls dist/assets/index-*.js | head -1 | xargs basename)
+          echo "checking /app/assets/$asset"
+          curl -sfI "https://console.esamithi.com/app/assets/$asset" | grep -qi "immutable"
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://console.esamithi.com/app/)
+          test "$code" = "401" || test "$code" = "200" || { echo "shell answered $code"; exit 1; }
+          curl -sf https://console.esamithi.com/api/v1/health > /dev/null
