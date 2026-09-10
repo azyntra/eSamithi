@@ -57,7 +57,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
                       'group flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] font-medium text-sidebar-foreground/85 transition-colors duration-150 hover:bg-sidebar-hover hover:text-white',
                       collapsed && 'justify-center px-0'
                     )}
-                    activeProps={{ className: 'bg-sidebar-active text-sidebar-active-foreground hover:bg-sidebar-active hover:text-white shadow-sm', 'aria-current': 'page' }}
+                    activeProps={{ className: 'bg-sidebar-active text-sidebar-active-foreground! hover:bg-sidebar-active shadow-sm', 'aria-current': 'page' }}
                   >
                     <Icon className="size-[18px] shrink-0 opacity-90" aria-hidden />
                     {!collapsed && <span className="truncate">{t(item.key)}</span>}

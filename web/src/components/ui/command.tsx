@@ -36,7 +36,9 @@ function CommandItem({ className, ...props }: React.ComponentProps<typeof Comman
   )
 }
 function CommandSeparator({ className, ...props }: React.ComponentProps<typeof CommandPrimitive.Separator>) {
-  return <CommandPrimitive.Separator data-slot="command-separator" className={cn('-mx-1 h-px bg-border', className)} {...props} />
+  // A separator is not an allowed child of the list's listbox role, and this
+  // one is decoration: the group headings carry the structure.
+  return <CommandPrimitive.Separator data-slot="command-separator" role="presentation" aria-hidden className={cn('-mx-1 h-px bg-border', className)} {...props} />
 }
 
 export { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator }
