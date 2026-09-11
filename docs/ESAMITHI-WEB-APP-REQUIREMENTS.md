@@ -798,7 +798,15 @@ Indicative durations for one developer working with an AI pair (≈ 12–13 deve
 | **2 · Remaining modules** (3 wk) | Loans, Reports, Settings (users / roles, change password, sessions), Attendance, Messages, all migration-mode variants, statements | Phase 1 exit | Full matrix green; Sinhala terminology review scheduled |
 | **3 · Polish & hardening** (2 wk) | Command palette, scan sink, tablet layouts, dark / print QA, a11y, budgets, PWA, CSP / HSTS + CORS enforcement on the testbed, visual regression, load test, docs | Phase 2 exit | `web-v1.0.0-rc` tagged; sign-off items 1–8 done |
 | **4 · Pilot & cut-over** (2–3 wk calendar) | DNS + certificate + gated vhost; production **Deploy A** after backup; migrations 014 / 015 verified on `samithi01`; preview week; pilot with Maranadhara Samithi side by side with 1.3.7; fixes; gate removed; **Deploy B** (`PASSWORD_REHASH=on`) after two clean weeks; `STAFF_LOCKOUT_SCOPE=all` | RC + owner go | Pilot sign-off (items 9–10); desktop feature freeze declared |
-| **5 · Shell & end of life** (1 wk + fade) | 1.3.8 thin shell via the update feed; adoption watched through the shell UA in nginx logs; console handoff to `/support`; `/workspace/` retired; later, the frozen renderer deleted | Cut-over | ≥ 90 % of office sessions on web or shell; workspace removed |
+| **5 · Shell & end of life** (1 wk + fade) | 1.3.8 thin shell via the update feed; adoption read from `staff_auth_events` (`server/scripts/adoption.sh`); console handoff to `/support` switched on per server; `/workspace/` retired; later, the frozen renderer deleted | Cut-over | ≥ 90 % of office sign-ins on web or shell; workspace removed |
+
+**Measuring the exit criterion.** Every successful staff sign-in already
+records which client made it — `desktop` for 1.3.x on `POST /auth/login`,
+`web` for a browser on `POST /auth/session`, `shell` for the same call from
+the 1.3.8 thin shell, which the API tells apart by the `eSamithiShell/` suffix
+its user agent carries. `server/scripts/adoption.sh [days]` reads that from
+each tenant database on a server host and prints the split per society and for
+the fleet. It is read-only and needs nothing deployed.
 
 **Milestones the owner will see:** M0 requirements approved (this document) · M1 first login on the QA host · M2 counter-day rehearsal · M3 full parity demo · M4 release candidate · M5 pilot start · M6 cut-over · M7 shell release.
 
