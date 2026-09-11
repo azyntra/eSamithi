@@ -21,6 +21,16 @@ for db in $(node -e "const t=require('/opt/esamithi/tenants.json');console.log(O
   echo "  dumped $db ($(du -h "$DEST/$db.sql.gz" | cut -f1))"
 done
 
+# The control plane's own database. It holds the samithi registry, the
+# super-admin accounts and the append-only audit log — none of which is in any
+# tenant dump, so without this line a lost disk loses the fleet's index of
+# itself while every society's data survives.
+docker compose exec -T mysql mysqldump -uroot -p"$ROOT_PW" \
+  --single-transaction --no-tablespaces --set-gtid-purged=OFF esamithi_platform \
+  | gzip > "$DEST/esamithi_platform.sql.gz"
+gunzip -t "$DEST/esamithi_platform.sql.gz"
+echo "  dumped esamithi_platform ($(du -h "$DEST/esamithi_platform.sql.gz" | cut -f1))"
+
 # Member photos and other uploads
 tar -czf "$DEST/uploads.tar.gz" -C /opt/server uploads
 

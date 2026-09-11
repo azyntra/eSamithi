@@ -865,19 +865,38 @@ them to the office web app instead. Both are live at once, per server, so the
 testbed can move first and production can follow whenever it is ready — and
 either can be put back in one call, with no deploy:
 
-```bash
-# move this server's support sessions to the web app
-curl -sX PATCH https://console.esamithi.com/pa/v1/servers/<code> \
-  -H "Authorization: Bearer $PA_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"app_url":"https://app.esamithi.com"}'        # testbed: .../app
+The switch is a `PATCH /pa/v1/servers/:code`, which needs a super-admin token.
+The practical way to get one is to already have one: run this in the devtools
+console of a signed-in console tab. It mints a fresh access token from the
+session's own refresh token — no password and no TOTP are involved.
 
-# put them back on /workspace/
-curl -sX PATCH ... -d '{"app_url":null}'
+```js
+// 1. trade the session's refresh token for an access token
+const r = await (await fetch('/pa/v1/auth/refresh', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ refresh_token: sessionStorage.getItem('esamithi.pa.refresh') })
+})).json()
+// refresh rotates: put the new one back, or this tab's session dies next time
+sessionStorage.setItem('esamithi.pa.refresh', r.refresh_token)
+
+// 2. move that server's support sessions to the web app
+//    testbed: 'https://console.esamithi.com/app'   prod: 'https://app.esamithi.com'
+//    to put them back on /workspace/, send null instead
+console.log(await (await fetch('/pa/v1/servers/server1', {
+  method: 'PATCH',
+  headers: { Authorization: `Bearer ${r.token}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ app_url: 'https://console.esamithi.com/app' })
+})).json())
 ```
 
 The console appends `/support` to whatever is stored, so the value is the app's
-root with no trailing slash. Both forms are recorded in the platform audit log
-as `server_update`, with the before and after values.
+root with no trailing slash. Going through the API rather than SQL is what
+validates the URL and writes the `server_update` audit entry, with the before
+and after values.
+
+On the **testbed** the app host still sits behind the `auth_basic` preview
+gate, so an operator entering a society there meets a browser password prompt
+on the way in. Production has no gate.
 
 ---
 
