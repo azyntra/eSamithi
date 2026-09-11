@@ -51,7 +51,7 @@ const live = {
 test.describe('support mode', () => {
   test('a handoff signs the operator in, and the token never stays in the URL', async ({ page }) => {
     await stubApi(page, live)
-    await page.goto(`support#s=${pack({ token: TOKEN, slug: 'demo01', console: 'https://console.esamithi.com' })}`)
+    await page.goto(`support#s=${pack({ token: TOKEN, slug: 'demo01', console: 'https://console.test.invalid' })}`)
 
     await expect(page).toHaveURL(/\/dashboard$/)
     expect(page.url()).not.toContain('#s=')
@@ -70,16 +70,18 @@ test.describe('support mode', () => {
 
   test('exit returns to the console with the sid it has to revoke', async ({ page }) => {
     await stubApi(page, live)
-    await page.goto(`support#s=${pack({ token: TOKEN, slug: 'demo01', console: 'https://console.esamithi.com' })}`)
+    await page.goto(`support#s=${pack({ token: TOKEN, slug: 'demo01', console: 'https://console.test.invalid' })}`)
     await expect(page.getByRole('region', { name: /support session/i })).toBeVisible()
 
-    // Stand in for the console so no request actually leaves for the live one
-    await page.route('https://console.esamithi.com/**', (route) => route.fulfill({ contentType: 'text/html', body: '<h1>console</h1>' }))
+    // A console origin that is deliberately not the real one: on the deployed
+    // QA lane the app itself is served from console.esamithi.com, and a stub
+    // for that host would swallow the app's own requests.
+    await page.route('https://console.test.invalid/**', (route) => route.fulfill({ contentType: 'text/html', body: '<h1>console</h1>' }))
     await page.getByRole('button', { name: /exit samithi/i }).click()
 
     // The sid rides in the fragment — never sent to a server, read by the
     // console's own hash router — so it is the page URL that has to carry it.
-    await expect(page).toHaveURL('https://console.esamithi.com/admin/#/?exit=e2e-sid')
+    await expect(page).toHaveURL('https://console.test.invalid/admin/#/?exit=e2e-sid')
   })
 
   test('a payload the API will not vouch for gets nowhere', async ({ page }) => {
@@ -97,7 +99,7 @@ test.describe('support mode', () => {
   // surface that never gets checked by the palette work — check it here.
   test('the banner passes axe in both themes', async ({ page }) => {
     await stubApi(page, live)
-    await page.goto(`support#s=${pack({ token: TOKEN, slug: 'demo01', console: 'https://console.esamithi.com' })}`)
+    await page.goto(`support#s=${pack({ token: TOKEN, slug: 'demo01', console: 'https://console.test.invalid' })}`)
     await expect(page.getByRole('region', { name: /support session/i })).toBeVisible()
     for (const theme of ['light', 'dark'] as const) {
       await page.evaluate((t) => {
