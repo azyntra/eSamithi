@@ -5,11 +5,16 @@ import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { MotionConfig } from 'motion/react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { I18nProvider } from '@/lib/i18n'
+import { consumeHandoff } from '@/lib/api/support'
 import { initTheme } from '@/lib/theme'
 import { routeTree } from './routeTree.gen'
 import '@/styles/globals.css'
 
 initTheme()
+
+// Before the router looks at the URL: an operator support handoff arrives as a
+// one-time fragment (#s=…) that must be banked and wiped, not routed on.
+consumeHandoff()
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { isApiError } from '@/lib/api/errors'
 import { signIn, signOut, useSession } from '@/lib/api/session'
+import { leaveSupport } from '@/features/support/SupportBanner'
 import { useT } from '@/lib/i18n'
 import { loginErrorKey } from '@/features/auth/loginErrors'
 
@@ -14,7 +15,7 @@ import { loginErrorKey } from '@/features/auth/loginErrors'
 // username are kept, and whatever query failed re-runs afterwards.
 export function SessionDialog() {
   const { t } = useT()
-  const { status, user } = useSession()
+  const { status, user, support } = useSession()
   const router = useRouter()
   const queryClient = useQueryClient()
   const [password, setPassword] = useState('')
@@ -49,6 +50,24 @@ export function SessionDialog() {
   const switchUser = async () => {
     await signOut()
     void router.navigate({ to: '/login' })
+  }
+
+  // A support session cannot be renewed in place — the hour is fixed and the
+  // console may have revoked it — so there is one honest thing to offer.
+  if (support) {
+    return (
+      <Dialog open={open}>
+        <DialogContent showCloseButton={false} onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('support.ended')}</DialogTitle>
+            <DialogDescription>{t('support.endedBody')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={leaveSupport}>{t('support.leave')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
   }
 
   return (

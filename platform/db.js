@@ -87,6 +87,15 @@ async function ensureSchema() {
     UNIQUE KEY uq_server_code (code)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
+  // Where this server's office web app lives. NULL until an operator sets it,
+  // and that is the switch: with no app_url the console still hands support
+  // sessions to the legacy /workspace/ bundle, exactly as it does today. One
+  // UPDATE moves a server's operators to the new /support route, and one more
+  // moves them back — no deploy either way (web requirements FR-15.3).
+  await addColumns('servers', {
+    app_url: 'VARCHAR(255) DEFAULT NULL AFTER api_url'
+  });
+
   await pool.query(`CREATE TABLE IF NOT EXISTS samithis (
     id              INT PRIMARY KEY AUTO_INCREMENT,
     slug            VARCHAR(30)  NOT NULL,

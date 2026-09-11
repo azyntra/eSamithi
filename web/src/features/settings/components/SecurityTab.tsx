@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { KeyRound, LogOut, Monitor, Smartphone } from 'lucide-react'
+import { KeyRound, LogOut, Monitor, Smartphone, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Field } from '@/components/form/Field'
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/EmptyState'
 import { useChangePassword, useRevokeSession, useSessions } from '@/features/auth/queries'
 import { errorMessage } from '@/lib/api/errors'
 import { signOut, useSession } from '@/lib/api/session'
@@ -16,7 +17,7 @@ import { useT } from '@/lib/i18n'
 
 export function SecurityTab() {
   const { t, lang } = useT()
-  const { user } = useSession()
+  const { user, support } = useSession()
   const sessions = useSessions()
   const revoke = useRevokeSession()
   const change = useChangePassword()
@@ -41,6 +42,20 @@ export function SecurityTab() {
     } catch (err) {
       setError(errorMessage(err))
     }
+  }
+
+  // An operator has no password here and no session of their own to end —
+  // the identity is minted by the platform and lasts an hour. Offering the
+  // form anyway would only produce a 403 for anyone who tried it.
+  if (support) {
+    return (
+      <EmptyState
+        icon={<ShieldAlert />}
+        title={t('support.securityTitle')}
+        description={t('support.securityBody')}
+        className="max-w-lg"
+      />
+    )
   }
 
   return (

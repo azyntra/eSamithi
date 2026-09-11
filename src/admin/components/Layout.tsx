@@ -1,7 +1,9 @@
-import React, { useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import React, { useEffect, useRef, useState } from 'react'
+import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom'
 import { LayoutDashboard, Building2, KeyRound, ScrollText, Moon, Sun, LogOut, BarChart3, Megaphone, Activity } from 'lucide-react'
 import { useAuth } from '../auth'
+import { revokeImpersonation } from '../lib/enter'
+import { useToast } from './ui'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -34,7 +36,32 @@ function useTheme(): [string, () => void] {
   return [theme, toggle]
 }
 
+// An operator leaving a support session in the web app comes back here with
+// ?exit=<sid>, because ending that session needs credentials only the console
+// holds. Doing it here rather than at boot means it still works when the
+// console login had lapsed and they had to sign in again on the way back.
+function useExitingSupportSession(): void {
+  const [params, setParams] = useSearchParams()
+  const toast = useToast()
+  const sid = params.get('exit')
+  const done = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!sid || done.current === sid) return
+    done.current = sid
+    const next = new URLSearchParams(params)
+    next.delete('exit')
+    setParams(next, { replace: true })
+    revokeImpersonation(sid).then(
+      () => toast('success', 'Support session ended'),
+      // Already expired, already revoked, or gone — the hour caps it regardless
+      () => toast('info', 'Support session closed')
+    )
+  }, [sid, params, setParams, toast])
+}
+
 export default function Layout(): React.ReactElement {
+  useExitingSupportSession()
   const { admin, logout } = useAuth()
   const [theme, toggleTheme] = useTheme()
   const loc = useLocation()

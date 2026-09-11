@@ -20,12 +20,14 @@ function tenantSecretFor(serverCode) {
   return process.env[envKey] || process.env.TENANT_JWT_SECRET;
 }
 
-// POST /pa/v1/samithis/:slug/impersonate → { token, api_url, slug, expires_at, sid }
+// POST /pa/v1/samithis/:slug/impersonate → { token, api_url, app_url, slug, expires_at, sid }
+// app_url is null until an operator sets it on the server row; the console
+// reads that as "this server's support sessions still go to /workspace/".
 router.post('/samithis/:slug/impersonate', requireSuperadmin, async (req, res, next) => {
   try {
     const pool = getPool();
     const [[s]] = await pool.query(
-      `SELECT s.slug, s.status, v.api_url, v.code AS server_code FROM samithis s JOIN servers v ON v.id = s.server_id WHERE s.slug = ?`,
+      `SELECT s.slug, s.status, v.api_url, v.app_url, v.code AS server_code FROM samithis s JOIN servers v ON v.id = s.server_id WHERE s.slug = ?`,
       [req.params.slug]
     );
     if (!s) return res.status(404).json({ error: 'Unknown samithi' });
@@ -56,7 +58,7 @@ router.post('/samithis/:slug/impersonate', requireSuperadmin, async (req, res, n
     );
 
     res.locals.audit = { action: 'impersonation_start', samithi: s.slug, sid };
-    res.json({ token, api_url: s.api_url, slug: s.slug, sid, expires_at: expiresAt.toISOString() });
+    res.json({ token, api_url: s.api_url, app_url: s.app_url || null, slug: s.slug, sid, expires_at: expiresAt.toISOString() });
   } catch (err) { next(err); }
 });
 

@@ -285,9 +285,11 @@ Priorities follow MoSCoW: **M** must have for v1.0 (parity or safety), **S** sho
 
 | ID | Requirement | Pri | Acceptance criteria |
 |---|---|---|---|
-| FR-15.1 | The console's "Enter samithi" hands off to `${app_url}/support#s=<payload>`; the app stores the payload in `sessionStorage`, strips the fragment and runs in bearer-token mode without refresh | S | Same behaviour as `workspace.tsx` today, including the percent-decoding fix |
-| FR-15.2 | Permanent red banner with actor, society and countdown; Exit revokes on the platform and closes the tab | S | — |
-| FR-15.3 | `/workspace/` stays deployed until the handoff is switched | M | No operator downtime |
+| FR-15.1 | The console's "Enter samithi" hands off to `${app_url}/support#s=<payload>`; the app banks the payload in `sessionStorage`, strips the fragment before the router sees the URL, and runs in bearer-token mode with no refresh | S | The token never appears in the address bar or history; a reload of that tab keeps the session, a new tab does not |
+| FR-15.2 | Nothing in the payload is trusted but the token. `GET /auth/me` decides whether this is a support session, and supplies the actor, the society and the expiry the banner shows | S | A hand-written fragment cannot produce a banner: without a `support` block the app clears the payload and shows "No active support session" |
+| FR-15.3 | Permanent red banner with actor, society and countdown; it leaves by itself when the hour is up, and a 401 ends the session outright rather than trying to renew it | S | Banner colours are fixed rather than themed (red on white in both themes) and pass axe; the countdown is not an ARIA live region |
+| FR-15.4 | Exit returns the operator to `${console}/admin/#/?exit=<sid>`; the console revokes the session under its own super-admin login. The web app never holds platform credentials | S | Revocation is best-effort — a session nobody revokes still expires on its own hour; the return origin is reduced to scheme + host |
+| FR-15.5 | `/workspace/` stays deployed, and which one an operator gets is decided per server by `servers.app_url`: set it and that server's support sessions go to `/support`, clear it and they go back to `/workspace/` | M | No operator downtime, and no deploy in either direction |
 
 ---
 ## 4. UX redesign specification
@@ -680,7 +682,7 @@ The web app reproduces the 78-method contract that `workspace/shim.ts` maps onto
 | Messages | `GET/POST/PUT /announcements`, `PATCH /announcements/:id/toggle`, `DELETE`; `GET /member-requests`, `PATCH /member-requests/:id`; `GET /puruka-admin`, `PATCH /puruka-admin/:id/deactivate|reactivate`, `GET/POST /puruka-admin/categories`, `PATCH /puruka-admin/categories/:id` |
 | Attendance | `GET/POST /events`, `PATCH /events/:id`, `DELETE /events/:id`, `GET/POST /events/:id/attendance`, `DELETE /events/:id/attendance/:memberId` |
 | Settings & misc | `GET/PUT /settings`, `POST /client-errors`, `GET /health` (gains `api_version`) |
-| Directory (platform) | `GET /directory/v1/resolve/:code` (gains optional `app_url`) |
+| Directory (platform) | `GET /directory/v1/resolve/:code` (gains optional `app_url`, omitted while a server has none) |
 
 Response shapes are unchanged; the web DTO types are ported from `src/renderer/src/types/index.ts` and checked against MSW fixtures recorded from the testbed.
 
@@ -845,6 +847,29 @@ Indicative durations for one developer working with an AI pair (≈ 12–13 deve
 | `CORS_ALLOWED_ORIGINS` | unset (= today) | Allow-list once observed origins are logged |
 | `VITE_BASE`, `VITE_API_ORIGINS`, `VITE_PWA` | `/`, prod origins, `on` | Build-time SPA configuration |
 | nginx `auth_basic` | on during preview | Private preview gate |
+| `servers.app_url` (platform DB) | `NULL` | Per-server support-mode switch — see below |
+
+**Switching a server's operators to `/support`.** `servers.app_url` is the only
+thing that decides where the console's "Enter samithi" goes. While it is `NULL`
+that server behaves exactly as it does today: the operator lands in
+`/workspace/`, the frozen desktop renderer with its fetch shim. Setting it sends
+them to the office web app instead. Both are live at once, per server, so the
+testbed can move first and production can follow whenever it is ready — and
+either can be put back in one call, with no deploy:
+
+```bash
+# move this server's support sessions to the web app
+curl -sX PATCH https://console.esamithi.com/pa/v1/servers/<code> \
+  -H "Authorization: Bearer $PA_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"app_url":"https://app.esamithi.com"}'        # testbed: .../app
+
+# put them back on /workspace/
+curl -sX PATCH ... -d '{"app_url":null}'
+```
+
+The console appends `/support` to whatever is stored, so the value is the app's
+root with no trailing slash. Both forms are recorded in the platform audit log
+as `server_update`, with the before and after values.
 
 ---
 
@@ -899,8 +924,8 @@ Defaults below are applied unless the owner objects before Phase 0 ends.
 | B9 | `server/server.js` | `app.set('trust proxy', 1)`, `cookie-parser`, env-gated CORS allow-list (`lib/cors.js`), `api_version` on shallow `/health` |
 | B10 | `server/package.json`, `.env.example` | Add `cookie-parser`; document the `STAFF_*`, `PASSWORD_REHASH`, `CORS_ALLOWED_ORIGINS` variables |
 | B11 | `server/routes/dashboard.routes.js` | P2 `GET /dashboard/trends?months=12` |
-| B12 | `platform/db.js`, `platform/routes/servers.routes.js`, resolve handler | Additive `servers.app_url`, surfaced in the resolve response (Phase 4/5) |
-| B13 | `src/admin/lib/enter.ts` | Handoff to `${app_url}/support` (Phase 5) |
+| B12 | `platform/db.js`, `platform/routes/servers.routes.js`, `platform/routes/impersonation.routes.js`, resolve handler | Additive `servers.app_url` (nullable, no default), accepted on `POST`/`PATCH /pa/v1/servers`, surfaced in the resolve and impersonate responses |
+| B13 | `src/admin/lib/enter.ts`, `src/admin/components/Layout.tsx` | Handoff to `${app_url}/support` when the server has one, `/workspace/` when it does not; `?exit=<sid>` on return revokes the impersonation session |
 
 ## Appendix B · Infrastructure work list
 

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as AppAttendanceRouteImport } from './routes/_app/attendance'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppExpensesRouteImport } from './routes/_app/expenses'
@@ -37,6 +38,11 @@ const AppRoute = AppRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppAttendanceRoute = AppAttendanceRouteImport.update({
@@ -103,6 +109,7 @@ const AppMembersMemberIdRoute = AppMembersMemberIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/support': typeof SupportRoute
   '/attendance': typeof AppAttendanceRoute
   '/dashboard': typeof AppDashboardRoute
   '/expenses': typeof AppExpensesRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/support': typeof SupportRoute
   '/attendance': typeof AppAttendanceRoute
   '/dashboard': typeof AppDashboardRoute
   '/expenses': typeof AppExpensesRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/support': typeof SupportRoute
   '/_app/attendance': typeof AppAttendanceRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/expenses': typeof AppExpensesRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/support'
     | '/attendance'
     | '/dashboard'
     | '/expenses'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/support'
     | '/attendance'
     | '/dashboard'
     | '/expenses'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/support'
     | '/_app/attendance'
     | '/_app/dashboard'
     | '/_app/expenses'
@@ -206,6 +218,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  SupportRoute: typeof SupportRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -229,6 +242,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/attendance': {
@@ -354,6 +374,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  SupportRoute: SupportRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

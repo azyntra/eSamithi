@@ -1,5 +1,5 @@
 import { useRouter } from '@tanstack/react-router'
-import { ChevronDown, Download, LogOut, Menu, MonitorSmartphone, Search } from 'lucide-react'
+import { ChevronDown, Download, LogOut, Menu, MonitorSmartphone, Search, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { LangSwitcher } from '@/components/LangSwitcher'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useInstallPrompt } from '@/lib/pwa/install'
 import { signOut, useSession, type Role } from '@/lib/api/session'
+import { leaveSupport } from '@/features/support/SupportBanner'
 import { useT, type TranslationKey } from '@/lib/i18n'
 import { errorMessage } from '@/lib/api/errors'
+import { cn } from '@/lib/utils'
 
 const ROLE_KEY: Record<Role, TranslationKey> = { admin: 'role.admin', user: 'role.user', viewer: 'role.viewer' }
 
@@ -22,9 +24,9 @@ function initials(name: string): string {
     .join('')
 }
 
-export function TopBar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () => void }) {
+export function TopBar({ onMenu, onSearch, offsetTop = false }: { onMenu: () => void; onSearch: () => void; offsetTop?: boolean }) {
   const { t } = useT()
-  const { user, samithi } = useSession()
+  const { user, samithi, support } = useSession()
   const router = useRouter()
   const { canInstall, install } = useInstallPrompt()
 
@@ -38,7 +40,7 @@ export function TopBar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () 
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur-md md:px-6">
+    <header className={cn('sticky z-30 flex h-16 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur-md md:px-6', offsetTop ? 'top-9' : 'top-0')}>
       <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation" onClick={onMenu}>
         <Menu />
       </Button>
@@ -94,23 +96,31 @@ export function TopBar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () 
                 <LangSwitcher />
               </div>
               <DropdownMenuSeparator />
-              {canInstall && (
-                <DropdownMenuItem
-                  onSelect={() =>
-                    void install().then((outcome) => {
-                      if (outcome === 'accepted') toast.success(t('pwa.installed'))
-                    })
-                  }
-                >
-                  <Download /> {t('pwa.install')}
+              {support ? (
+                <DropdownMenuItem onSelect={leaveSupport}>
+                  <ShieldAlert /> {t('support.exit')}
                 </DropdownMenuItem>
+              ) : (
+                <>
+                  {canInstall && (
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        void install().then((outcome) => {
+                          if (outcome === 'accepted') toast.success(t('pwa.installed'))
+                        })
+                      }
+                    >
+                      <Download /> {t('pwa.install')}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onSelect={() => void leave(false)}>
+                    <LogOut /> {t('sidebar.signOut')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => void leave(true)}>
+                    <MonitorSmartphone /> {t('auth.signOutEverywhere')}
+                  </DropdownMenuItem>
+                </>
               )}
-              <DropdownMenuItem onSelect={() => void leave(false)}>
-                <LogOut /> {t('sidebar.signOut')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => void leave(true)}>
-                <MonitorSmartphone /> {t('auth.signOutEverywhere')}
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}

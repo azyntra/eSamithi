@@ -50,7 +50,7 @@ app.get('/v1/resolve/:code', async (req, res, next) => {
     const code = String(req.params.code || '').trim().toUpperCase();
     if (!/^[A-Z0-9-]{2,20}$/.test(code)) return res.status(404).json({ error: 'Unknown samithi code' });
     const [[row]] = await getPool().query(
-      `SELECT s.slug, s.name_en AS name, s.status, s.min_app_version, v.api_url
+      `SELECT s.slug, s.name_en AS name, s.status, s.min_app_version, v.api_url, v.app_url
        FROM samithis s JOIN servers v ON v.id = s.server_id WHERE s.join_code = ?`,
       [code]
     );
@@ -72,6 +72,10 @@ app.get('/v1/resolve/:code', async (req, res, next) => {
       slug: row.slug,
       name: row.name,
       api_url: row.api_url,
+      // Which office web app serves this society. The web app uses it to send
+      // a join code entered on the wrong host to the right one; desktop and
+      // mobile ignore the field, so adding it changes nothing for them.
+      app_url: row.app_url || undefined,
       status: row.status,
       min_app_version: minApp || undefined,
       maintenance: ps.maintenance_active === '1' && ps.maintenance_message
