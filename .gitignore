@@ -49,3 +49,7 @@ store-assets/leaflet/out/
 # Playwright output when specs are run from the repo root
 test-results/
 playwright-report/
+
+# Intermediates from docs/build-pdf.mjs (KEEP_HTML=1 leaves these behind)
+docs/.*.tmp.html
+docs/.*.body.html
