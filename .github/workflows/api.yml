@@ -88,13 +88,19 @@ jobs:
             | ssh -o StrictHostKeyChecking=accept-new root@212.227.103.150 'mkdir -p /opt/platform && tar -C /opt/platform -xf -'
 
       - name: Rebuild containers, migrate all tenants, health check
+        # The gate asks whether THIS deploy broke a tenant, not whether deep
+        # health is perfect: the testbed registry carries a society whose
+        # database was never created, so a `curl -f` on deep health failed on
+        # every run and a real regression looked no different. See
+        # server/scripts/deploy-health-gate.sh (pushed with server/** above).
         run: |
           ssh -o StrictHostKeyChecking=accept-new root@212.227.103.150 '
             set -e
             cd /opt/esamithi
+            before=$(bash /opt/server/scripts/deploy-health-gate.sh snapshot)
             docker compose up -d --build api platform
             for i in $(seq 1 30); do curl -sf http://localhost/api/v1/health >/dev/null && break; sleep 2; done
             docker compose exec -T api node migrate.js
-            curl -sf "http://localhost/api/v1/health?deep=1"
+            bash /opt/server/scripts/deploy-health-gate.sh compare "$before"
             curl -sf http://localhost/directory/health
           '
