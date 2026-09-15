@@ -18,6 +18,6 @@ export interface DashboardStats {
     type: 'Income' | 'Expense'
     amount: number
     date: string
-    name: string
+    name: string | null
   }>
 }

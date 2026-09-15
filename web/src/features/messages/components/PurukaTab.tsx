@@ -18,6 +18,7 @@ import { useDebouncedValue } from '@/lib/hooks/useDebouncedValue'
 import { useT } from '@/lib/i18n'
 import { useCreateCategory, usePurukaCategories, usePurukaPosts, useRestorePost, useTakeDownPost, useUpdateCategory } from '../queries'
 import type { PurukaCategory, PurukaPost } from '../types'
+import { memberLabel } from '@/lib/members'
 
 const STATUSES = ['Active', 'Sold', 'Inactive', 'Removed', 'Deleted']
 
@@ -84,11 +85,11 @@ export function PurukaTab() {
       { id: 'category', accessorFn: (p) => p.category_label, header: t('msg.pkCategory') },
       {
         id: 'seller',
-        accessorFn: (p) => p.seller_name,
+        accessorFn: (p) => p.seller_name ?? '',
         header: t('msg.pkSeller'),
         cell: ({ row }) => (
           <div className="leading-tight">
-            <div className="font-medium">{row.original.seller_name}</div>
+            <div className="font-medium">{memberLabel({ full_name: row.original.seller_name }, t('members.unnamed'))}</div>
             <div className="tnum text-xs text-muted-foreground">{row.original.seller_society_id}</div>
           </div>
         )

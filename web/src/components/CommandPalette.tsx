@@ -4,7 +4,7 @@ import { ArrowDownToLine, ArrowUpFromLine, CalendarPlus, HandCoins, Languages, L
 import { toast } from 'sonner'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
-import { memberSublabel } from '@/components/MemberPicker'
+import { matchesMember, memberLabel, memberSublabel } from '@/lib/members'
 import { NAV_GROUPS } from '@/app/shell/nav'
 import { useMembersSlim } from '@/features/members/queries'
 import { errorMessage } from '@/lib/api/errors'
@@ -60,7 +60,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
     const q = query.trim().toLowerCase()
     if (q.length < 2) return []
     return (members.data ?? [])
-      .filter((m) => m.full_name.toLowerCase().includes(q) || memberSublabel(m).toLowerCase().includes(q))
+      .filter((m) => matchesMember(m, q))
       .slice(0, 8)
   }, [members.data, query])
 
@@ -79,9 +79,9 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
             {memberMatches.length > 0 && (
               <CommandGroup heading={t('nav.members')}>
                 {memberMatches.map((m) => (
-                  <CommandItem key={m.id} value={`${m.full_name} ${memberSublabel(m)}`} onSelect={() => run(() => void navigate({ to: '/members/$memberId', params: { memberId: m.id }, search: { tab: undefined } }))}>
+                  <CommandItem key={m.id} value={`${m.id} ${memberSublabel(m)}`} onSelect={() => run(() => void navigate({ to: '/members/$memberId', params: { memberId: m.id }, search: { tab: undefined } }))}>
                     <Users />
-                    <span className="flex-1 truncate">{m.full_name}</span>
+                    <span className="flex-1 truncate">{memberLabel(m, t('members.unnamed'))}</span>
                     <span className="tnum text-xs text-muted-foreground">{memberSublabel(m)}</span>
                   </CommandItem>
                 ))}

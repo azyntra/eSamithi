@@ -15,6 +15,7 @@ import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { useRepayLoan } from '../queries'
 import { balanceOf, type Loan, type PaymentMethod, type RepayResult } from '../types'
+import { memberLabel } from '@/lib/members'
 
 // Repayments are applied fine → interest → principal. The preview shows the
 // officer that split before they commit (FR-6.4).
@@ -79,7 +80,7 @@ export function RepayLoanDialog({ loan, onOpenChange, onRepaid }: { loan: Loan |
             <DialogTitle className="flex items-center gap-2">
               <HandCoins className="size-5 text-primary" /> {t('lform.repayTitle')}
             </DialogTitle>
-            <DialogDescription>{loan?.member_name}</DialogDescription>
+            <DialogDescription>{loan ? memberLabel({ full_name: loan.member_name }, t('members.unnamed')) : ''}</DialogDescription>
           </DialogHeader>
 
           <div className="rounded-xl border border-border bg-muted/40 px-4 py-3">

@@ -15,7 +15,7 @@ export interface Loan {
   last_accrual_date: string | null
   disbursement_wallet_id: number | null
   created_at: string
-  member_name?: string
+  member_name?: string | null
   member_nic?: string | null
   member_society_id?: string | null
   disbursement_wallet_name?: string | null
@@ -24,7 +24,7 @@ export interface Loan {
 
 export interface Guarantor {
   id: number
-  full_name: string
+  full_name: string | null
   nic: string | null
   phone: string | null
 }

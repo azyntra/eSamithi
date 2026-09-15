@@ -6,11 +6,18 @@ import { MotionConfig } from 'motion/react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { I18nProvider } from '@/lib/i18n'
 import { consumeHandoff } from '@/lib/api/support'
+import { reportCrash } from '@/lib/errors/report'
 import { initTheme } from '@/lib/theme'
 import { routeTree } from './routeTree.gen'
 import '@/styles/globals.css'
 
 initTheme()
+
+// Errors that escape every boundary — a rejected promise nobody awaited, a
+// throw inside an event handler — still get filed, marked non-fatal because
+// the page is still standing.
+window.addEventListener('unhandledrejection', (e) => reportCrash(e.reason, `${window.location.pathname} (unhandled rejection)`, false))
+window.addEventListener('error', (e) => reportCrash(e.error ?? e.message, `${window.location.pathname} (window error)`, false))
 
 // Before the router looks at the URL: an operator support handoff arrives as a
 // one-time fragment (#s=…) that must be banked and wiped, not routed on.

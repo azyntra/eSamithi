@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { formatTime } from '@/lib/format/dates'
 import { useT } from '@/lib/i18n'
 import { isMarkedView, type AttendanceMode, type AttendanceRow } from '../types'
+import { matchesMember } from '@/lib/members'
 
 // One table for both sides. Whether a row can be removed or moved across
 // depends on the method, not on which tab you are looking at: the tab holding
@@ -40,7 +41,7 @@ export function RosterTable({
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return rows
-    return rows.filter((r) => r.full_name.toLowerCase().includes(q) || String(r.society_id ?? '').toLowerCase().includes(q) || String(r.nic ?? '').toLowerCase().includes(q))
+    return rows.filter((r) => matchesMember({ id: r.member_id, ...r }, q))
   }, [rows, search])
 
   const columns = useMemo<ColumnDef<AttendanceRow, unknown>[]>(

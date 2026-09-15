@@ -22,7 +22,7 @@ export interface SocietyEvent {
 export interface AttendanceRow {
   member_id: number
   society_id: string
-  full_name: string
+  full_name: string | null
   nic?: string | null
   phone: string | null
   marked_at: string | null

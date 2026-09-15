@@ -25,6 +25,7 @@ import { MigrateLoanSheet } from './components/MigrateLoanSheet'
 import { RepayLoanDialog } from './components/RepayLoanDialog'
 import { useDeleteLoan, useLoans } from './queries'
 import { balanceOf, isOpen, type Loan } from './types'
+import { memberLabel } from '@/lib/members'
 
 export function LoansPage({ q, sort, dir, create = false }: { q: string; sort: string; dir: 'asc' | 'desc'; create?: boolean }) {
   const { t, lang } = useT()
@@ -116,7 +117,7 @@ export function LoansPage({ q, sort, dir, create = false }: { q: string; sort: s
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <Link to="/loans/$loanId" params={{ loanId: l.id }} className="truncate font-medium hover:text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
-                  {l.member_name}
+                  {memberLabel({ full_name: l.member_name }, t('members.unnamed'))}
                 </Link>
                 {Number(l.is_migrated) === 1 && (
                   <Badge variant="neutral" title={t('loans.migratedHint')}>

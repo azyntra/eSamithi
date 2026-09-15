@@ -24,6 +24,7 @@ import { useAnnualReport, useArrearsReport, useMonthlyReport } from './queries'
 import type { CategoryRow, Summary } from './types'
 
 import type { ArrearsTab, ReportTab } from './tabs'
+import { memberLabel } from '@/lib/members'
 export type { ArrearsTab, ReportTab }
 
 const THIS_YEAR = new Date().getFullYear()
@@ -374,7 +375,7 @@ export function ReportsPage({ tab, arrearsTab, year, month, onChange }: ReportsP
                             arrears.data.overdueLoans.map((l) => (
                               <TableRow key={l.id}>
                                 <TableCell>
-                                  <div className="font-medium">{l.member_name}</div>
+                                  <div className="font-medium">{memberLabel({ full_name: l.member_name }, t('members.unnamed'))}</div>
                                   <div className="tnum text-[11px] text-muted-foreground">{l.society_id}</div>
                                 </TableCell>
                                 <TableCell className="tnum">{l.phone ? <span className="inline-flex items-center gap-1"><Phone className="size-3" />{l.phone}</span> : '—'}</TableCell>
@@ -412,7 +413,7 @@ export function ReportsPage({ tab, arrearsTab, year, month, onChange }: ReportsP
                             </TableRow>
                           ) : (
                             arrears.data.fdsMaturing.map((f) => {
-                              const matured = f.maturity_date.slice(0, 10) <= todayIso()
+                              const matured = String(f.maturity_date ?? '').slice(0, 10) <= todayIso()
                               return (
                                 <TableRow key={f.id}>
                                   <TableCell className="font-mono font-medium">{f.fd_number}</TableCell>
@@ -459,7 +460,7 @@ export function ReportsPage({ tab, arrearsTab, year, month, onChange }: ReportsP
                               arrears.data.membersWithoutFee.map((m) => (
                                 <TableRow key={m.id}>
                                   <TableCell className="tnum font-medium">{m.society_id}</TableCell>
-                                  <TableCell>{m.full_name}</TableCell>
+                                  <TableCell>{memberLabel(m, t('members.unnamed'))}</TableCell>
                                   <TableCell className="tnum">{m.phone || '—'}</TableCell>
                                 </TableRow>
                               ))

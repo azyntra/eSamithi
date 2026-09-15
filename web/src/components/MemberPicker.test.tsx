@@ -6,10 +6,14 @@ import { renderWithApp } from '@/test/render'
 import { api, http, HttpResponse, mockApi } from '@/test/msw'
 import { MemberPicker } from './MemberPicker'
 
+// The fourth row is shaped like production: a member entered from paper with
+// nothing but a society ID. MySQL sorts NULL first, so in a real society these
+// are the first rows the picker shows, and the first the treasurer types past.
 const MEMBERS = [
   { id: 1, society_id: 'TEST-001', full_name: 'Nimal Perera', nic: '901234567V' },
   { id: 2, society_id: 'TEST-002', full_name: 'Kamala Silva', nic: '885544332V' },
-  { id: 3, society_id: 'TEST-003', full_name: 'Nimal Fernando', nic: '921111222V' }
+  { id: 3, society_id: 'TEST-003', full_name: 'Nimal Fernando', nic: '921111222V' },
+  { id: 207, society_id: '207', full_name: null, nic: null }
 ]
 
 mockApi(http.get(api('/members/slim'), () => HttpResponse.json(MEMBERS)))
@@ -23,6 +27,28 @@ function Harness({ exclude = [] as number[] }) {
     </>
   )
 }
+
+describe('a member with no name on record', () => {
+  it('does not crash the picker on the first keystroke and is still found by ID', async () => {
+    const user = userEvent.setup()
+    renderWithApp(<Harness />)
+    await user.click(screen.getByRole('combobox'))
+    await waitFor(() => expect(screen.getByText('Kamala Silva')).toBeInTheDocument())
+    expect(screen.getByText('Unnamed member')).toBeInTheDocument()
+
+    const search = screen.getByPlaceholderText(/search/i)
+    await user.type(search, 'a')
+    await waitFor(() => expect(screen.getByText('Kamala Silva')).toBeInTheDocument())
+
+    await user.clear(search)
+    await user.type(search, '207')
+    await waitFor(() => expect(screen.getByText('Unnamed member')).toBeInTheDocument())
+    expect(screen.queryByText('Kamala Silva')).not.toBeInTheDocument()
+
+    await user.click(screen.getByText('Unnamed member'))
+    expect(screen.getByTestId('picked')).toHaveTextContent('207')
+  })
+})
 
 describe('finding a member', () => {
   it('finds the same person by name, by member ID and by NIC', async () => {

@@ -22,6 +22,7 @@ import { RepayLoanDialog } from './components/RepayLoanDialog'
 import { useDeleteLoan, useLoan } from './queries'
 import { loanPaymentReceiptHtml, loanStatementHtml } from './receipts'
 import { balanceOf, isOpen, type LoanPayment } from './types'
+import { memberLabel } from '@/lib/members'
 
 export function LoanPage({ loanId }: { loanId: number }) {
   const { t, lang } = useT()
@@ -80,7 +81,7 @@ export function LoanPage({ loanId }: { loanId: number }) {
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight">
-            {l.member_name}
+            {memberLabel({ full_name: l.member_name }, t('members.unnamed'))}
             {Number(l.is_migrated) === 1 && (
               <Badge variant="neutral" className="gap-1" title={t('loans.migratedHint')}>
                 <Archive /> {t('loans.migrated')}
@@ -133,7 +134,7 @@ export function LoanPage({ loanId }: { loanId: number }) {
             ) : (
               l.guarantors.map((g) => (
                 <div key={g.id} className="rounded-lg border border-border bg-muted/40 px-4 py-2.5">
-                  <div className="font-medium">{g.full_name}</div>
+                  <div className="font-medium">{memberLabel(g, t('members.unnamed'))}</div>
                   <div className="tnum text-xs text-muted-foreground">
                     {g.nic || '—'}
                     {g.phone ? ` · ${g.phone}` : ''}

@@ -34,7 +34,7 @@ export type RequestStatus = 'Pending' | 'Approved' | 'Rejected' | 'Done'
 export interface MemberRequest {
   id: number
   member_id: number
-  member_name: string
+  member_name: string | null
   member_society_id: string
   member_phone: string | null
   type: 'loan' | 'correction'
@@ -59,7 +59,7 @@ export interface PurukaPost {
   expires_at: string
   category_label: string
   category_id: number
-  seller_name: string
+  seller_name: string | null
   seller_society_id: string
   seller_phone: string | null
   report_reasons: string | null

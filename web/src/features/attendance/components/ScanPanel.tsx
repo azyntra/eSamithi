@@ -9,6 +9,7 @@ import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { useScanCard } from '../queries'
 import type { AttendanceMode } from '../types'
+import { memberLabel } from '@/lib/members'
 
 type Feedback = { seq: number; kind: 'ok' | 'dup' | 'err'; text: string }
 
@@ -53,7 +54,7 @@ export function ScanPanel({ eventId, mode, onModeRequest }: { eventId: number; m
     setValue('')
     try {
       const res = await scan.mutateAsync(scanned)
-      const name = res.member.full_name
+      const name = memberLabel(res.member, t('members.unnamed'))
       if (res.already) {
         setFeedback({ seq: Date.now(), kind: 'dup', text: byAbsence ? t('att.alreadyAbsent', { name }) : t('att.alreadyMarked', { name }) })
       } else {

@@ -42,11 +42,13 @@ export interface MembersPage {
   total: number
 }
 
+// full_name is nullable because it is nullable in production: members
+// entered from paper can carry nothing but a society ID (see lib/members.ts).
 export interface SlimMember {
   id: number
   society_id?: string | null
   nic?: string | null
-  full_name: string
+  full_name: string | null
 }
 
 export interface DependentInput {
@@ -83,7 +85,7 @@ export interface MemberStatement {
   income: Array<{ id: number; date: string; amount: number; status: string; payment_method: string; loan_id: number | null; type_name: string; type_code: string | null }>
   expenses: Array<{ id: number; date: string; amount: number; status: string; payment_method: string; type_name: string; type_code: string | null }>
   loans: Array<{ id: number; principal_amount: number; principal_owed: number; interest_owed: number; fines_owed: number; date_issued: string; status: string; is_migrated: number }>
-  guarantees: Array<{ id: number; date_issued: string; status: string; borrower_name: string }>
+  guarantees: Array<{ id: number; date_issued: string; status: string; borrower_name: string | null }>
 }
 
 export const isMemberActive = (m: Pick<Member, 'is_active'>): boolean => m.is_active == null || Number(m.is_active) === 1

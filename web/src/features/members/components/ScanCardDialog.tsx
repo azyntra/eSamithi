@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { useT } from '@/lib/i18n'
 import { membersApi } from '../api'
+import { fold } from '@/lib/members'
 
 // Keyboard-wedge scanners type the society ID and press Enter. Exact match
 // wins; a single fuzzy hit is accepted so partial IDs still work.
@@ -33,7 +34,7 @@ export function ScanCardDialog({ open, onOpenChange }: { open: boolean; onOpenCh
     setNotFound(null)
     try {
       const result = await membersApi.list({ search: scanned, page: 1, limit: 10 })
-      const exact = result.members.find((m) => m.society_id.toLowerCase() === scanned.toLowerCase())
+      const exact = result.members.find((m) => fold(m.society_id) === fold(scanned))
       const match = exact ?? (result.members.length === 1 ? result.members[0] : undefined)
       if (match) {
         onOpenChange(false)

@@ -7,6 +7,7 @@ import { UpdatePrompt } from '@/app/shell/UpdatePrompt'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
+import { reportCrash } from '@/lib/errors/report'
 import { useT } from '@/lib/i18n'
 
 // A tab left open across a release asks for chunks that no longer exist. The
@@ -52,7 +53,10 @@ function RootError({ error, reset }: ErrorComponentProps) {
   const stale = isStaleChunk(error)
 
   useEffect(() => {
-    if (!stale) return
+    if (!stale) {
+      reportCrash(error, window.location.pathname)
+      return
+    }
     let alreadyTried = false
     try {
       alreadyTried = sessionStorage.getItem(RELOAD_FLAG) === '1'
@@ -61,7 +65,7 @@ function RootError({ error, reset }: ErrorComponentProps) {
       /* storage blocked: fall through to the manual button */
     }
     if (!alreadyTried) window.location.reload()
-  }, [stale])
+  }, [stale, error])
 
   return (
     <div className="grid min-h-screen place-items-center p-6">

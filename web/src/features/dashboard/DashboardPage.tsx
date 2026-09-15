@@ -128,7 +128,7 @@ export function DashboardPage() {
                             {income ? <ArrowDownToLine className="size-4" /> : <ArrowUpFromLine className="size-4" />}
                           </span>
                           <div className="min-w-0 flex-1">
-                            <div className="truncate font-medium">{row.name}</div>
+                            <div className="truncate font-medium">{row.name || t('members.unnamed')}</div>
                             <div className="text-xs text-muted-foreground">{formatDate(row.date, lang)}</div>
                           </div>
                           <Badge variant={income ? 'success' : 'danger'} className="hidden sm:inline-flex">

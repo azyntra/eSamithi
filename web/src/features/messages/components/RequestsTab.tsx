@@ -17,6 +17,7 @@ import { formatDateTime } from '@/lib/format/dates'
 import { useT } from '@/lib/i18n'
 import { useMemberRequests, useReviewRequest } from '../queries'
 import type { MemberRequest, RequestStatus } from '../types'
+import { memberLabel } from '@/lib/members'
 
 // Members submit loan enquiries and detail corrections from the mobile app;
 // this is the office side of that queue. Approving a loan request does not
@@ -77,7 +78,7 @@ export function RequestsTab({ pendingOnly, onFilterChange }: { pendingOnly: bool
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-sm">
                     <Link to="/members/$memberId" params={{ memberId: r.member_id }} className="font-medium text-primary hover:underline">
-                      {r.member_name}
+                      {memberLabel({ full_name: r.member_name }, t('members.unnamed'))}
                     </Link>
                     <Badge variant="outline" className="tnum text-[11px]">
                       {r.member_society_id}

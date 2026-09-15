@@ -23,6 +23,7 @@ import { useMember, useMemberStatement, useSetAppAccess } from './queries'
 import { isAppEnabled, isMemberActive, type MemberStatement, type MemberWithDependents } from './types'
 
 import type { MemberTab } from './tabs'
+import { memberLabel } from '@/lib/members'
 export type { MemberTab }
 
 const GENDER: Record<string, TranslationKey> = { Male: 'mform.male', Female: 'mform.female' }
@@ -305,7 +306,7 @@ function StatementTab({ loading, error, data, onRetry }: { memberId: number; loa
             <p className="mt-1 flex items-start gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-primary" />
               <span>
-                {t('vmember.guaranteeing', { count: data.guarantees.length })} {data.guarantees.map((g) => g.borrower_name).join(', ')}
+                {t('vmember.guaranteeing', { count: data.guarantees.length })} {data.guarantees.map((g) => memberLabel({ full_name: g.borrower_name }, t('members.unnamed'))).join(', ')}
               </span>
             </p>
           )}
