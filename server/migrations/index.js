@@ -292,6 +292,20 @@ async function loanAccrualDay(pool) {
   }
 }
 
+// 016 — the paper receipt-book number written when a loan repayment is taken.
+// One payment, one bill: it lives on loan_payments, not on the income rows the
+// payment spawns (a principal-only instalment spawns none). Nullable, free
+// text, no uniqueness — books repeat across years and offices.
+async function loanPaymentBillNo(pool) {
+  const [cols] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'loan_payments' AND COLUMN_NAME = 'bill_no'`
+  );
+  if (cols.length === 0) {
+    await pool.query('ALTER TABLE loan_payments ADD COLUMN bill_no VARCHAR(50) DEFAULT NULL AFTER fines_paid');
+  }
+}
+
 // 014 — web staff sessions (requirements §6.6): rotating refresh tokens, one
 // family per sign-in, plus lockout / password-change bookkeeping on users.
 // Inert for the desktop and mobile apps; all columns nullable or defaulted.
@@ -361,5 +375,6 @@ module.exports = [
   { id: '012_loan_accrual_day', up: loanAccrualDay },
   { id: '013_attendance_mode', up: attendanceMode },
   { id: '014_staff_sessions', up: staffSessions },
-  { id: '015_staff_auth_events', up: staffAuthEvents }
+  { id: '015_staff_auth_events', up: staffAuthEvents },
+  { id: '016_loan_payment_bill_no', up: loanPaymentBillNo }
 ];

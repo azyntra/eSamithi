@@ -28,6 +28,7 @@ export function RepayLoanDialog({ loan, onOpenChange, onRepaid }: { loan: Loan |
   const [walletId, setWalletId] = useState('')
   const [method, setMethod] = useState<PaymentMethod>('Cash')
   const [date, setDate] = useState(todayIso())
+  const [billNo, setBillNo] = useState('')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
   const open = Boolean(loan)
@@ -38,6 +39,7 @@ export function RepayLoanDialog({ loan, onOpenChange, onRepaid }: { loan: Loan |
       setWalletId('')
       setMethod('Cash')
       setDate(todayIso())
+      setBillNo('')
       setNotes('')
       setError(null)
     }
@@ -56,7 +58,7 @@ export function RepayLoanDialog({ loan, onOpenChange, onRepaid }: { loan: Loan |
     if (cents <= 0) return setError(t('lform.repayGtZero'))
     if (cents > totalOwed) return setError(t('lform.exceedsOutstanding', { total: formatCurrency(totalOwed) }))
     try {
-      const r = await repay.mutateAsync({ amount: cents, wallet_id: Number(walletId), payment_method: method, date, notes: notes.trim() || null })
+      const r = await repay.mutateAsync({ amount: cents, wallet_id: Number(walletId), payment_method: method, date, bill_no: billNo.trim() || null, notes: notes.trim() || null })
       toast.success(r.status === 'Paid' ? t('lform.fullySettled') : t('lform.repayRecorded'))
       onRepaid?.(r)
       onOpenChange(false)
@@ -140,9 +142,15 @@ export function RepayLoanDialog({ loan, onOpenChange, onRepaid }: { loan: Loan |
             </div>
           )}
 
-          <div className="grid gap-1.5">
-            <Label htmlFor="repay-notes">{t('lform.notesRef')}</Label>
-            <Input id="repay-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('lform.receiptPlaceholder')} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="repay-bill">{t('lform.billNo')}</Label>
+              <Input id="repay-bill" maxLength={50} autoComplete="off" className="font-mono" value={billNo} onChange={(e) => setBillNo(e.target.value)} placeholder={t('lform.billNoPlaceholder')} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="repay-notes">{t('lform.notesRef')}</Label>
+              <Input id="repay-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('lform.receiptPlaceholder')} />
+            </div>
           </div>
 
           {error && (

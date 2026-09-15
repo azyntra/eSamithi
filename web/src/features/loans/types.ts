@@ -36,6 +36,7 @@ export interface LoanPayment {
   principal_paid: number
   interest_paid: number
   fines_paid: number
+  bill_no?: string | null
   wallet_id: number | null
   income_ledger_id: number | null
 }
@@ -73,6 +74,7 @@ export interface RepayPayload {
   wallet_id: number
   payment_method: PaymentMethod
   date: string
+  bill_no: string | null
   notes: string | null
 }
 

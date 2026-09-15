@@ -245,6 +245,8 @@ router.post('/:id/repay', async (req, res, next) => {
     await conn.beginTransaction();
     const loanId = parseInt(req.params.id);
     const { amount, wallet_id, payment_method, date, notes } = req.body;
+    // Receipt-book number from the paper bill the officer just wrote (optional)
+    const billNo = String(req.body.bill_no ?? '').trim().slice(0, 50) || null;
 
     if (!amount || Number(amount) <= 0) throw Object.assign(new Error('Repayment amount must be greater than zero'), { statusCode: 400 });
     if (!wallet_id) throw Object.assign(new Error('A wallet must be selected to receive the repayment'), { statusCode: 400 });
@@ -298,7 +300,7 @@ router.post('/:id/repay', async (req, res, next) => {
       const [r] = await conn.query(
         `INSERT INTO income_ledger (date, payer_type, member_id, income_type_id, amount, interest_part, payment_method, wallet_id, loan_id, notes, status)
          VALUES (?, 'Member', ?, ?, ?, ?, ?, ?, ?, ?, 'Active')`,
-        [paymentDate, memberId, typeId, interestPaid, interestPaid, payment_method || 'Cash', wallet_id, loanId, notes || 'Loan interest payment']
+        [paymentDate, memberId, typeId, interestPaid, interestPaid, payment_method || 'Cash', wallet_id, loanId, notes || (billNo ? `Loan interest payment · Bill No ${billNo}` : 'Loan interest payment')]
       );
       interestLedgerId = r.insertId;
     }
@@ -307,14 +309,14 @@ router.post('/:id/repay', async (req, res, next) => {
       await conn.query(
         `INSERT INTO income_ledger (date, payer_type, member_id, income_type_id, amount, payment_method, wallet_id, loan_id, notes, status)
          VALUES (?, 'Member', ?, ?, ?, ?, ?, ?, ?, 'Active')`,
-        [paymentDate, memberId, typeId, finesPaid, payment_method || 'Cash', wallet_id, loanId, notes || 'Loan late-payment fine']
+        [paymentDate, memberId, typeId, finesPaid, payment_method || 'Cash', wallet_id, loanId, notes || (billNo ? `Loan late-payment fine · Bill No ${billNo}` : 'Loan late-payment fine')]
       );
     }
 
     await conn.query(
-      `INSERT INTO loan_payments (loan_id, date, principal_paid, interest_paid, fines_paid, wallet_id, income_ledger_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [loanId, paymentDate, principalPaid, interestPaid, finesPaid, wallet_id, interestLedgerId]
+      `INSERT INTO loan_payments (loan_id, date, principal_paid, interest_paid, fines_paid, bill_no, wallet_id, income_ledger_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [loanId, paymentDate, principalPaid, interestPaid, finesPaid, billNo, wallet_id, interestLedgerId]
     );
 
     // The full payment (principal included) lands in the wallet as cash

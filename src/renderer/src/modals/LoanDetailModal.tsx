@@ -21,6 +21,7 @@ interface LoanPayment {
   principal_paid: number
   interest_paid: number
   fines_paid: number
+  bill_no?: string | null
 }
 
 interface LoanDetail extends Loan {
@@ -74,6 +75,7 @@ export default function LoanDetailModal({ loanId, onClose, onChanged, wallets, s
       rows: [
         [t('rcpt.borrower'), loan.member_name || '—'],
         [t('rcpt.loanRef'), `#${loan.id}`],
+        ...(p.bill_no ? [[t('rcpt.billNo'), p.bill_no] as [string, string]] : []),
         [t('rcpt.appliedFine'), formatCurrency(p.fines_paid)],
         [t('rcpt.appliedInterest'), formatCurrency(p.interest_paid)],
         [t('rcpt.appliedPrincipal'), formatCurrency(p.principal_paid)]
@@ -202,6 +204,7 @@ export default function LoanDetailModal({ loanId, onClose, onChanged, wallets, s
                       <thead>
                         <tr>
                           <th>{t('common.date')}</th>
+                          <th>{t('lform.billNo')}</th>
                           <th className="text-right">{t('lform.fine')}</th>
                           <th className="text-right">{t('reports.interest')}</th>
                           <th className="text-right">{t('reports.principal')}</th>
@@ -213,6 +216,7 @@ export default function LoanDetailModal({ loanId, onClose, onChanged, wallets, s
                         {loan.payments.map(p => (
                           <tr key={p.id}>
                             <td>{new Date(p.date).toLocaleDateString()}</td>
+                            <td style={{ fontFamily: 'monospace' }}>{p.bill_no || '—'}</td>
                             <td className="text-right">{formatCurrency(p.fines_paid)}</td>
                             <td className="text-right">{formatCurrency(p.interest_paid)}</td>
                             <td className="text-right">{formatCurrency(p.principal_paid)}</td>

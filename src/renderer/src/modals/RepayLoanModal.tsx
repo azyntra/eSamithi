@@ -24,6 +24,7 @@ export default function RepayLoanModal({ loan, onClose, onRepaid, wallets }: Pro
   const [walletId, setWalletId] = useState<number | ''>('')
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Bank Transfer' | 'Cheque'>('Cash')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [billNo, setBillNo] = useState('')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -59,6 +60,7 @@ export default function RepayLoanModal({ loan, onClose, onRepaid, wallets }: Pro
         wallet_id: walletId,
         payment_method: paymentMethod,
         date,
+        bill_no: billNo.trim() || null,
         notes: notes.trim() || null
       })
       showToast('success', result.status === 'Paid' ? t('lform.fullySettled') : t('lform.repayRecorded'))
@@ -150,9 +152,15 @@ export default function RepayLoanModal({ loan, onClose, onRepaid, wallets }: Pro
               </div>
             )}
 
-            <div className="form-group full-width">
-              <label>{t('lform.notesRef')}</label>
-              <input type="text" className="form-control" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('lform.receiptPlaceholder')} />
+            <div className="form-grid">
+              <div className="form-group">
+                <label>{t('lform.billNo')}</label>
+                <input type="text" className="form-control" maxLength={50} value={billNo} onChange={(e) => setBillNo(e.target.value)} placeholder={t('lform.billNoPlaceholder')} />
+              </div>
+              <div className="form-group">
+                <label>{t('lform.notesRef')}</label>
+                <input type="text" className="form-control" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('lform.receiptPlaceholder')} />
+              </div>
             </div>
           </div>
 

@@ -162,6 +162,7 @@ export function LoanPage({ loanId }: { loanId: number }) {
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t('common.date')}</TableHead>
+                      <TableHead>{t('lform.billNo')}</TableHead>
                       <TableHead className="text-right">{t('lform.fine')}</TableHead>
                       <TableHead className="text-right">{t('reports.interest')}</TableHead>
                       <TableHead className="text-right">{t('reports.principal')}</TableHead>
@@ -173,6 +174,7 @@ export function LoanPage({ loanId }: { loanId: number }) {
                     {l.payments.map((p) => (
                       <TableRow key={p.id}>
                         <TableCell className="tnum whitespace-nowrap">{formatDate(p.date, lang)}</TableCell>
+                        <TableCell className="font-mono text-[13px]">{p.bill_no || <span className="text-muted-foreground">—</span>}</TableCell>
                         <TableCell className="tnum text-right">{formatCurrency(p.fines_paid)}</TableCell>
                         <TableCell className="tnum text-right">{formatCurrency(p.interest_paid)}</TableCell>
                         <TableCell className="tnum text-right">{formatCurrency(p.principal_paid)}</TableCell>

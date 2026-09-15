@@ -17,6 +17,7 @@ export function loanPaymentReceiptHtml(loan: LoanDetail, p: LoanPayment, society
     rows: [
       [pt('rcpt.borrower'), loan.member_name || '—'],
       [pt('rcpt.loanRef'), `#${loan.id}`],
+      ...(p.bill_no ? [[pt('rcpt.billNo'), p.bill_no] as [string, string]] : []),
       [pt('rcpt.appliedFine'), formatCurrency(p.fines_paid)],
       [pt('rcpt.appliedInterest'), formatCurrency(p.interest_paid)],
       [pt('rcpt.appliedPrincipal'), formatCurrency(p.principal_paid)]

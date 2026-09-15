@@ -90,9 +90,13 @@ test.describe('loans', () => {
     await repay.getByLabel(/repayment amount/i).fill('4')
     await expect(repay.getByText(/automatic allocation/i)).toBeVisible()
     await repay.getByLabel(/deposit to wallet/i).selectOption({ index: 1 })
+    // The paper receipt-book number goes with the payment and shows in history
+    const billNo = `B${tag.slice(-6)}`
+    await repay.getByLabel(/bill no/i).fill(billNo)
     await repay.getByRole('button', { name: /record repayment/i }).click()
     await expect(page.getByText(/repayment recorded successfully/i)).toBeVisible()
     await expect(page.getByText(/repayment history \(1\)/i)).toBeVisible()
+    await expect(page.getByRole('cell', { name: billNo })).toBeVisible()
 
     // Receipt and statement previews carry the frozen numbering series
     await page.getByRole('row').filter({ hasText: 'Rs. 4.00' }).first().getByRole('button', { name: /print receipt/i }).click()
