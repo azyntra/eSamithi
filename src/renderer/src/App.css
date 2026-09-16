@@ -1410,6 +1410,12 @@ tbody td {
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
+/* A grid item's minimum is its content unless told otherwise, so one long
+   member name in a picker used to push its column past the dialog and give
+   the whole form a horizontal scrollbar. Columns shrink; text truncates. */
+.form-grid > * {
+  min-width: 0;
+}
 
 .form-group {
   display: flex;

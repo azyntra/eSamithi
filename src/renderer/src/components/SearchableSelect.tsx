@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, ChevronDown, X } from 'lucide-react'
 import { useT } from '../i18n'
 
@@ -34,7 +35,12 @@ export default function SearchableSelect({
   const containerRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const popupRef = useRef<HTMLDivElement>(null)
   const listboxId = useRef(`ss-listbox-${Math.random().toString(36).slice(2, 8)}`)
+  // Where the list goes. It is rendered through a portal so the modal's own
+  // scroll area can never clip it: inside a scrolling .modal-body an absolute
+  // dropdown was cut off after four rows and made the dialog scroll instead.
+  const [pos, setPos] = useState<{ top: number; left: number; width: number; maxHeight: number } | null>(null)
 
   const selectedOption = options.find(o => String(o.value) === String(value))
 
@@ -45,9 +51,9 @@ export default function SearchableSelect({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
+      const target = event.target as Node
+      if (containerRef.current?.contains(target) || popupRef.current?.contains(target)) return
+      setIsOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -59,6 +65,37 @@ export default function SearchableSelect({
     const el = listRef.current?.querySelector<HTMLElement>(`[data-index="${highlighted}"]`)
     el?.scrollIntoView({ block: 'nearest' })
   }, [highlighted, isOpen])
+
+  // Anchor the list to the trigger: below when there is room for a useful
+  // list, above when there is more room there. Wide enough to read a full
+  // Sinhala name even when two pickers share a row, never past the viewport.
+  const place = (): void => {
+    const rect = triggerRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const gap = 6
+    const below = vh - rect.bottom - gap - 8
+    const above = rect.top - gap - 8
+    const wanted = 380
+    const openBelow = below >= Math.min(wanted, 260) || below >= above
+    const maxHeight = Math.max(160, Math.min(wanted, openBelow ? below : above))
+    const width = Math.min(Math.max(rect.width, 360), vw - 16)
+    const left = Math.max(8, Math.min(rect.left, vw - width - 8))
+    setPos({ top: openBelow ? rect.bottom + gap : rect.top - gap - maxHeight, left, width, maxHeight })
+  }
+
+  useLayoutEffect(() => {
+    if (!isOpen) return
+    place()
+    const onMove = (): void => place()
+    window.addEventListener('resize', onMove)
+    window.addEventListener('scroll', onMove, true)
+    return () => {
+      window.removeEventListener('resize', onMove)
+      window.removeEventListener('scroll', onMove, true)
+    }
+  }, [isOpen])
 
   const open = (): void => {
     if (disabled) return
@@ -143,7 +180,7 @@ export default function SearchableSelect({
         onClick={() => (isOpen ? close() : open())}
         onKeyDown={handleTriggerKeyDown}
       >
-        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
+        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, minWidth: 0 }} title={selectedOption?.label}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         {selectedOption && !disabled && (
@@ -184,19 +221,18 @@ export default function SearchableSelect({
         style={{ opacity: 0, position: 'absolute', top: '50%', left: '50%', zIndex: -1, width: 1, height: 1, pointerEvents: 'none' }}
       />
 
-      {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          right: 0,
-          marginTop: '4px',
+      {isOpen && pos && createPortal(
+        <div ref={popupRef} style={{
+          position: 'fixed',
+          top: pos.top,
+          left: pos.left,
+          width: pos.width,
+          maxHeight: pos.maxHeight,
           background: 'var(--bg-white)',
           border: '1px solid var(--border)',
           borderRadius: 'var(--radius-md)',
-          boxShadow: 'var(--shadow-md)',
-          zIndex: 50,
-          maxHeight: '260px',
+          boxShadow: 'var(--shadow-modal, var(--shadow-md))',
+          zIndex: 10000,
           display: 'flex',
           flexDirection: 'column'
         }}>
@@ -256,11 +292,11 @@ export default function SearchableSelect({
                       gap: '2px'
                     }}
                   >
-                    <div style={{ fontWeight: 500, fontSize: '0.9rem', color: isSelected ? 'var(--primary)' : 'var(--text-primary)' }}>
+                    <div style={{ fontWeight: 500, fontSize: '0.9rem', lineHeight: 1.35, color: isSelected ? 'var(--primary)' : 'var(--text-primary)' }}>
                       {opt.label}
                     </div>
                     {opt.sublabel && (
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
                         {opt.sublabel}
                       </div>
                     )}
@@ -269,7 +305,13 @@ export default function SearchableSelect({
               })
             )}
           </div>
-        </div>
+          {filteredOptions.length > 0 && (
+            <div style={{ padding: '6px 12px', borderTop: '1px solid var(--border)', fontSize: '0.72rem', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
+              {search ? `${filteredOptions.length} / ${options.length}` : options.length}
+            </div>
+          )}
+        </div>,
+        document.body
       )}
     </div>
   )
