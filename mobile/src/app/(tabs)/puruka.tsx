@@ -14,7 +14,7 @@ import {
   type PurukaPost,
   type PurukaType
 } from '../../api/hooks'
-import { Badge, BrandGradient, Button, EmptyState, ErrorView, Money, ScalePressable, Screen, Segmented, SkeletonCards, StaleBanner } from '../../ui'
+import { Badge, BrandGradient, Button, Chip, EmptyState, ErrorView, Money, ScalePressable, Screen, Segmented, SkeletonCards, StaleBanner } from '../../ui'
 import { dur, useReducedMotion } from '../../motion'
 
 // Category code → icon; admin-added categories fall back to the tag icon
@@ -249,24 +249,7 @@ export default function Puruka(): React.ReactElement {
         ].map((chip) => {
           const selected = category === chip.id
           return (
-            <ScalePressable
-              key={String(chip.id)}
-              onPress={() => setCategory(chip.id)}
-              accessibilityRole="button"
-              accessibilityState={selected ? { selected: true } : {}}
-              haptic="selection"
-              scaleTo={0.94}
-              style={{
-                paddingHorizontal: spacing.lg - 2,
-                paddingVertical: spacing.sm,
-                borderRadius: radius.pill,
-                backgroundColor: selected ? p.primary : p.primarySoft
-              }}
-            >
-              <Text style={{ color: selected ? p.onPrimary : p.primaryOnSoft, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>
-                {chip.label}
-              </Text>
-            </ScalePressable>
+            <Chip key={String(chip.id)} label={chip.label} selected={selected} onPress={() => setCategory(chip.id)} />
           )
         })}
       </ScrollView>

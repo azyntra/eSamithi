@@ -6,7 +6,7 @@ import { useT } from '../i18n'
 import { usePalette } from '../theme'
 import { useMyRequests, type MemberRequest } from '../api/hooks'
 import { formatCurrency } from '../lib/money'
-import { Badge, Button, Card, EmptyState, ErrorView, Screen, SkeletonCards, StaleBanner } from '../ui'
+import { Button, Card, EmptyState, ErrorView, Screen, SkeletonCards, StaleBanner, StatusPill } from '../ui'
 import { useType } from '../typography'
 
 export default function Requests(): React.ReactElement {
@@ -15,17 +15,6 @@ export default function Requests(): React.ReactElement {
   const ty = useType()
   const router = useRouter()
   const requests = useMyRequests()
-
-  const statusBadge = (s: MemberRequest['status']): React.ReactElement => {
-    const map = {
-      Pending: { label: t('mob.stPending'), color: p.warning, bg: p.warningBg },
-      Approved: { label: t('mob.stApproved'), color: p.success, bg: p.successBg },
-      Rejected: { label: t('mob.stRejected'), color: p.danger, bg: p.dangerBg },
-      Done: { label: t('mob.stDone'), color: p.textMuted, bg: p.surfaceAlt }
-    } as const
-    const c = map[s] ?? map.Done
-    return <Badge text={c.label} color={c.color} bg={c.bg} />
-  }
 
   if (requests.isPending) return <Screen><SkeletonCards cards={2} /></Screen>
   if (requests.isError && !requests.data) {
@@ -56,7 +45,7 @@ export default function Requests(): React.ReactElement {
             <Text style={{ color: p.text, fontSize: 16, flex: 1, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>
               {r.type === 'loan' ? t('mob.reqTypeLoan') : t('mob.reqTypeCorrection')}
             </Text>
-            {statusBadge(r.status)}
+            <StatusPill status={r.status} />
           </View>
           <Text style={{ color: p.textMuted, fontSize: 12, marginBottom: 6, fontFamily: ty.family.regular, lineHeight: ty.lh(12) }}>{r.created_at}</Text>
           {r.type === 'loan' && r.amount != null && (

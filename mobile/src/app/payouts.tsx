@@ -6,7 +6,7 @@ import { useT } from '../i18n'
 import { usePalette } from '../theme'
 import { useStatement } from '../api/hooks'
 import { formatDate } from '../lib/date'
-import { Card, EmptyState, ErrorView, Money, ScalePressable, Screen, SkeletonCards, StaleBanner, StatusBadge } from '../ui'
+import { Card, EmptyState, ErrorView, Money, ScalePressable, Screen, SkeletonCards, StaleBanner, StatusPill } from '../ui'
 import { useType } from '../typography'
 
 export default function Payouts(): React.ReactElement {
@@ -52,7 +52,7 @@ export default function Payouts(): React.ReactElement {
                 <Text style={{ color: p.textMuted, fontSize: 14, marginTop: 2, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{formatDate(row.date)}</Text>
                 {row.status !== 'Active' && (
                   <View style={{ marginTop: 4 }}>
-                    <StatusBadge status={row.status} />
+                    <StatusPill status={row.status} />
                   </View>
                 )}
               </View>

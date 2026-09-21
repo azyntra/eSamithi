@@ -7,7 +7,7 @@ import { usePalette } from '../theme'
 import { photoUrl } from '../api/client'
 import { useMyPurukaPosts, useUpdatePurukaPost, type PurukaPost } from '../api/hooks'
 import { categoryIcon } from './(tabs)/puruka'
-import { Badge, Banner, Button, EmptyState, ErrorView, Money, Screen, SkeletonCards, StaleBanner } from '../ui'
+import { Banner, Button, EmptyState, ErrorView, Money, Screen, SkeletonCards, StaleBanner, StatusPill } from '../ui'
 import { useType } from '../typography'
 
 const EXPIRY_WARN_DAYS = 3
@@ -38,18 +38,6 @@ export default function MyPurukaPosts(): React.ReactElement {
   const expiringSoon = rows.filter(
     (post) => post.status === 'Active' && post.expires_at && daysUntil(post.expires_at) <= EXPIRY_WARN_DAYS
   )
-
-  const statusBadge = (post: PurukaPost): React.ReactElement => {
-    const map: Record<PurukaPost['status'], { text: string; color: string; bg: string }> = {
-      Active: { text: t('common.active'), color: p.success, bg: p.successBg },
-      Sold: { text: t('mob.pkSold'), color: p.textMuted, bg: p.surfaceAlt },
-      Inactive: { text: t('mob.pkInactive'), color: p.warning, bg: p.warningBg },
-      Removed: { text: t('mob.pkRemoved'), color: p.danger, bg: p.dangerBg },
-      Deleted: { text: t('mob.pkRemoved'), color: p.danger, bg: p.dangerBg }
-    }
-    const c = map[post.status]
-    return <Badge text={c.text} color={c.color} bg={c.bg} />
-  }
 
   return (
     <Screen refreshing={posts.isRefetching} onRefresh={() => posts.refetch()}>
@@ -92,7 +80,7 @@ export default function MyPurukaPosts(): React.ReactElement {
                 <View style={{ flex: 1, padding: 12, justifyContent: 'center' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text style={{ color: p.text, fontSize: 16, flex: 1, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }} numberOfLines={1}>{post.title}</Text>
-                    {statusBadge(post)}
+                    <StatusPill status={post.status} />
                   </View>
                   <View style={{ marginTop: 4 }}>
                     {post.price !== null

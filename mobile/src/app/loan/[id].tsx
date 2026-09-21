@@ -7,7 +7,7 @@ import { usePalette } from '../../theme'
 import { useLoan, useSocietyInfo } from '../../api/hooks'
 import { formatDate } from '../../lib/date'
 import { repaidFraction } from '../(tabs)/loans'
-import { Card, EmptyText, ErrorView, Money, ProgressBar, Row, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner, StatusBadge } from '../../ui'
+import { Card, EmptyText, ErrorView, Money, ProgressBar, Row, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner, StatusPill } from '../../ui'
 import { useType } from '../../typography'
 
 export default function LoanDetail(): React.ReactElement {
@@ -37,7 +37,7 @@ export default function LoanDetail(): React.ReactElement {
       {loan.isError && <StaleBanner />}
       <Card>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <StatusBadge status={d.status} />
+          <StatusPill status={d.status} />
           <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.loanIssued', { date: formatDate(d.date_issued) })}</Text>
         </View>
         {d.is_migrated === 1 && (

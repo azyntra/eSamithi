@@ -7,7 +7,7 @@ import { interFamily, useType } from '../../typography'
 import { useAnnouncements, type Announcement } from '../../api/hooks'
 import { formatDate } from '../../lib/date'
 import { useNoticesSeen } from '../../lib/noticesSeen'
-import { Card, EmptyState, ErrorView, Row, ScalePressable, Screen, SkeletonCards, StaleBanner } from '../../ui'
+import { Card, Chip, EmptyState, ErrorView, Row, Screen, SkeletonCards, StaleBanner } from '../../ui'
 
 export function noticeMeta(type: Announcement['type'], t: ReturnType<typeof useT>['t'], p: ReturnType<typeof usePalette>): {
   icon: 'flower-outline' | 'calendar-outline' | 'megaphone-outline'
@@ -64,24 +64,7 @@ export default function Notices(): React.ReactElement {
           {chips.map((chip) => {
             const selected = filter === chip.value
             return (
-              <ScalePressable
-                key={chip.value}
-                onPress={() => setFilter(chip.value)}
-                accessibilityRole="button"
-                accessibilityState={selected ? { selected: true } : {}}
-                haptic="selection"
-                scaleTo={0.94}
-                style={{
-                  paddingHorizontal: spacing.lg - 2,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.pill,
-                  backgroundColor: selected ? p.primary : p.primarySoft
-                }}
-              >
-                <Text style={{ color: selected ? p.onPrimary : p.primaryOnSoft, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>
-                  {chip.label}
-                </Text>
-              </ScalePressable>
+              <Chip key={chip.value} label={chip.label} selected={selected} onPress={() => setFilter(chip.value)} />
             )
           })}
         </ScrollView>

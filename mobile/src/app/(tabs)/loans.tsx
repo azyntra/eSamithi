@@ -6,7 +6,7 @@ import { useT } from '../../i18n'
 import { usePalette } from '../../theme'
 import { useStatement, type StatementLoan } from '../../api/hooks'
 import { formatDate } from '../../lib/date'
-import { Card, EmptyState, ErrorView, Money, ProgressBar, Row, Screen, SkeletonCards, StaleBanner, StatusBadge } from '../../ui'
+import { Card, EmptyState, ErrorView, Money, ProgressBar, Row, Screen, SkeletonCards, StaleBanner, StatusPill } from '../../ui'
 import { useType } from '../../typography'
 
 // Repaid fraction of the original principal (0..1); migrated loans may have
@@ -46,7 +46,7 @@ export default function Loans(): React.ReactElement {
           <Pressable key={loan.id} onPress={() => router.push(`/loan/${loan.id}`)} accessibilityRole="button">
             <Card>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <StatusBadge status={loan.status} />
+                <StatusPill status={loan.status} />
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.loanIssued', { date: formatDate(loan.date_issued) })}</Text>
                   <Ionicons name="chevron-forward" size={16} color={p.textMuted} />

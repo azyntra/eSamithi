@@ -25,6 +25,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { elevation, radius, spacing, type as typeScale, usePalette, useThemeMode } from '../theme'
 import { interFamily, useType } from '../typography'
 import { useT } from '../i18n'
+import type { TranslationKey } from '../i18n/en'
 import { formatCurrency } from '../lib/money'
 import { ScalePressable } from './pressable'
 
@@ -309,6 +310,10 @@ export function Segmented<T extends string>({
             accessibilityState={selected ? { selected: true } : {}}
             scaleTo={0.95}
             style={{
+              // 48 dp minimum: this control is both the language switcher and
+              // the theme switcher, and it used to be about 34 dp tall.
+              minHeight: 48,
+              justifyContent: 'center',
               paddingHorizontal: spacing.lg - 2,
               paddingVertical: spacing.sm,
               borderRadius: radius.md - 4,
@@ -527,22 +532,50 @@ export function Badge({ text, color, bg }: { text: string; color: string; bg: st
   )
 }
 
-// Status → colored badge, using the same status vocabulary as the desktop.
-// Pill with a leading dot so state reads even without color vision.
-export function StatusBadge({ status }: { status: string }): React.ReactElement {
+// One status vocabulary for the whole app. There were four parallel colour
+// maps — this component plus local ones in requests, my-posts and post detail
+// — and this one printed the RAW ENGLISH status, so a Sinhala-reading member
+// saw "Active" and "Overdue" in Latin script on their own loan.
+// The leading dot means state still reads without colour vision.
+type StatusTone = 'success' | 'warning' | 'danger' | 'neutral'
+
+const STATUS: Record<string, { key: TranslationKey; tone: StatusTone }> = {
+  // loans and ledger
+  Active: { key: 'rcpt.stActive', tone: 'success' },
+  Overdue: { key: 'rcpt.stOverdue', tone: 'danger' },
+  Paid: { key: 'rcpt.stPaid', tone: 'neutral' },
+  Void: { key: 'rcpt.stVoid', tone: 'warning' },
+  Defaulted: { key: 'rcpt.stDefaulted', tone: 'danger' },
+  // member requests
+  Pending: { key: 'mob.stPending', tone: 'warning' },
+  Approved: { key: 'mob.stApproved', tone: 'success' },
+  Rejected: { key: 'mob.stRejected', tone: 'danger' },
+  Done: { key: 'mob.stDone', tone: 'neutral' },
+  // marketplace listings
+  Sold: { key: 'mob.pkSold', tone: 'neutral' },
+  Inactive: { key: 'mob.pkInactive', tone: 'warning' },
+  Removed: { key: 'mob.pkRemoved', tone: 'danger' },
+  Deleted: { key: 'mob.pkRemoved', tone: 'danger' }
+}
+
+export function StatusPill({ status }: { status: string }): React.ReactElement {
   const p = usePalette()
   const ty = useType()
-  const map: Record<string, { color: string; bg: string }> = {
-    Active: { color: p.success, bg: p.successBg },
-    Overdue: { color: p.danger, bg: p.dangerBg },
-    Paid: { color: p.textMuted, bg: p.surfaceAlt },
-    Void: { color: p.warning, bg: p.warningBg }
+  const { t } = useT()
+  const entry = STATUS[status]
+  const tones: Record<StatusTone, { color: string; bg: string }> = {
+    success: { color: p.success, bg: p.successBg },
+    warning: { color: p.warning, bg: p.warningBg },
+    danger: { color: p.danger, bg: p.dangerBg },
+    neutral: { color: p.textMuted, bg: p.surfaceAlt }
   }
-  const c = map[status] ?? { color: p.textMuted, bg: p.surfaceAlt }
+  const c = tones[entry?.tone ?? 'neutral']
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.bg, borderRadius: radius.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 3, alignSelf: 'flex-start' }}>
       <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.color }} />
-      <Text style={{ color: c.color, fontSize: typeScale.micro, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.micro) }}>{status}</Text>
+      <Text style={{ color: c.color, fontSize: typeScale.micro, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.micro) }}>
+        {entry ? t(entry.key) : status}
+      </Text>
     </View>
   )
 }
@@ -580,5 +613,161 @@ export function ErrorView({ onRetry }: { onRetry: () => void }): React.ReactElem
       </Text>
       <Button label={t('mob.retry')} onPress={onRetry} variant="secondary" />
     </Animated.View>
+  )
+}
+
+// The most duplicated pattern in the app: an icon, a label, a value and a
+// chevron inside a card. It existed eight times at six different vertical
+// paddings (10/12/13/14/18), so scrolling from Contributions to Payouts to
+// Benefits to Help changed the list density each time. One row, 56 dp minimum
+// — which is also the accessible touch target this app never had.
+export function ListRow({
+  icon,
+  iconTone,
+  label,
+  sublabel,
+  value,
+  right,
+  onPress,
+  first
+}: {
+  icon?: keyof typeof Ionicons.glyphMap
+  iconTone?: 'brand' | 'success' | 'warning' | 'danger'
+  label: string
+  sublabel?: string
+  value?: string
+  right?: React.ReactNode
+  onPress?: () => void
+  first?: boolean
+}): React.ReactElement {
+  const p = usePalette()
+  const ty = useType()
+  const tones = {
+    brand: { fg: p.primaryOnSoft, bg: p.primarySoft },
+    success: { fg: p.success, bg: p.successBg },
+    warning: { fg: p.warning, bg: p.warningBg },
+    danger: { fg: p.danger, bg: p.dangerBg }
+  }
+  const tone = tones[iconTone ?? 'brand']
+
+  const body = (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        minHeight: 56,
+        paddingVertical: spacing.sm,
+        borderTopWidth: first ? 0 : 1,
+        borderTopColor: p.border
+      }}
+    >
+      {icon ? (
+        <View style={{ width: 40, height: 40, borderRadius: radius.pill, backgroundColor: tone.bg, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md }}>
+          <Ionicons name={icon} size={19} color={tone.fg} />
+        </View>
+      ) : null}
+      <View style={{ flex: 1, marginRight: spacing.md }}>
+        <Text style={{ color: p.text, fontSize: typeScale.body, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.body) }}>{label}</Text>
+        {sublabel ? (
+          <Text style={{ color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.caption), marginTop: 1 }}>{sublabel}</Text>
+        ) : null}
+      </View>
+      {value ? (
+        <Text style={{ color: p.textMuted, fontSize: typeScale.body, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.body) }}>{value}</Text>
+      ) : null}
+      {right}
+      {onPress ? <Ionicons name="chevron-forward" size={18} color={p.textMuted} style={{ marginLeft: spacing.xs }} /> : null}
+    </View>
+  )
+
+  if (!onPress) return body
+  return (
+    <ScalePressable accessibilityRole="button" onPress={onPress} scaleTo={0.99}>
+      {body}
+    </ScalePressable>
+  )
+}
+
+// Filter and category chips. There were three implementations, two of them
+// byte-identical copies and a third at a different radius and weight.
+// 44 dp minimum so a thumb can actually hit it.
+export function Chip({
+  label,
+  icon,
+  selected,
+  onPress
+}: {
+  label: string
+  icon?: keyof typeof Ionicons.glyphMap
+  selected: boolean
+  onPress: () => void
+}): React.ReactElement {
+  const p = usePalette()
+  const ty = useType()
+  return (
+    <ScalePressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      haptic="selection"
+      onPress={onPress}
+      scaleTo={0.96}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs + 2,
+        minHeight: 44,
+        paddingHorizontal: spacing.lg - 2,
+        borderRadius: radius.pill,
+        backgroundColor: selected ? p.primary : p.primarySoft
+      }}
+    >
+      {icon ? <Ionicons name={icon} size={16} color={selected ? p.onPrimary : p.primaryOnSoft} /> : null}
+      <Text style={{ color: selected ? p.onPrimary : p.primaryOnSoft, fontSize: typeScale.caption, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.caption) }}>
+        {label}
+      </Text>
+    </ScalePressable>
+  )
+}
+
+// "A big number in a box" existed three times, one of which hand-built its own
+// "Rs. …" string and so skipped the two-decimal rule the rest of the app keeps.
+export function AmountCard({
+  label,
+  cents,
+  tone,
+  icon,
+  hint,
+  onPress
+}: {
+  label: string
+  cents: number
+  tone?: 'success' | 'warning' | 'danger'
+  icon?: keyof typeof Ionicons.glyphMap
+  hint?: string
+  onPress?: () => void
+}): React.ReactElement {
+  const p = usePalette()
+  const ty = useType()
+  const colors = { success: p.success, warning: p.warning, danger: p.danger }
+  const fg = tone ? colors[tone] : p.text
+  const bg = tone ? { success: p.successBg, warning: p.warningBg, danger: p.dangerBg }[tone] : p.primarySoft
+  return (
+    <Card onPress={onPress}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {icon ? (
+          <View style={{ width: 40, height: 40, borderRadius: radius.pill, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md }}>
+            <Ionicons name={icon} size={19} color={tone ? fg : p.primaryOnSoft} />
+          </View>
+        ) : null}
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.caption) }}>{label}</Text>
+          <Money cents={cents} size={typeScale.display} bold color={fg} />
+          {hint ? (
+            <Text style={{ color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.caption), marginTop: 2 }}>{hint}</Text>
+          ) : null}
+        </View>
+        {onPress ? <Ionicons name="chevron-forward" size={18} color={p.textMuted} /> : null}
+      </View>
+    </Card>
   )
 }

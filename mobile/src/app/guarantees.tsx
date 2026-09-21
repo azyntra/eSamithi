@@ -4,7 +4,7 @@ import { useT } from '../i18n'
 import { usePalette } from '../theme'
 import { useStatement } from '../api/hooks'
 import { formatDate } from '../lib/date'
-import { Card, EmptyState, ErrorView, Screen, SkeletonCards, StaleBanner, StatusBadge, Subtitle } from '../ui'
+import { Card, EmptyState, ErrorView, Screen, SkeletonCards, StaleBanner, StatusPill, Subtitle } from '../ui'
 import { useType } from '../typography'
 
 export default function Guarantees(): React.ReactElement {
@@ -37,7 +37,7 @@ export default function Guarantees(): React.ReactElement {
               <Text style={{ color: p.text, fontSize: 16, marginTop: 2, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{g.borrower_name}</Text>
               <Text style={{ color: p.textMuted, fontSize: 14, marginTop: 2, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.loanIssued', { date: formatDate(g.date_issued) })}</Text>
             </View>
-            <StatusBadge status={g.status} />
+            <StatusPill status={g.status} />
           </View>
         </Card>
       ))}
