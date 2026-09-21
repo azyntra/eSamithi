@@ -548,7 +548,7 @@ WCAG 2.1 AA is the bar, adapted to a native app and to this audience.
 | N2 | No unbounded list renders into a `ScrollView` (§3.7) |
 | N3 | Frame rate stays at 60 fps while scrolling Contributions with 5 years of history on a budget device |
 | N4 | The refresh adds no new npm dependency — everything specified here uses what is already installed |
-| N5 | Phases 1–5 ship over the air; nothing in them touches `app.json` `plugins`, the icon or the splash |
+| N5 | Phases 1–5 ship over the air; nothing in them touches `app.json` `plugins`, the icon or the splash. Phase 6 changes `app.json` and therefore the runtime fingerprint: vc7 lands on `f3b0f79c…` while existing vc6 installs stay on `a1a49392…`. Future OTAs must target whichever runtimes are still in the field |
 | N6 | `npx tsc --noEmit` green at every commit; typed routes unchanged |
 | N7 | React Compiler stays enabled; new components obey the rules of React |
 
@@ -567,7 +567,7 @@ suite to catch a half-finished refresh (§10).
 | **3 · Colour** ✅ **done** | Web brand scale, AA-passing semantics, dark-mode primary and gradient, membership-card badge | OTA | Contrast script passes in both themes |
 | **4 · Components** ✅ **done** | `ListRow`, `StatusPill`, `Chip`, `AmountCard`; `Input`/`Card`/`Screen`/`Segmented` rework; retire duplicates | OTA | Duplicate implementations deleted, not merely unused |
 | **5 · Screens** ✅ **mostly done** | Home, Dues, Contributions, Loans, Notices; `FlatList`; Welcome reachable | OTA | Before/after screenshots in four states (§8) |
-| **6 · Binary (deferred)** | Unify the three blues; icon, splash, adaptive icon, notification colour; new Play Store screenshots; versionCode 7 | Store | Owner schedules it |
+| **6 · Binary** 🔄 **built, not submitted** | Three blues unified to `#1E64D4` (the notification accent was the visible one — it tints the icon in the shade beside the app's own blue). Icon artwork unchanged: it already carries the eS gradient rather than a flat colour. Version 1.4.0, versionCode 7. | Store | ✅ AAB built. **Outstanding: `eas.json` has no Play service account, so submission needs the owner; screenshots are taken on a real phone per `store-assets/PLAY-CONSOLE-GUIDE.md`** |
 
 Sequencing rationale: motion first because it is the loudest complaint and the smallest
 diff; Sinhala second because it affects the majority of users; colour third because it is
