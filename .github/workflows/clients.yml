@@ -38,6 +38,11 @@ jobs:
       # Guards the Reanimated 4 regression that made every tap wobble for 1.4s:
       # a partial spring config silently inherits mass:4/stiffness:900 and the
       # damping ratio collapses. See mobile/src/motion.ts.
+      #
+      # Invoked directly, NOT through an npm script: `packageJson:scripts` is a
+      # source of the expo-updates runtime fingerprint, so adding a script to
+      # mobile/package.json changes the runtime version and makes every OTA
+      # update invisible to the installed app. Found the hard way.
       - name: Motion gate
         working-directory: mobile
-        run: npm run check:motion
+        run: node scripts/check-motion.mjs
