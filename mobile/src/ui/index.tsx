@@ -190,7 +190,7 @@ export function Row({
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.sm + 1 }}>
       {icon ? (
         <View style={{ width: 30, height: 30, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md - 2 }}>
-          <Ionicons name={icon} size={15} color={p.primary} />
+          <Ionicons name={icon} size={15} color={p.primaryOnSoft} />
         </View>
       ) : null}
       {/* paddingRight guards against Android clipping the label's last glyph */}
@@ -233,7 +233,7 @@ export function Button({
 }): React.ReactElement {
   const p = usePalette()
   const ty = useType()
-  const fg = variant === 'secondary' ? p.primary : p.onPrimary
+  const fg = variant === 'secondary' ? p.primaryOnSoft : p.onPrimary
   const isPrimary = variant === 'primary'
   // The gradient is a sibling BEHIND the Pressable, not a child on top of it.
   // On Fabric/Android an SVG child intercepts touches over its whole area
@@ -475,7 +475,7 @@ export function EmptyState({ icon, text }: { icon: keyof typeof Ionicons.glyphMa
   return (
     <Animated.View entering={FadeIn.duration(dur.enter)} style={{ alignItems: 'center', paddingVertical: spacing.xxxl + 4, gap: spacing.lg - 2 }}>
       <View style={{ width: 72, height: 72, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
-        <Ionicons name={icon} size={30} color={p.primary} />
+        <Ionicons name={icon} size={30} color={p.primaryOnSoft} />
       </View>
       <Text style={{ color: p.textMuted, fontSize: typeScale.body, fontFamily: ty.family.regular, textAlign: 'center', paddingHorizontal: spacing.xxl, lineHeight: ty.lh(typeScale.body) }}>
         {text}
@@ -573,7 +573,7 @@ export function ErrorView({ onRetry }: { onRetry: () => void }): React.ReactElem
   return (
     <Animated.View entering={FadeIn.duration(dur.enter)} style={{ alignItems: 'center', paddingVertical: spacing.xxxl, paddingHorizontal: spacing.lg }}>
       <View style={{ width: 72, height: 72, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg - 2 }}>
-        <Ionicons name="cloud-offline-outline" size={30} color={p.primary} />
+        <Ionicons name="cloud-offline-outline" size={30} color={p.primaryOnSoft} />
       </View>
       <Text style={{ color: p.textMuted, fontSize: typeScale.body, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.body), textAlign: 'center', marginBottom: spacing.lg }}>
         {t('mob.errorLoad')}

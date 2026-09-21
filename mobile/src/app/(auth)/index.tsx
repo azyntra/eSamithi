@@ -88,11 +88,11 @@ export default function Welcome(): React.ReactElement {
               backgroundColor: p.primarySoft
             }}
           >
-            <Ionicons name="people-circle-outline" size={16} color={p.primary} />
+            <Ionicons name="people-circle-outline" size={16} color={p.primaryOnSoft} />
             <Text style={{ color: p.text, fontSize: 14, fontFamily: ty.family.semibold, lineHeight: ty.lh(14) }}>
               {pendingProfile.name || pendingProfile.code || pendingProfile.slug}
             </Text>
-            <Text style={{ color: p.primary, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>· {t('mob.samithiChange')}</Text>
+            <Text style={{ color: p.primaryOnSoft, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>· {t('mob.samithiChange')}</Text>
           </ScalePressable>
         </Animated.View>
       </View>

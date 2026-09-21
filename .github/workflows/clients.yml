@@ -51,3 +51,8 @@ jobs:
       - name: Typography gate
         working-directory: mobile
         run: node scripts/check-type.mjs
+      # Members read this outdoors on cheap screens. Six palette pairs used to
+      # fail WCAG AA, including the primary blue as both text and button fill.
+      - name: Contrast gate
+        working-directory: mobile
+        run: node scripts/check-contrast.mjs

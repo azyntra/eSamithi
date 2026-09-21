@@ -77,7 +77,7 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
                   }}
                 />
               ) : null}
-              <Ionicons name={focused ? icons.active : icons.idle} size={21} color={focused ? p.primary : p.textMuted} />
+              <Ionicons name={focused ? icons.active : icons.idle} size={21} color={focused ? p.primaryOnSoft : p.textMuted} />
               {options.tabBarBadge != null ? (
                 <Animated.View
                   entering={FadeIn.duration(dur.micro)}

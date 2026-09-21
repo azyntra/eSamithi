@@ -2,30 +2,36 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { useColorScheme } from 'react-native'
 import * as SecureStore from 'expo-secure-store'
 
-// Palette mirroring the desktop app's token theme (blue primary, slate darks).
-// The gradient pair + navy match the eS launcher icon so in-app branding and
-// the store identity read as one family.
+// Palette mirroring the web and desktop apps' token theme, so a member's app
+// and the officer's screen read as one product.
+//
+// Every foreground/background pair here is checked by scripts/check-contrast.mjs
+// against WCAG AA. Six pairs used to fail, including the primary blue both as
+// a text colour (3.68:1) and under a white button label (3.68:1).
 export const palettes = {
   light: {
     bg: '#f1f5f9',
     surface: '#ffffff',
     surfaceAlt: '#f8fafc',
     text: '#0f172a',
-    textMuted: '#64748b',
+    textMuted: '#475569',
     border: '#e2e8f0',
-    primary: '#3b82f6',
-    primaryDark: '#2563eb',
-    primarySoft: '#e8f0fe',
+    primary: '#1E64D4',
+    primaryDark: '#1854B8',
+    primarySoft: '#EEF4FE',
+    // Text sitting ON primarySoft. Separate from `primary` because in dark
+    // mode the tint is dark and the label has to lift off it.
+    primaryOnSoft: '#1E64D4',
     onPrimary: '#ffffff',
-    gradStart: '#3b82f6',
-    gradEnd: '#1E64D4',
+    gradStart: '#1E64D4',
+    gradEnd: '#1854B8',
     navy: '#0B1F3B',
     surfaceElevated: '#ffffff',
     overlay: 'rgba(15, 23, 42, 0.45)',
     shadow: '#0f172a',
-    success: '#16a34a',
-    warning: '#d97706',
-    danger: '#dc2626',
+    success: '#166534',
+    warning: '#B45309',
+    danger: '#B91C1C',
     dangerBg: '#fee2e2',
     warningBg: '#fef3c7',
     successBg: '#dcfce7'
@@ -37,12 +43,18 @@ export const palettes = {
     text: '#e2e8f0',
     textMuted: '#94a3b8',
     border: '#27324a',
-    primary: '#3b82f6',
-    primaryDark: '#2563eb',
-    primarySoft: '#1e2f55',
-    onPrimary: '#ffffff',
-    gradStart: '#3b82f6',
-    gradEnd: '#1E64D4',
+    // Dark mode inverts the brand surface: a light blue fill with a navy
+    // label, rather than the same saturated blue the light theme uses. The old
+    // palette shared `primary` byte-for-byte between the two themes, so the
+    // gradient hero and every primary button were the brightest thing on a
+    // dark screen — and white-on-#3b82f6 measured 3.68:1, below the minimum.
+    primary: '#4C8DF6',
+    primaryDark: '#6FA3F8',
+    primarySoft: '#1B2B4D',
+    primaryOnSoft: '#85B0F2',
+    onPrimary: '#0F172A',
+    gradStart: '#6FA3F8',
+    gradEnd: '#4C8DF6',
     navy: '#0B1F3B',
     surfaceElevated: '#1a2540',
     overlay: 'rgba(2, 6, 23, 0.55)',

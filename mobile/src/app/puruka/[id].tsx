@@ -172,7 +172,7 @@ export default function PurukaPostDetail(): React.ReactElement {
         {item.price !== null
           ? <Money cents={item.price} size={20} bold color={p.primary} />
           : wanted && <Text style={{ color: p.primary, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{t('mob.pkOpenBudget')}</Text>}
-        {item.negotiable === 1 && <Badge text={wanted ? t('mob.pkBudgetFlexible') : t('mob.pkNegotiable')} color={p.primary} bg={p.primarySoft} />}
+        {item.negotiable === 1 && <Badge text={wanted ? t('mob.pkBudgetFlexible') : t('mob.pkNegotiable')} color={p.primaryOnSoft} bg={p.primarySoft} />}
       </View>
 
       {!!item.description && (

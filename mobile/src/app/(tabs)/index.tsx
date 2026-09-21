@@ -192,7 +192,7 @@ export default function Home(): React.ReactElement {
             style={{ flex: 1, alignItems: 'center', gap: spacing.xs + 2, paddingVertical: spacing.sm }}
           >
             <View style={{ width: 46, height: 46, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name={qa.icon} size={21} color={p.primary} />
+              <Ionicons name={qa.icon} size={21} color={p.primaryOnSoft} />
             </View>
             <Text
               numberOfLines={2}

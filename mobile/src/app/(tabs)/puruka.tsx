@@ -263,7 +263,7 @@ export default function Puruka(): React.ReactElement {
                 backgroundColor: selected ? p.primary : p.primarySoft
               }}
             >
-              <Text style={{ color: selected ? p.onPrimary : p.primary, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>
+              <Text style={{ color: selected ? p.onPrimary : p.primaryOnSoft, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>
                 {chip.label}
               </Text>
             </ScalePressable>

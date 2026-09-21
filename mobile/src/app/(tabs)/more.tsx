@@ -83,7 +83,7 @@ export default function More(): React.ReactElement {
       }}
     >
       <View style={{ width: 34, height: 34, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md }}>
-        <Ionicons name={item.icon} size={17} color={p.primary} />
+        <Ionicons name={item.icon} size={17} color={p.primaryOnSoft} />
       </View>
       <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16), flex: 1 }}>{item.label}</Text>
       <Ionicons name="chevron-forward" size={18} color={p.textMuted} />

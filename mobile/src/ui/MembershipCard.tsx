@@ -71,8 +71,8 @@ export function MembershipCard({
           </Text>
           <Badge
             text={active ? t('common.active') : t('common.inactive')}
-            color={active ? '#166534' : '#7f1d1d'}
-            bg={active ? '#bbf7d0' : '#fecaca'}
+            color={active ? p.success : p.danger}
+            bg={active ? p.successBg : p.dangerBg}
           />
         </View>
       </View>
