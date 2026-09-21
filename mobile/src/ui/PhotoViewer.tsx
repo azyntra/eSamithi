@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { dur, timing, useReducedMotion } from '../motion'
 import { radius, spacing } from '../theme'
 import { interFamily } from '../typography'
 import { ScalePressable } from './pressable'
@@ -15,6 +16,9 @@ import { ScalePressable } from './pressable'
 
 function ZoomablePhoto({ uri }: { uri: string }): React.ReactElement {
   const { width, height } = useWindowDimensions()
+  // Reanimated gates its own animations; a Modal's platform fade and an
+  // expo-image cross-fade it cannot see, so they are gated here.
+  const reduce = useReducedMotion()
   const scale = useSharedValue(1)
   const savedScale = useSharedValue(1)
   const tx = useSharedValue(0)
@@ -24,10 +28,10 @@ function ZoomablePhoto({ uri }: { uri: string }): React.ReactElement {
 
   const reset = (): void => {
     'worklet'
-    scale.value = withTiming(1, { duration: 180 })
+    scale.value = withTiming(1, timing(dur.gesture))
     savedScale.value = 1
-    tx.value = withTiming(0, { duration: 180 })
-    ty.value = withTiming(0, { duration: 180 })
+    tx.value = withTiming(0, timing(dur.gesture))
+    ty.value = withTiming(0, timing(dur.gesture))
     savedTx.value = 0
     savedTy.value = 0
   }
@@ -61,7 +65,7 @@ function ZoomablePhoto({ uri }: { uri: string }): React.ReactElement {
       if (scale.value > 1) {
         reset()
       } else {
-        scale.value = withTiming(2.2, { duration: 180 })
+        scale.value = withTiming(2.2, timing(dur.gesture))
         savedScale.value = 2.2
       }
     })
@@ -75,7 +79,7 @@ function ZoomablePhoto({ uri }: { uri: string }): React.ReactElement {
   return (
     <GestureDetector gesture={composed}>
       <Animated.View style={[{ width, height, alignItems: 'center', justifyContent: 'center' }, style]}>
-        <Image source={{ uri }} style={{ width, height }} contentFit="contain" transition={150} />
+        <Image source={{ uri }} style={{ width, height }} contentFit="contain" transition={reduce ? 0 : dur.micro} />
       </Animated.View>
     </GestureDetector>
   )
@@ -93,6 +97,7 @@ export function PhotoViewer({
   onClose: () => void
 }): React.ReactElement {
   const insets = useSafeAreaInsets()
+  const reduce = useReducedMotion()
   const [index, setIndex] = useState(initialIndex)
 
   useEffect(() => {
@@ -102,7 +107,7 @@ export function PhotoViewer({
   const current = photos[Math.min(index, photos.length - 1)]
 
   return (
-    <Modal visible={visible} transparent statusBarTranslucent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent statusBarTranslucent animationType={reduce ? 'none' : 'fade'} onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.96)', justifyContent: 'center' }}>
         {/* keyed so zoom state resets per photo */}
         {current ? <ZoomablePhoto key={current} uri={current} /> : null}

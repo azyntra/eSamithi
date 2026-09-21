@@ -3,8 +3,9 @@ import { Text, View } from 'react-native'
 // expo-router (SDK 57) vendors react-navigation — the public package isn't
 // installed, so the tab-bar props type comes from the vendored build.
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs/types'
-import Animated, { ZoomIn } from 'react-native-reanimated'
+import Animated, { FadeIn } from 'react-native-reanimated'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { dur } from '../motion'
 import { elevation, radius, spacing, usePalette } from '../theme'
 import { useType } from '../typography'
 import { ScalePressable } from './pressable'
@@ -66,7 +67,7 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
             <View style={{ width: 54, height: 30, alignItems: 'center', justifyContent: 'center' }}>
               {focused ? (
                 <Animated.View
-                  entering={ZoomIn.springify().damping(16)}
+                  entering={FadeIn.duration(dur.micro)}
                   style={{
                     position: 'absolute',
                     width: 54,
@@ -79,7 +80,7 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
               <Ionicons name={focused ? icons.active : icons.idle} size={21} color={focused ? p.primary : p.textMuted} />
               {options.tabBarBadge != null ? (
                 <Animated.View
-                  entering={ZoomIn.springify().damping(14)}
+                  entering={FadeIn.duration(dur.micro)}
                   style={{
                     position: 'absolute',
                     top: -2,

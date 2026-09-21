@@ -13,6 +13,7 @@ import { LoadingView } from '../ui'
 import { ToastProvider } from '../ui/toast'
 import '../lib/queryFocus' // wires app-foreground → React Query refetch
 import '../lib/errorReporter' // global JS crash reports → /client-errors
+import { useReducedMotion } from '../motion'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +26,7 @@ const queryClient = new QueryClient({
 function RootNavigator(): React.ReactElement {
   const { status } = useAuth()
   const { t } = useT()
+  const reduce = useReducedMotion()
   const p = usePalette()
   const ty = useType()
   const { scheme } = useThemeMode()
@@ -55,7 +57,7 @@ function RootNavigator(): React.ReactElement {
         headerShadowVisible: false,
         headerTitleStyle: { fontFamily: ty.family.bold, fontSize: 17 },
         headerBackButtonDisplayMode: 'minimal',
-        animation: 'slide_from_right',
+        animation: reduce ? 'none' : 'slide_from_right',
         contentStyle: { backgroundColor: p.bg }
       }}
     >

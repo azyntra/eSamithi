@@ -12,13 +12,14 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
-  Easing,
   FadeIn,
+  makeMutable,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming
 } from 'react-native-reanimated'
+import { dur, ease, timing } from '../motion'
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Rect, Stop } from 'react-native-svg'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { elevation, radius, spacing, type as typeScale, usePalette, useThemeMode } from '../theme'
@@ -89,8 +90,13 @@ export function Screen({
 }): React.ReactElement {
   const p = usePalette()
   const insets = useSafeAreaInsets()
+  // Every screen renders a skeleton Screen and then swaps it for a content
+  // Screen, so the two unmount and mount: a hard cut. One short fade here
+  // turns that seam into a crossfade on all eighteen screens at once, which
+  // is what the Home screen's seven-section cascade was really trying to do.
   return (
-    <ScrollView
+    <Animated.ScrollView
+      entering={FadeIn.duration(dur.content)}
       style={{ flex: 1, backgroundColor: p.bg }}
       contentContainerStyle={{ padding: padded ? spacing.lg : 0, paddingBottom: insets.bottom + spacing.xxxl }}
       refreshControl={
@@ -98,7 +104,7 @@ export function Screen({
       }
     >
       {children}
-    </ScrollView>
+    </Animated.ScrollView>
   )
 }
 
@@ -378,6 +384,26 @@ export function Input(props: TextInputProps & { label: string; error?: string })
 // ---- Loading / feedback ----------------------------------------------------
 
 // Shimmering placeholder block for skeleton loading states
+// One phase drives every skeleton on screen. The Puruka loading state shows
+// twelve of these; twelve independent loops used to run out of step, and the
+// old sweep used Easing.inOut with no `reverse`, so a white bar decelerated to
+// a near-stop at each edge and then snapped back — it read as a twitch, not a
+// shimmer. This is a single shared breath, in phase everywhere.
+const skeletonPhase = makeMutable(0)
+let skeletonRunning = false
+
+function useSkeletonPhase(): typeof skeletonPhase {
+  // Started from an effect, not at module scope: an import-time withRepeat
+  // runs before Reanimated's UI runtime is ready. The flag keeps it to one
+  // animation no matter how many skeletons mount.
+  useEffect(() => {
+    if (skeletonRunning) return
+    skeletonRunning = true
+    skeletonPhase.value = withRepeat(withTiming(1, timing(900, ease.pulse)), -1, true)
+  }, [])
+  return skeletonPhase
+}
+
 export function Skeleton({ height = 16, width = '100%' as number | `${number}%`, radius: r = 8, style }: {
   height?: number
   width?: number | `${number}%`
@@ -386,31 +412,18 @@ export function Skeleton({ height = 16, width = '100%' as number | `${number}%`,
 }): React.ReactElement {
   const p = usePalette()
   const { scheme } = useThemeMode()
-  const [w, setW] = useState(0)
-  const sweep = useSharedValue(0)
+  const phase = useSkeletonPhase()
 
-  useEffect(() => {
-    sweep.value = withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.ease) }), -1)
-  }, [sweep])
-
-  const sweepStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: -90 + sweep.value * (w + 180) }]
-  }))
+  const breath = useAnimatedStyle(() => ({ opacity: 0.55 + phase.value * 0.45 }))
 
   return (
-    <View
-      onLayout={(e) => setW(e.nativeEvent.layout.width)}
-      style={[{ height, width, borderRadius: r, backgroundColor: scheme === 'dark' ? p.surfaceAlt : p.border, overflow: 'hidden', marginBottom: spacing.sm }, style]}
-    >
-      {w > 0 ? (
-        <Animated.View
-          style={[
-            { width: 90, height: '100%', backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.55)' },
-            sweepStyle
-          ]}
-        />
-      ) : null}
-    </View>
+    <Animated.View
+      style={[
+        { height, width, borderRadius: r, backgroundColor: scheme === 'dark' ? p.surfaceAlt : p.border, marginBottom: spacing.sm },
+        breath,
+        style
+      ]}
+    />
   )
 }
 
@@ -436,7 +449,7 @@ export function ProgressBar({ value, color }: { value: number; color?: string })
   const fill = useSharedValue(0)
 
   useEffect(() => {
-    fill.value = withTiming(clamped, { duration: 650, easing: Easing.out(Easing.cubic) })
+    fill.value = withTiming(clamped, timing(dur.page, ease.enter))
   }, [clamped, fill])
 
   const fillStyle = useAnimatedStyle(() => ({
@@ -447,7 +460,7 @@ export function ProgressBar({ value, color }: { value: number; color?: string })
     <View style={{ height: 8, borderRadius: 4, backgroundColor: p.surfaceAlt, overflow: 'hidden', marginTop: spacing.sm }}>
       <Animated.View
         style={[
-          { height: 8, width: '100%', borderRadius: 4, backgroundColor: color ?? p.success, transformOrigin: 'left' },
+          { height: 8, width: '100%', backgroundColor: color ?? p.success, transformOrigin: 'left' },
           fillStyle
         ]}
       />
@@ -460,7 +473,7 @@ export function EmptyState({ icon, text }: { icon: keyof typeof Ionicons.glyphMa
   const p = usePalette()
   const ty = useType()
   return (
-    <Animated.View entering={FadeIn.duration(300)} style={{ alignItems: 'center', paddingVertical: spacing.xxxl + 4, gap: spacing.lg - 2 }}>
+    <Animated.View entering={FadeIn.duration(dur.enter)} style={{ alignItems: 'center', paddingVertical: spacing.xxxl + 4, gap: spacing.lg - 2 }}>
       <View style={{ width: 72, height: 72, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
         <Ionicons name={icon} size={30} color={p.primary} />
       </View>
@@ -558,7 +571,7 @@ export function ErrorView({ onRetry }: { onRetry: () => void }): React.ReactElem
   const ty = useType()
   const { t } = useT()
   return (
-    <Animated.View entering={FadeIn.duration(300)} style={{ alignItems: 'center', paddingVertical: spacing.xxxl, paddingHorizontal: spacing.lg }}>
+    <Animated.View entering={FadeIn.duration(dur.enter)} style={{ alignItems: 'center', paddingVertical: spacing.xxxl, paddingHorizontal: spacing.lg }}>
       <View style={{ width: 72, height: 72, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg - 2 }}>
         <Ionicons name="cloud-offline-outline" size={30} color={p.primary} />
       </View>

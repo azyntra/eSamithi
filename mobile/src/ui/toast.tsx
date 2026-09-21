@@ -1,7 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated'
+import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated'
+import { dur, ease } from '../motion'
 import * as Haptics from 'expo-haptics'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { elevation, radius, spacing, usePalette } from '../theme'
@@ -73,8 +74,8 @@ function ToastCard({ toast }: { toast: ToastState }): React.ReactElement {
 
   return (
     <Animated.View
-      entering={SlideInDown.springify().damping(18)}
-      exiting={SlideOutDown.duration(180)}
+      entering={FadeInDown.duration(dur.surface).easing(ease.enter)}
+      exiting={FadeOutDown.duration(dur.exit).easing(ease.exit)}
       pointerEvents="none"
       style={{
         position: 'absolute',

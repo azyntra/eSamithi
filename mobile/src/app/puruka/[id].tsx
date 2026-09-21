@@ -3,7 +3,8 @@ import { Alert, Dimensions, Linking, type NativeScrollEvent, type NativeSyntheti
 import { Image } from 'expo-image'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { LinearTransition } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useDerivedValue, withTiming } from 'react-native-reanimated'
+import { dur, ease, timing, useReducedMotion } from '../../motion'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../i18n'
 import { elevation, radius, spacing, usePalette } from '../../theme'
@@ -21,8 +22,26 @@ function whatsappNumber(phone: string): string {
   return digits.startsWith('0') ? `94${digits.slice(1)}` : digits
 }
 
+
+// A fixed-width slot with a bar that scales inside it. The old version
+// animated each dot's `width` through a layout transition, which springs the
+// ORIGIN of every sibling too — one swipe shuffled the whole row for 1.8 s.
+// Nothing here changes layout, so nothing else moves.
+function PagerDot({ active, activeColor, idleColor }: { active: boolean; activeColor: string; idleColor: string }): React.ReactElement {
+  const t = useDerivedValue(() => withTiming(active ? 1 : 0, timing(dur.micro, ease.standard)), [active])
+  const style = useAnimatedStyle(() => ({ transform: [{ scaleX: 0.35 + t.value * 0.65 }] }))
+  return (
+    <View style={{ width: 20, height: 7, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View
+        style={[{ width: 20, height: 7, borderRadius: 4, backgroundColor: active ? activeColor : idleColor }, style]}
+      />
+    </View>
+  )
+}
+
 export default function PurukaPostDetail(): React.ReactElement {
   const { t, lang } = useT()
+  const reduce = useReducedMotion()
   const p = usePalette()
   const ty = useType()
   const insets = useSafeAreaInsets()
@@ -120,7 +139,7 @@ export default function PurukaPostDetail(): React.ReactElement {
                   source={{ uri: photoUrl(photo) }}
                   style={{ width: pageWidth, height: 250, borderRadius: radius.lg, marginRight: 10, backgroundColor: p.surfaceAlt }}
                   contentFit="cover"
-                  transition={180}
+                  transition={reduce ? 0 : dur.gesture}
                 />
               </ScalePressable>
             ))}
@@ -128,16 +147,7 @@ export default function PurukaPostDetail(): React.ReactElement {
           {item.photos.length > 1 && (
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 7, marginTop: spacing.md - 2 }}>
               {item.photos.map((photo, i) => (
-                <Animated.View
-                  key={photo}
-                  layout={LinearTransition.springify().damping(18)}
-                  style={{
-                    width: i === activePhoto ? 20 : 7,
-                    height: 7,
-                    borderRadius: 4,
-                    backgroundColor: i === activePhoto ? p.primary : p.border
-                  }}
-                />
+                <PagerDot key={photo} active={i === activePhoto} activeColor={p.primary} idleColor={p.border} />
               ))}
             </View>
           )}

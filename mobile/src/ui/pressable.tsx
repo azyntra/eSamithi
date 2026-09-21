@@ -1,15 +1,22 @@
 import React from 'react'
 import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native'
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
+import { dur, ease, timing } from '../motion'
 
 const AnimatedPressableBase = Animated.createAnimatedComponent(Pressable)
 
 export type HapticKind = 'impact' | 'selection' | 'none'
 
-// The app-wide press affordance: a soft spring scale-down (0.97) instead of
-// bare opacity. Everything tappable — buttons, cards, list rows, tab items —
-// funnels through this so touch feedback feels like one system.
+// The app-wide press affordance: a short scale-down instead of bare opacity.
+// Everything tappable — buttons, cards, list rows, tab items — funnels through
+// this so touch feedback feels like one system.
+//
+// This used to be a spring, and because it passed a partial config it ran at a
+// damping ratio of 0.25: it sprang 1.3% LARGER than rest on release and wobbled
+// for 1.4 seconds, on every tap in the app. A timing curve cannot overshoot, is
+// cheaper, and is interruption-safe. Asymmetric on purpose — the finger drives
+// the press down, the release settles.
 export function ScalePressable({
   children,
   style,
@@ -35,11 +42,11 @@ export function ScalePressable({
       {...rest}
       disabled={disabled}
       onPressIn={(e) => {
-        pressed.value = withSpring(1, { damping: 20, stiffness: 400 })
+        pressed.value = withTiming(1, timing(dur.pressIn, ease.press))
         rest.onPressIn?.(e)
       }}
       onPressOut={(e) => {
-        pressed.value = withSpring(0, { damping: 20, stiffness: 400 })
+        pressed.value = withTiming(0, timing(dur.pressOut))
         rest.onPressOut?.(e)
       }}
       onPress={(e) => {

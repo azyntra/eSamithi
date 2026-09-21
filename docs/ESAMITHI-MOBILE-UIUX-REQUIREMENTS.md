@@ -281,35 +281,48 @@ export const TIMING = {
 export const stagger = (i: number): number => Math.min(i, 2) * 30
 ```
 
-**Token table** — every value computed, not estimated:
+**Token table** — as built. Every value computed, not estimated.
 
-| Token | Value | ζ | Overshoot | Settle | Used for |
-|---|---|---|---|---|---|
-| `TIMING.press` | `withTiming(90, Easing.out(quad))` | — | none | 90 ms | Every tap. A curve, not a spring: predictable, cheap, and structurally incapable of wobbling |
-| `TIMING.fast` | 150 ms | — | none | 150 ms | Chips, toggles, tab indicator, pager dots |
-| `TIMING.base` | 220 ms | — | none | 220 ms | Toast, banners, sheets |
-| `TIMING.page` | 320 ms | — | none | 320 ms | Stack transitions (already native — do not replace) |
-| `SPRING.enter` | `{damping:38, stiffness:360, mass:1}` | **1.00** | none | ~210 ms | Screen and section entrances |
-| `SPRING.settle` | `{damping:120, stiffness:900, mass:4}` | **1.00** | none | ~267 ms | Physical-feeling movement that must not bounce |
-
-This matches the web app's 80/150/220/320 ladder (`ESAMITHI-WEB-APP-REQUIREMENTS.md` §4.5),
-adapted: mobile's press token is 90 ms rather than 80 ms because a touch has no hover state
-to precede it.
-
-**Per-interaction specification.** Each row is a requirement.
-
-| Interaction | Today | Required | Token | Where |
+| Token | Value | ζ | Settle | Used for |
 |---|---|---|---|---|
-| Any press | spring ζ 0.25, 44 % overshoot, 1.6 s | scale 0.97 in, back out, no overshoot | `TIMING.press` | `src/ui/pressable.tsx:38,42` |
-| Tab switch | pill `ZoomIn` peaking at scale 1.66, 2.0 s | indicator **slides** between tabs; no zoom, no scale | `TIMING.fast` | `src/ui/TabBar.tsx:68-69` |
-| Unread badge appears | `ZoomIn` peaking at 1.69, 2.3 s | fade in only | `TIMING.fast` | `src/ui/TabBar.tsx:81-82` |
-| Home sections mount | 7-item cascade, 62 % overshoot, 2.2 s total | fade + 8 px rise, **max 3 staggered items**, first mount only | `SPRING.enter` + `stagger()` | `src/app/(tabs)/index.tsx:18-21` |
-| Welcome mounts | 5 staggered elements, 2.1 s | same rule — 3 items maximum | `SPRING.enter` + `stagger()` | `src/app/(auth)/index.tsx:36,44,50,56,81` |
-| Toast appears | springs a full window height, ζ 0.15 | slides **its own height**, symmetric in and out | `TIMING.base` | `src/ui/toast.tsx:75-77` |
-| Pager dots | width springs to 28 px, row shuffles 1.8 s | width animates 7 ↔ 20 px | `TIMING.fast` | `src/app/puruka/[id].tsx:131-139` |
-| Skeleton shimmer | 1100 ms `Easing.inOut`, snaps back, 12 at once | linear sweep, 1000 ms, `reverse: true`; highlight alpha 0.55 → **0.25** | — | `src/ui/index.tsx:388-414` |
-| Progress fill | 650 ms | ≤ 400 ms | `TIMING.base`-scale | `src/ui/index.tsx:433-456` |
-| Stack push | `slide_from_right`, native | unchanged | — | `src/app/_layout.tsx:58` |
+| `dur.pressIn` / `dur.pressOut` | `withTiming` 90 / 140 ms, `ease.press` in, `ease.standard` out | — | 90 / 140 ms | Every tap. Asymmetric on purpose: the finger drives the press down, the release settles. A curve, not a spring — structurally incapable of wobbling |
+| `dur.micro` | 150 ms | — | 150 ms | Tab pill, unread badge, chips, pager dots |
+| `dur.exit` | 160 ms | — | 160 ms | Every exit — deliberately shorter than its entrance |
+| `dur.content` | 160 ms | — | 160 ms | Skeleton giving way to content, on `Screen` |
+| `dur.gesture` | 180 ms | — | 180 ms | Photo zoom/pan and image cross-fades. Already correct; tokenised, not changed |
+| `dur.surface` | 220 ms | — | 220 ms | Toast, banner |
+| `dur.enter` | 260 ms | — | 260 ms | Welcome-screen arrivals, empty and error states |
+| `dur.page` | 320 ms | — | 320 ms | Progress fill. Also roughly the native stack transition, which is left alone |
+| `dur.stagger` | 30 ms per item | — | — | Welcome screen only |
+| `dist.rise` | 12 px | — | — | How far an entering element travels. Short, because `ease.enter` is front-loaded |
+| `SPRING.settle` | `{damping:120, stiffness:900, mass:4}` | **1.00** | ~390 ms | The only spring left in the app. Reanimated 4's own Gentle numbers, stated in full |
+
+Easings: `ease.standard` `bezier(.2,0,0,1)` · `ease.enter` `bezier(0,0,0,1)` · `ease.exit`
+`bezier(.3,0,1,1)` · `ease.press` `Easing.out(Easing.quad)` · `ease.pulse`
+`Easing.inOut(Easing.quad)`. This is the web app's 80/150/220/320 ladder
+(`ESAMITHI-WEB-APP-REQUIREMENTS.md` §4.5); mobile's press token is 90 ms rather than 80 ms
+because a touch has no hover state to precede it.
+
+**Bezier easings are `.factory()`'d once at module scope.** Built per render they allocate a
+new worklet each time, and an un-factoried curve handed to a layout builder trips
+`assertEasingIsWorklet` in dev and misbehaves silently in release.
+
+**Per-interaction, as built.**
+
+| Interaction | Was | Now | Where |
+|---|---|---|---|
+| Any press | spring ζ 0.25, 44 % overshoot, 1.6 s | 90 ms down, 140 ms back | `src/ui/pressable.tsx` |
+| Tab switch | pill `ZoomIn` peaking at 1.66, 2.0 s | `FadeIn` 150 ms. **Not** a duration-solved spring: that solver runs a 100-iteration bisection on the UI thread at every start, and this fires on every press | `src/ui/TabBar.tsx` |
+| Unread badge | `ZoomIn` peaking at 1.69, 2.3 s | `FadeIn` 150 ms. No pop, ever — this badge counts death notices | `src/ui/TabBar.tsx` |
+| Home opens | 7-section cascade, still moving after 2.2 s | The cascade is **deleted**. Home is a tab screen that expo-router keeps mounted, so it fired once per launch and never again | `src/app/(tabs)/index.tsx` |
+| Skeleton → content, every screen | a hard cut — the skeleton `Screen` unmounts and a content `Screen` mounts | one 160 ms crossfade, moved onto `Screen` so all 18 screens get it | `src/ui/index.tsx` |
+| Welcome | 5 elements, 62 % overshoot each, ~2.1 s | 5 elements, 260 ms each, 30 ms apart, 12 px rise — 380 ms total. The one stagger that earns its keep | `src/app/(auth)/index.tsx` |
+| Toast | `SlideInDown` sprang the layout `originY` a full window height; flat 180 ms exit | `FadeInDown` 220 ms in, `FadeOutDown` 160 ms out — symmetric, and it rises into place because it is anchored at the bottom | `src/ui/toast.tsx` |
+| Pager dots | `LinearTransition` spring — one swipe shuffled the whole row for 1.8 s | fixed 20 × 7 slot, inner bar `scaleX` 0.35 ↔ 1.0 at 150 ms. Nothing changes layout, so nothing else moves | `src/app/puruka/[id].tsx` |
+| Skeleton | 12 independent 1100 ms sweeps, `Easing.inOut` and no `reverse`, so a white bar snapped back each cycle | one shared 900 ms opacity breath, `reverse: true`, in phase everywhere | `src/ui/index.tsx` |
+| Progress fill | 650 ms, and `scaleX` squashed the fill's own rounded cap | 320 ms; the radius moved to the track | `src/ui/index.tsx` |
+| Stack push · photo zoom · empty/error fade | already correct | unchanged — tokenised and reduced-motion gated only | — |
+
 
 **Banned outright**, in this codebase, permanently:
 
@@ -320,11 +333,10 @@ to precede it.
 * Any animation over 400 ms that is not a stack transition.
 * Stagger beyond 3 items, or on anything but a first mount.
 
-**Reduced motion becomes explicit.** `reduceMotion: ReduceMotion.System` is stated on every
-token above rather than inherited silently, and the three things Reanimated does not cover —
-the `PhotoViewer` `Modal` fade, the stack transition and the `expo-image` cross-fades — are
-gated on `AccessibilityInfo.isReduceMotionEnabled()` exposed through a `useReducedMotion()`
-hook in the same module.
+**Reduced motion is explicit.** `reduceMotion: ReduceMotion.System` is stated on every token
+rather than inherited silently, and the three things Reanimated cannot see — the
+`PhotoViewer` `Modal` fade, the native stack transition and the `expo-image` cross-fades —
+are gated on `useReducedMotion()`, re-exported from the same module.
 
 ### 3.3 Typography
 
@@ -550,7 +562,7 @@ suite to catch a half-finished refresh (§10).
 | Phase | Scope | Ships | Exit criteria |
 |---|---|---|---|
 | **0 · This document** | Approval of the direction | — | Owner signs off §1.2 |
-| **1 · Motion** | `src/motion.ts`; every call site in `pressable.tsx`, `TabBar.tsx`, `toast.tsx`, `(tabs)/index.tsx`, `(auth)/index.tsx`, `puruka/[id].tsx`, `Skeleton`, `ProgressBar`; explicit reduced motion | OTA | No partial spring configs remain; ζ ≥ 0.9 for every spring; owner confirms on a `preview` build that nothing dances |
+| **1 · Motion** ✅ **done** | `src/motion.ts`; every call site in `pressable.tsx`, `TabBar.tsx`, `toast.tsx`, `(tabs)/index.tsx`, `(auth)/index.tsx`, `puruka/[id].tsx`, `Screen`, `Skeleton`, `ProgressBar`, `PhotoViewer`, `_layout.tsx`; explicit reduced motion; `scripts/check-motion.mjs` wired into CI | OTA | ✅ No spring remains outside `SPRING.settle` (ζ = 1.00); the gate fails on the original bug when reintroduced; `tsc` green; bundle exports and runs with no runtime errors. **Outstanding: the owner confirms on a `preview` build that nothing dances** |
 | **2 · Sinhala and type** | `useType()` everywhere; delete 27 `fontWeight`s; six-size scale; tab labels; font scaling | OTA | No `fontWeight` outside `typography.tsx`; Sinhala headings bold on a real Android; 200 % font scale clean |
 | **3 · Colour** | Web brand scale, AA-passing semantics, dark-mode primary and gradient, membership-card badge | OTA | Contrast script passes in both themes |
 | **4 · Components** | `ListRow`, `StatusPill`, `Chip`, `AmountCard`; `Input`/`Card`/`Screen`/`Segmented` rework; retire duplicates | OTA | Duplicate implementations deleted, not merely unused |
@@ -568,7 +580,7 @@ self-contained; components before screens because screens consume them.
 CI runs only `npx tsc --noEmit`. There are no tests, no lint config and no visual
 regression, so verification has to be deliberate and mostly scripted.
 
-**Automated, added by this work** (`mobile/scripts/`, wired into `clients.yml`):
+**Automated, added by this work** (`mobile/scripts/`, wired into `clients.yml`). `check-motion.mjs` exists and runs in CI as of phase 1; the other three arrive with their phases:
 
 | Check | Fails when |
 |---|---|

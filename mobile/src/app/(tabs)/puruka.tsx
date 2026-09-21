@@ -15,6 +15,7 @@ import {
   type PurukaType
 } from '../../api/hooks'
 import { Badge, BrandGradient, Button, EmptyState, ErrorView, Money, ScalePressable, Screen, Segmented, SkeletonCards, StaleBanner } from '../../ui'
+import { dur, useReducedMotion } from '../../motion'
 
 // Category code → icon; admin-added categories fall back to the tag icon
 const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -35,6 +36,7 @@ export function categoryIcon(code: string): keyof typeof Ionicons.glyphMap {
 
 function PostTile({ post, onPress }: { post: PurukaPost; onPress: () => void }): React.ReactElement {
   const { t, lang } = useT()
+  const reduce = useReducedMotion()
   const p = usePalette()
   const ty = useType()
   const { scheme } = useThemeMode()
@@ -62,7 +64,7 @@ function PostTile({ post, onPress }: { post: PurukaPost; onPress: () => void }):
             source={{ uri: photoUrl(post.photos[0]) }}
             style={{ width: '100%', height: '100%' }}
             contentFit="cover"
-            transition={180}
+            transition={reduce ? 0 : dur.gesture}
             recyclingKey={String(post.id)}
           />
         ) : (

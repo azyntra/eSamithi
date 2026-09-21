@@ -35,3 +35,9 @@ jobs:
       - name: Typecheck
         working-directory: mobile
         run: npx tsc --noEmit
+      # Guards the Reanimated 4 regression that made every tap wobble for 1.4s:
+      # a partial spring config silently inherits mass:4/stiffness:900 and the
+      # damping ratio collapses. See mobile/src/motion.ts.
+      - name: Motion gate
+        working-directory: mobile
+        run: npm run check:motion
