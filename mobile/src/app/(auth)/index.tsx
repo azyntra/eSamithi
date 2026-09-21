@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -37,13 +37,11 @@ export default function Welcome(): React.ReactElement {
   const insets = useSafeAreaInsets()
   const { pendingProfile } = useAuth()
 
-  // Multi-samithi: everything downstream (verify/login) needs to know which
-  // samithi it talks to — the code screen provides that first
-  useEffect(() => {
-    if (!pendingProfile) router.replace('/(auth)/samithi')
-  }, [pendingProfile, router])
-
-  if (!pendingProfile) return <View style={{ flex: 1, backgroundColor: p.bg }} />
+  // Everything downstream (verify/login) needs to know which samithi it talks
+  // to, so the code has to come first — but this screen used to `replace` its
+  // way to the code form, which meant a first-time member never saw the
+  // welcome at all. It appeared only on the way back. Now the welcome IS the
+  // first screen, and its one action goes and gets the code.
 
   return (
     <View style={{ flex: 1, backgroundColor: p.bg, padding: spacing.xxl, paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xxl }}>
@@ -72,6 +70,7 @@ export default function Welcome(): React.ReactElement {
           {t('mob.welcomeSubtitle')}
         </Animated.Text>
 
+        {pendingProfile ? (
         <Animated.View entering={arrive(3)} style={{ alignSelf: 'flex-start' }}>
           <ScalePressable
             accessibilityRole="button"
@@ -95,12 +94,19 @@ export default function Welcome(): React.ReactElement {
             <Text style={{ color: p.primaryOnSoft, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>· {t('mob.samithiChange')}</Text>
           </ScalePressable>
         </Animated.View>
+        ) : null}
       </View>
 
       <Animated.View entering={arriveUp(4)}>
-        <Button label={t('mob.getStarted')} onPress={() => router.push('/(auth)/verify')} />
-        <View style={{ height: spacing.sm + 2 }} />
-        <Button label={t('mob.alreadyEnrolled')} variant="secondary" onPress={() => router.push('/(auth)/login')} />
+        {pendingProfile ? (
+          <>
+            <Button label={t('mob.getStarted')} onPress={() => router.push('/(auth)/verify')} />
+            <View style={{ height: spacing.sm + 2 }} />
+            <Button label={t('mob.alreadyEnrolled')} variant="secondary" onPress={() => router.push('/(auth)/login')} />
+          </>
+        ) : (
+          <Button label={t('mob.getStarted')} onPress={() => router.push('/(auth)/samithi')} />
+        )}
       </Animated.View>
     </View>
   )

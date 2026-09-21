@@ -858,6 +858,7 @@ export const en = {
   'mob.membershipFee': 'Membership fee',
   'mob.feePaid': 'Recorded',
   'mob.feeDue': 'Not recorded',
+  'mob.quickActions': 'Quick actions',
   'mob.recentActivity': 'Recent activity',
   'mob.staleData': 'Showing saved data — check your connection.',
   'mob.paidPercent': '{p}% repaid',

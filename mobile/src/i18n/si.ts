@@ -862,6 +862,7 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'mob.membershipFee': 'සාමාජික ගාස්තුව',
   'mob.feePaid': 'සටහන් වී ඇත',
   'mob.feeDue': 'සටහන් වී නොමැත',
+  'mob.quickActions': 'ඉක්මන් ක්‍රියා',
   'mob.recentActivity': 'මෑත ක්‍රියාකාරකම්',
   'mob.staleData': 'සුරැකි දත්ත පෙන්වයි — සම්බන්ධතාවය පරීක්ෂා කරන්න.',
   'mob.paidPercent': '{p}% ගෙවා ඇත',

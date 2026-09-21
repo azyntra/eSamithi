@@ -109,6 +109,53 @@ export function Screen({
   )
 }
 
+// The same chrome as Screen, but virtualised. There was no FlatList anywhere
+// in this app: a member's entire payment history, the whole notice archive and
+// every loaded marketplace page all rendered into one ScrollView. After a few
+// years of monthly dues that is the first thing to jank on a cheap Android.
+export function ListScreen<T>({
+  data,
+  renderItem,
+  keyExtractor,
+  header,
+  empty,
+  refreshing,
+  onRefresh,
+  onEndReached
+}: {
+  data: readonly T[]
+  renderItem: (item: T, index: number) => React.ReactElement
+  keyExtractor: (item: T, index: number) => string
+  header?: React.ReactElement
+  empty?: React.ReactElement
+  refreshing?: boolean
+  onRefresh?: () => void
+  onEndReached?: () => void
+}): React.ReactElement {
+  const p = usePalette()
+  const insets = useSafeAreaInsets()
+  return (
+    <Animated.FlatList
+      entering={FadeIn.duration(dur.content)}
+      data={data as T[]}
+      renderItem={({ item, index }) => renderItem(item, index)}
+      keyExtractor={keyExtractor}
+      ListHeaderComponent={header}
+      ListEmptyComponent={empty}
+      style={{ flex: 1, backgroundColor: p.bg }}
+      contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xxxl }}
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.4}
+      removeClippedSubviews
+      initialNumToRender={10}
+      windowSize={7}
+      refreshControl={
+        onRefresh ? <RefreshControl refreshing={refreshing ?? false} onRefresh={onRefresh} tintColor={p.primary} colors={[p.primary]} /> : undefined
+      }
+    />
+  )
+}
+
 export function Card({
   children,
   style,

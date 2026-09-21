@@ -4,12 +4,12 @@ import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../i18n'
-import { radius, spacing, usePalette } from '../../theme'
+import { radius, spacing, type as typeScale, usePalette } from '../../theme'
 import { interFamily, useType } from '../../typography'
 import { useAnnouncements, useDues, useProfile, useSocietyInfo, useStatement, type LedgerRow } from '../../api/hooks'
 import { formatDate } from '../../lib/date'
 import { noticeMeta } from './notices'
-import { Banner, BrandGradient, Card, ErrorView, Money, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner } from '../../ui'
+import { AmountCard, BrandGradient, Card, ErrorView, ListRow, Money, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner } from '../../ui'
 import { MembershipCard } from '../../ui/MembershipCard'
 
 type ActivityRow = LedgerRow & { direction: 'in' | 'out' }
@@ -78,18 +78,21 @@ export default function Home(): React.ReactElement {
   const feeMissing = dues.data?.membership_fee_paid === false
   const showStale = (profile.isError || statement.isError || dues.isError)
 
+  const owed = (dues.data?.overdue_loans ?? []).reduce((sum, l) => sum + l.principal_owed + l.interest_owed + l.fines_owed, 0)
+  const latest = notices.data?.[0]
+
   return (
     <Screen refreshing={refreshing} onRefresh={onRefresh}>
       <View style={{ height: insets.top + spacing.sm }} />
       {showStale && <StaleBanner />}
 
-      {/* Greeting header (tab header is hidden for Home) */}
+      {/* 1 — who you are. The page's own title, not a section. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg }}>
         <View style={{ flex: 1, marginRight: spacing.md }}>
-          <Text style={{ color: p.text, fontSize: 22, fontFamily: ty.family.extrabold, lineHeight: ty.lh(22) }}>
+          <Text style={{ color: p.text, fontSize: typeScale.title, fontFamily: ty.family.extrabold, lineHeight: ty.lh(typeScale.title) }}>
             {t('mob.hello', { name: prof.full_name.split(' ')[0] })}
           </Text>
-          <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14), marginTop: 2 }}>
+          <Text style={{ color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.caption), marginTop: 2 }}>
             {prof.date_of_joining ? `${t('mob.memberSince', { date: formatDate(prof.date_of_joining) })} · ` : ''}{prof.society_id}
           </Text>
         </View>
@@ -101,151 +104,100 @@ export default function Home(): React.ReactElement {
           style={{ width: 44, height: 44, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
         >
           <BrandGradient rounded={radius.pill} />
-          <Text style={{ color: '#ffffff', fontFamily: ty.family.extrabold, fontSize: 18, lineHeight: ty.lh(18) }}>
+          <Text style={{ color: p.onPrimary, fontFamily: interFamily.extrabold, fontSize: typeScale.heading }}>
             {prof.full_name.trim().charAt(0)}
           </Text>
         </ScalePressable>
       </View>
 
-      {/* Membership card — tap for the full-size version */}
-      <ScalePressable onPress={() => router.push('/card')} accessibilityRole="button" scaleTo={0.98} style={{ marginBottom: spacing.lg }}>
-        <MembershipCard
-          profile={prof}
-          societyName={society.data?.society_name ?? 'Maranadhara Samithi'}
-          compact
+      {/* 2 — the question this app exists to answer, always in the same place.
+             It used to be a conditional stack of banners, so the whole page
+             shifted depending on whether you owed anything. */}
+      {hasOverdue ? (
+        <AmountCard
+          label={t('mob.totalOwed')}
+          cents={owed}
+          tone="danger"
+          icon="alert-circle"
+          hint={t('mob.overdueLoanBanner')}
+          onPress={() => router.push('/dues')}
         />
+      ) : feeMissing ? (
+        <Card onPress={() => router.push('/dues')}>
+          <ListRow first icon="time-outline" iconTone="warning" label={t('mob.duesTitle')} sublabel={t('mob.membershipFeeDue')} onPress={() => router.push('/dues')} />
+        </Card>
+      ) : (
+        <Card onPress={() => router.push('/dues')}>
+          <ListRow first icon="checkmark-circle" iconTone="success" label={t('mob.allGood')} onPress={() => router.push('/dues')} />
+        </Card>
+      )}
+
+      {/* 3 — the card members show at the office */}
+      <ScalePressable onPress={() => router.push('/card')} accessibilityRole="button" scaleTo={0.98} style={{ marginBottom: spacing.lg }}>
+        <MembershipCard profile={prof} societyName={society.data?.society_name ?? 'Maranadhara Samithi'} compact />
       </ScalePressable>
 
-      {(hasOverdue || feeMissing) && <SectionHeader>{t('mob.duesTitle')}</SectionHeader>}
-      {hasOverdue && (
-        <ScalePressable onPress={() => router.push('/dues')} accessibilityRole="button" scaleTo={0.98}>
-          <Banner kind="danger" text={t('mob.overdueLoanBanner')} />
-        </ScalePressable>
-      )}
-      {feeMissing && (
-        <ScalePressable onPress={() => router.push('/dues')} accessibilityRole="button" scaleTo={0.98}>
-          <Banner kind="warning" text={t('mob.membershipFeeDue')} />
-        </ScalePressable>
-      )}
-      {!hasOverdue && !feeMissing && dues.isSuccess && <Banner kind="success" text={t('mob.allGood')} />}
+      {/* 4 — the two standing figures */}
+      <AmountCard label={t('mob.totalContributed')} cents={totalContributed} tone="success" icon="trending-up" />
+      <AmountCard
+        label={t('mob.activeLoanBalance')}
+        cents={loanBalance}
+        tone={loanBalance > 0 ? 'warning' : undefined}
+        icon="wallet-outline"
+        onPress={loanBalance > 0 ? () => router.push('/(tabs)/loans') : undefined}
+      />
 
-      {notices.data && notices.data.length > 0 && (() => {
-        const latest = notices.data[0]
-        const meta = noticeMeta(latest.type, t, p)
-        return (
-          <>
+      {/* 5 — the latest notice */}
+      {latest ? (
+        <>
           <SectionHeader>{t('mob.latestNotice')}</SectionHeader>
-          <Card onPress={() => router.push('/(tabs)/notices')} style={{ borderLeftWidth: 4, borderLeftColor: meta.color }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs }}>
-              <Ionicons name={meta.icon} size={16} color={meta.color} />
-              <Text style={{ color: meta.color, fontSize: 12, fontFamily: ty.family.bold, lineHeight: ty.lh(12), flex: 1 }}>{meta.label}</Text>
-              <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: interFamily.regular, flexShrink: 0, paddingRight: 2 }}>
-                {formatDate(latest.created_at)}
-              </Text>
-            </View>
-            <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }} numberOfLines={2}>{latest.title}</Text>
-            {latest.type === 'death' && latest.deceased_name && (
-              <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14), marginTop: 2 }} numberOfLines={1}>
-                {latest.deceased_name}
-              </Text>
-            )}
+          <Card onPress={() => router.push('/(tabs)/notices')}>
+            <ListRow
+              first
+              icon={noticeMeta(latest.type, t, p).icon}
+              iconTone={latest.type === 'death' ? 'danger' : latest.type === 'meeting' ? 'warning' : 'brand'}
+              label={latest.title}
+              sublabel={latest.type === 'death' && latest.deceased_name ? latest.deceased_name : formatDate(latest.created_at)}
+              onPress={() => router.push('/(tabs)/notices')}
+            />
           </Card>
-          </>
-        )
-      })()}
+        </>
+      ) : null}
 
-      <View style={{ flexDirection: 'row', gap: spacing.md }}>
-        <Card style={{ flex: 1 }}>
-          <View style={{ width: 34, height: 34, borderRadius: radius.pill, backgroundColor: p.successBg, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm + 2 }}>
-            <Ionicons name="trending-up" size={17} color={p.success} />
-          </View>
-          <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.semibold, lineHeight: ty.lh(12), marginBottom: spacing.xs }}>
-            {t('mob.totalContributed')}
-          </Text>
-          <Money cents={totalContributed} size={19} bold color={p.success} />
-        </Card>
-        <Card style={{ flex: 1 }}>
-          <View style={{ width: 34, height: 34, borderRadius: radius.pill, backgroundColor: loanBalance > 0 ? p.warningBg : p.surfaceAlt, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm + 2 }}>
-            <Ionicons name="wallet-outline" size={17} color={loanBalance > 0 ? p.warning : p.textMuted} />
-          </View>
-          <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.semibold, lineHeight: ty.lh(12), marginBottom: spacing.xs }}>
-            {t('mob.activeLoanBalance')}
-          </Text>
-          <Money cents={loanBalance} size={19} bold color={loanBalance > 0 ? p.warning : p.text} />
-        </Card>
-      </View>
-
-      {/* Quick actions — the things members ask the office about most */}
-      <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs, marginBottom: spacing.sm }}>
+      {/* 6 — the four things members ask the office about. These were unlabelled
+             circles with 11px captions underneath; at 16px Sinhala a label
+             cannot fit under a 46px circle, but it fits beside one. */}
+      <SectionHeader>{t('mob.quickActions')}</SectionHeader>
+      <Card>
         {([
           { href: '/card', icon: 'id-card-outline', label: t('mob.memberCard') },
           { href: '/dues', icon: 'alert-circle-outline', label: t('mob.duesTitle') },
           { href: '/requests', icon: 'document-text-outline', label: t('mob.requests') },
           { href: '/help', icon: 'help-circle-outline', label: t('mob.help') }
-        ] as const).map((qa) => (
-          <ScalePressable
-            key={qa.href}
-            accessibilityRole="button"
-            haptic="selection"
-            scaleTo={0.95}
-            onPress={() => router.push(qa.href)}
-            style={{ flex: 1, alignItems: 'center', gap: spacing.xs + 2, paddingVertical: spacing.sm }}
-          >
-            <View style={{ width: 46, height: 46, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name={qa.icon} size={21} color={p.primaryOnSoft} />
-            </View>
-            <Text
-              numberOfLines={2}
-              style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.semibold, textAlign: 'center', lineHeight: ty.lh(12) }}
-            >
-              {qa.label}
-            </Text>
-          </ScalePressable>
+        ] as const).map((qa, i) => (
+          <ListRow key={qa.href} first={i === 0} icon={qa.icon} label={qa.label} onPress={() => router.push(qa.href)} />
         ))}
-      </View>
+      </Card>
 
-      {recent.length > 0 && (
+      {/* 7 — what moved lately */}
+      {recent.length > 0 ? (
         <>
-        <SectionHeader>{t('mob.recentActivity')}</SectionHeader>
-        <Card style={{ paddingVertical: spacing.xs }}>
-          {recent.map((row, i) => (
-            <View
-              key={`${row.direction}-${row.id}`}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingVertical: spacing.sm + 3,
-                borderTopWidth: i === 0 ? 0 : 1,
-                borderTopColor: p.border
-              }}
-            >
-              <View
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: radius.pill,
-                  backgroundColor: row.direction === 'in' ? p.successBg : p.warningBg,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: spacing.md - 2
-                }}
-              >
-                <Ionicons
-                  name={row.direction === 'in' ? 'arrow-up' : 'arrow-down'}
-                  size={16}
-                  color={row.direction === 'in' ? p.success : p.warning}
-                />
-              </View>
-              <View style={{ flex: 1, marginRight: spacing.md - 2 }}>
-                <Text style={{ color: p.text, fontSize: 14, fontFamily: ty.family.semibold, lineHeight: ty.lh(14) }} numberOfLines={1}>{row.type_name}</Text>
-                <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: interFamily.regular, marginTop: 1 }}>{formatDate(row.date)}</Text>
-              </View>
-              <Money cents={row.amount} color={row.direction === 'in' ? p.success : p.warning} size={14} />
-            </View>
-          ))}
-        </Card>
+          <SectionHeader>{t('mob.recentActivity')}</SectionHeader>
+          <Card>
+            {recent.map((row, i) => (
+              <ListRow
+                key={`${row.direction}-${row.id}`}
+                first={i === 0}
+                icon={row.direction === 'in' ? 'arrow-up' : 'arrow-down'}
+                iconTone={row.direction === 'in' ? 'success' : 'warning'}
+                label={row.type_name}
+                sublabel={formatDate(row.date)}
+                right={<Money cents={row.amount} color={row.direction === 'in' ? p.success : p.warning} size={typeScale.caption} bold />}
+              />
+            ))}
+          </Card>
         </>
-      )}
+      ) : null}
     </Screen>
   )
 }
