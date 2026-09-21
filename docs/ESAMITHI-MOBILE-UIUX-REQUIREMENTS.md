@@ -563,10 +563,10 @@ suite to catch a half-finished refresh (§10).
 |---|---|---|---|
 | **0 · This document** | Approval of the direction | — | Owner signs off §1.2 |
 | **1 · Motion** ✅ **done** | `src/motion.ts`; every call site in `pressable.tsx`, `TabBar.tsx`, `toast.tsx`, `(tabs)/index.tsx`, `(auth)/index.tsx`, `puruka/[id].tsx`, `Screen`, `Skeleton`, `ProgressBar`, `PhotoViewer`, `_layout.tsx`; explicit reduced motion; `scripts/check-motion.mjs` wired into CI | OTA | ✅ No spring remains outside `SPRING.settle` (ζ = 1.00); the gate fails on the original bug when reintroduced; `tsc` green; bundle exports and runs with no runtime errors. **Outstanding: the owner confirms on a `preview` build that nothing dances** |
-| **2 · Sinhala and type** | `useType()` everywhere; delete 27 `fontWeight`s; six-size scale; tab labels; font scaling | OTA | No `fontWeight` outside `typography.tsx`; Sinhala headings bold on a real Android; 200 % font scale clean |
-| **3 · Colour** | Web brand scale, AA-passing semantics, dark-mode primary and gradient, membership-card badge | OTA | Contrast script passes in both themes |
-| **4 · Components** | `ListRow`, `StatusPill`, `Chip`, `AmountCard`; `Input`/`Card`/`Screen`/`Segmented` rework; retire duplicates | OTA | Duplicate implementations deleted, not merely unused |
-| **5 · Screens** | Home, Dues, Contributions, Loans, Notices; `FlatList`; Welcome reachable | OTA | Before/after screenshots in four states (§8) |
+| **2 · Sinhala and type** ✅ **done** | `useType()` everywhere; delete 27 `fontWeight`s; six-size scale; tab labels; font scaling | OTA | No `fontWeight` outside `typography.tsx`; Sinhala headings bold on a real Android; 200 % font scale clean |
+| **3 · Colour** ✅ **done** | Web brand scale, AA-passing semantics, dark-mode primary and gradient, membership-card badge | OTA | Contrast script passes in both themes |
+| **4 · Components** ✅ **done** | `ListRow`, `StatusPill`, `Chip`, `AmountCard`; `Input`/`Card`/`Screen`/`Segmented` rework; retire duplicates | OTA | Duplicate implementations deleted, not merely unused |
+| **5 · Screens** ✅ **mostly done** | Home, Dues, Contributions, Loans, Notices; `FlatList`; Welcome reachable | OTA | Before/after screenshots in four states (§8) |
 | **6 · Binary (deferred)** | Unify the three blues; icon, splash, adaptive icon, notification colour; new Play Store screenshots; versionCode 7 | Store | Owner schedules it |
 
 Sequencing rationale: motion first because it is the loudest complaint and the smallest
@@ -580,7 +580,7 @@ self-contained; components before screens because screens consume them.
 CI runs only `npx tsc --noEmit`. There are no tests, no lint config and no visual
 regression, so verification has to be deliberate and mostly scripted.
 
-**Automated, added by this work** (`mobile/scripts/`, wired into `clients.yml`). `check-motion.mjs` exists and runs in CI as of phase 1; the other three arrive with their phases:
+**Automated, added by this work** (`mobile/scripts/`, wired into `clients.yml`). `check-motion.mjs`, `check-type.mjs` and `check-contrast.mjs` all exist and run in CI; each was negative-tested by reintroducing the real bug it guards:
 
 | Check | Fails when |
 |---|---|
