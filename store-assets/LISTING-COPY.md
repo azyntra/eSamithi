@@ -80,7 +80,23 @@ Your data belongs to your society. No ads, no analytics, no selling of data.
 Privacy policy: https://api.esamithi.com/privacy
 ```
 
-### Release notes / What's new (≤500)
+### Release notes / What's new — 1.4.0 (≤500)
+
+```
+Easier to read, and calmer to use.
+
+Sinhala now renders the way it should: bold headings are actually bold, lines
+have room to breathe, and text grows when you raise your phone's own text-size
+setting.
+
+Everything is a little larger, and colours have stronger contrast for reading
+in daylight. Dark mode no longer glares at night.
+
+Screens settle into place instead of bouncing, and the tab names along the
+bottom are no longer cut off in Sinhala.
+```
+
+### Release notes / What's new — 1.3.x (previous)
 
 ```
 Puruka now works both ways: post a "Wanted" listing for something you are
@@ -161,7 +177,24 @@ eSamithi වෙත ගෙන ඒමට කැමතිද? azyntra@gmail.com ව
 රහස්‍යතා ප්‍රතිපත්තිය: https://api.esamithi.com/privacy
 ```
 
-### Release notes / What's new
+### Release notes / What's new — 1.4.0
+
+> Sinhala below is a draft and wants a native reader's eye before it goes to
+> Play. The English above is the source.
+
+```
+කියවීමට පහසුයි, භාවිතයට සන්සුන්ය.
+
+සිංහල අකුරු දැන් නිවැරදිව පෙන්වයි: තද අකුරු ඇත්තටම තදයි, පේළි අතර ඉඩ වැඩියි,
+ඔබේ දුරකථනයේ අකුරු ප්‍රමාණය වැඩි කළ විට යෙදුමේ අකුරු ද විශාල වේ.
+
+සියල්ලම ටිකක් විශාලයි. දිවා ආලෝකයේ කියවීමට වර්ණ වඩාත් පැහැදිලියි, රාත්‍රී
+අඳුරු මාදිලිය ඇසට පහසුයි.
+
+තිර දැන් නොසෙලවී ස්ථානගත වේ. පහළ ඇති ටැබ් නම් සිංහලෙන් තවදුරටත් කැපී නොයයි.
+```
+
+### Release notes / What's new — 1.3.x (previous)
 
 ```
 පුරුක දැන් දෙපැත්තටම ක්‍රියා කරයි: විකුණන දේ පමණක් නොව, ඔබ සොයන දෙයක් සඳහා
