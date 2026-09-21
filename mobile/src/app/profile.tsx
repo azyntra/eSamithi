@@ -5,10 +5,12 @@ import { usePalette } from '../theme'
 import { useProfile } from '../api/hooks'
 import { formatDate } from '../lib/date'
 import { Banner, Card, EmptyText, ErrorView, Row, Screen, SkeletonCards, StaleBanner, SectionHeader } from '../ui'
+import { useType } from '../typography'
 
 export default function Profile(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const profile = useProfile()
 
   if (profile.isPending) return <Screen><SkeletonCards cards={3} /></Screen>
@@ -50,9 +52,9 @@ export default function Profile(): React.ReactElement {
       <Card>
         {d.dependents.length === 0 && <EmptyText>—</EmptyText>}
         {d.dependents.map((dep, i) => (
-          <Text key={i} style={{ color: p.text, fontSize: 15, paddingVertical: 6 }}>
+          <Text key={i} style={{ color: p.text, fontSize: 16, paddingVertical: 6, fontFamily: ty.family.regular, lineHeight: ty.lh(16) }}>
             {dep.name}
-            {dep.relationship ? <Text style={{ color: p.textMuted }}> · {dep.relationship}</Text> : null}
+            {dep.relationship ? <Text style={{ color: p.textMuted, fontFamily: ty.family.regular }}> · {dep.relationship}</Text> : null}
           </Text>
         ))}
       </Card>

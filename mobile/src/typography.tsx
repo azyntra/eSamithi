@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useWindowDimensions } from 'react-native'
 import { useT } from './i18n'
 
 // Language-aware typography. Setting an Inter fontFamily on text that
@@ -37,9 +38,14 @@ export interface TypeSet {
 
 export function useType(): TypeSet {
   const { lang } = useT()
+  // React Native scales fontSize by the phone's text-size setting but does NOT
+  // scale lineHeight. Left alone, a member who turns their text size up gets
+  // bigger glyphs in the same vertical space — and Sinhala, which stacks marks
+  // above and below the baseline, is the first thing to collide and clip.
+  const { fontScale } = useWindowDimensions()
   return useMemo(() => {
     const family = lang === 'si' ? sinhalaFamily : interFamily
     const ratio = lang === 'si' ? 1.55 : 1.35
-    return { family, lh: (size: number) => Math.round(size * ratio) }
-  }, [lang])
+    return { family, lh: (size: number) => Math.round(size * ratio * fontScale) }
+  }, [lang, fontScale])
 }

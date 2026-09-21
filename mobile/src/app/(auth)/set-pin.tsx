@@ -7,10 +7,12 @@ import { useAuth } from '../../auth/AuthContext'
 import { useT } from '../../i18n'
 import { usePalette } from '../../theme'
 import { Button, Input, Subtitle, Title } from '../../ui'
+import { useType } from '../../typography'
 
 export default function SetPin(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
   const { signInWithTokens } = useAuth()
   const [pin, setPin] = useState('')
@@ -67,7 +69,7 @@ export default function SetPin(): React.ReactElement {
           secureTextEntry
           maxLength={6}
         />
-        {error !== '' && <Text style={{ color: p.danger, fontSize: 15, marginBottom: 10 }}>{error}</Text>}
+        {error !== '' && <Text style={{ color: p.danger, fontSize: 16, marginBottom: 10, fontFamily: ty.family.regular, lineHeight: ty.lh(16) }}>{error}</Text>}
         <Button label={t('mob.savePin')} onPress={submit} loading={busy} disabled={pin.length < 4} />
       </ScrollView>
     </KeyboardAvoidingView>

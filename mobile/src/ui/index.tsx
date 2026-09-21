@@ -167,7 +167,7 @@ export function SectionHeader({ children }: { children: React.ReactNode }): Reac
   const p = usePalette()
   const ty = useType()
   return (
-    <Text style={{ color: p.textMuted, fontSize: 12.5, fontFamily: ty.family.bold, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: spacing.sm, marginTop: spacing.sm }}>
+    <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.bold, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: spacing.sm, marginTop: spacing.sm, lineHeight: ty.lh(12) }}>
       {children}
     </Text>
   )
@@ -270,7 +270,7 @@ export function Button({
         {/* Label keeps its width while loading so the button doesn't jump */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, opacity: loading ? 0 : 1 }}>
           {icon ? <Ionicons name={icon} size={18} color={fg} /> : null}
-          <Text style={{ color: fg, fontSize: 16.5, fontFamily: ty.family.bold, lineHeight: ty.lh(16.5) }}>{label}</Text>
+          <Text style={{ color: fg, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{label}</Text>
         </View>
         {loading ? (
           <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' }}>
@@ -364,7 +364,7 @@ export function Input(props: TextInputProps & { label: string; error?: string })
             borderRadius: radius.md,
             paddingHorizontal: spacing.lg - 2,
             paddingVertical: spacing.lg - 3,
-            fontSize: 16.5,
+            fontSize: 16,
             fontFamily: ty.family.regular,
             color: p.text,
             ...(focused ? { shadowColor: p.primary, ...elevation.sm } : null)

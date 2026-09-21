@@ -7,10 +7,12 @@ import { usePalette } from '../theme'
 import { useStatement } from '../api/hooks'
 import { formatDate } from '../lib/date'
 import { Card, EmptyState, ErrorView, Money, ScalePressable, Screen, SkeletonCards, StaleBanner, StatusBadge } from '../ui'
+import { useType } from '../typography'
 
 export default function Payouts(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
   const statement = useStatement()
 
@@ -46,8 +48,8 @@ export default function Payouts(): React.ReactElement {
               }}
             >
               <View style={{ flex: 1, marginRight: 10 }}>
-                <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>{row.type_name}</Text>
-                <Text style={{ color: p.textMuted, fontSize: 13, marginTop: 2 }}>{formatDate(row.date)}</Text>
+                <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{row.type_name}</Text>
+                <Text style={{ color: p.textMuted, fontSize: 14, marginTop: 2, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{formatDate(row.date)}</Text>
                 {row.status !== 'Active' && (
                   <View style={{ marginTop: 4 }}>
                     <StatusBadge status={row.status} />

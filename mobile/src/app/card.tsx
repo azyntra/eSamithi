@@ -7,6 +7,7 @@ import { usePalette } from '../theme'
 import { useProfile, useSocietyInfo } from '../api/hooks'
 import { Button, ErrorView, Screen, SkeletonCards, StaleBanner, useToast } from '../ui'
 import { MembershipCard } from '../ui/MembershipCard'
+import { useType } from '../typography'
 
 // Digital membership card — something members can show at the office or a
 // funeral house instead of a paper book. QR carries the society ID.
@@ -15,6 +16,7 @@ import { MembershipCard } from '../ui/MembershipCard'
 export default function MemberCardScreen(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const toast = useToast()
   const profile = useProfile()
   const society = useSocietyInfo()
@@ -66,7 +68,7 @@ export default function MemberCardScreen(): React.ReactElement {
       <View style={{ marginTop: 16 }}>
         <Button label={t('mob.cardShare')} icon="share-social-outline" onPress={shareCard} loading={sharing} />
       </View>
-      <Text style={{ color: p.textMuted, fontSize: 13, textAlign: 'center', marginTop: 14 }}>
+      <Text style={{ color: p.textMuted, fontSize: 14, textAlign: 'center', marginTop: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>
         {t('mob.cardShowOffice')}
       </Text>
     </Screen>

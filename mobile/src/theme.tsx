@@ -73,9 +73,14 @@ export const elevation = {
   lg: { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.16, shadowRadius: 24, elevation: 10 }
 } as const
 
-// Font-size scale. Line heights come from useType() (src/typography.tsx)
-// because Sinhala needs taller lines than Latin at the same size.
-export const type = { display: 28, title: 22, heading: 17, body: 15, caption: 13, micro: 12 } as const
+// Font-size scale — six steps, no fractionals. Nineteen distinct sizes were in
+// use before this, six of them fractional (9.5, 10.5, 12.5, 13.5, 15.5, 16.5),
+// while this scale was imported by exactly one file. The body sits at 16 rather
+// than 15: most members are elderly and read Sinhala in sunlight.
+// Line heights come from useType() (src/typography.tsx) because Sinhala needs
+// taller lines than Latin at the same size, and because lineHeight has to
+// track the phone's own text-size setting.
+export const type = { display: 28, title: 22, heading: 18, body: 16, caption: 14, micro: 12 } as const
 
 export type Palette = typeof palettes.light
 export type ThemeMode = 'system' | 'light' | 'dark'

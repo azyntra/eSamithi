@@ -46,3 +46,8 @@ jobs:
       - name: Motion gate
         working-directory: mobile
         run: node scripts/check-motion.mjs
+      # Sinhala is the default language, and a fontWeight on custom-family text
+      # drops it to the system face at regular weight on Android.
+      - name: Typography gate
+        working-directory: mobile
+        run: node scripts/check-type.mjs

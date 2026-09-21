@@ -86,10 +86,10 @@ export default function Home(): React.ReactElement {
       {/* Greeting header (tab header is hidden for Home) */}
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg }}>
         <View style={{ flex: 1, marginRight: spacing.md }}>
-          <Text style={{ color: p.text, fontSize: 24, fontFamily: ty.family.extrabold, lineHeight: ty.lh(24) }}>
+          <Text style={{ color: p.text, fontSize: 22, fontFamily: ty.family.extrabold, lineHeight: ty.lh(22) }}>
             {t('mob.hello', { name: prof.full_name.split(' ')[0] })}
           </Text>
-          <Text style={{ color: p.textMuted, fontSize: 13.5, fontFamily: ty.family.regular, lineHeight: ty.lh(13.5), marginTop: 2 }}>
+          <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14), marginTop: 2 }}>
             {prof.date_of_joining ? `${t('mob.memberSince', { date: formatDate(prof.date_of_joining) })} · ` : ''}{prof.society_id}
           </Text>
         </View>
@@ -101,7 +101,7 @@ export default function Home(): React.ReactElement {
           style={{ width: 44, height: 44, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
         >
           <BrandGradient rounded={radius.pill} />
-          <Text style={{ color: '#ffffff', fontFamily: ty.family.extrabold, fontSize: 18 }}>
+          <Text style={{ color: '#ffffff', fontFamily: ty.family.extrabold, fontSize: 18, lineHeight: ty.lh(18) }}>
             {prof.full_name.trim().charAt(0)}
           </Text>
         </ScalePressable>
@@ -143,9 +143,9 @@ export default function Home(): React.ReactElement {
                 {formatDate(latest.created_at)}
               </Text>
             </View>
-            <Text style={{ color: p.text, fontSize: 15, fontFamily: ty.family.bold, lineHeight: ty.lh(15) }} numberOfLines={2}>{latest.title}</Text>
+            <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }} numberOfLines={2}>{latest.title}</Text>
             {latest.type === 'death' && latest.deceased_name && (
-              <Text style={{ color: p.textMuted, fontSize: 13, fontFamily: ty.family.regular, lineHeight: ty.lh(13), marginTop: 2 }} numberOfLines={1}>
+              <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14), marginTop: 2 }} numberOfLines={1}>
                 {latest.deceased_name}
               </Text>
             )}
@@ -159,7 +159,7 @@ export default function Home(): React.ReactElement {
           <View style={{ width: 34, height: 34, borderRadius: radius.pill, backgroundColor: p.successBg, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm + 2 }}>
             <Ionicons name="trending-up" size={17} color={p.success} />
           </View>
-          <Text style={{ color: p.textMuted, fontSize: 12.5, fontFamily: ty.family.semibold, lineHeight: ty.lh(12.5), marginBottom: spacing.xs }}>
+          <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.semibold, lineHeight: ty.lh(12), marginBottom: spacing.xs }}>
             {t('mob.totalContributed')}
           </Text>
           <Money cents={totalContributed} size={19} bold color={p.success} />
@@ -168,7 +168,7 @@ export default function Home(): React.ReactElement {
           <View style={{ width: 34, height: 34, borderRadius: radius.pill, backgroundColor: loanBalance > 0 ? p.warningBg : p.surfaceAlt, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm + 2 }}>
             <Ionicons name="wallet-outline" size={17} color={loanBalance > 0 ? p.warning : p.textMuted} />
           </View>
-          <Text style={{ color: p.textMuted, fontSize: 12.5, fontFamily: ty.family.semibold, lineHeight: ty.lh(12.5), marginBottom: spacing.xs }}>
+          <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.semibold, lineHeight: ty.lh(12), marginBottom: spacing.xs }}>
             {t('mob.activeLoanBalance')}
           </Text>
           <Money cents={loanBalance} size={19} bold color={loanBalance > 0 ? p.warning : p.text} />
@@ -196,7 +196,7 @@ export default function Home(): React.ReactElement {
             </View>
             <Text
               numberOfLines={2}
-              style={{ color: p.textMuted, fontSize: 11, fontFamily: ty.family.semibold, textAlign: 'center', lineHeight: ty.lh(11) }}
+              style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.semibold, textAlign: 'center', lineHeight: ty.lh(12) }}
             >
               {qa.label}
             </Text>

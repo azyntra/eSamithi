@@ -6,11 +6,13 @@ import { useT } from '../i18n'
 import { usePalette } from '../theme'
 import { useDues } from '../api/hooks'
 import { Card, EmptyState, ErrorView, Money, Row, Screen, SectionHeader, SkeletonCards, StaleBanner } from '../ui'
+import { useType } from '../typography'
 
 // "What exactly do I owe?" — expansion of the Home dues banner
 export default function Dues(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
   const dues = useDues()
 
@@ -36,7 +38,7 @@ export default function Dues(): React.ReactElement {
       ) : (
         <>
           <Card>
-            <Text style={{ color: p.textMuted, fontSize: 13, marginBottom: 6 }}>{t('mob.totalOwed')}</Text>
+            <Text style={{ color: p.textMuted, fontSize: 14, marginBottom: 6, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.totalOwed')}</Text>
             <Money cents={totalDue} size={24} bold color={totalDue > 0 ? p.danger : p.success} />
           </Card>
 
@@ -44,13 +46,13 @@ export default function Dues(): React.ReactElement {
           {d.overdue_loans.map((loan) => (
             <Card key={loan.id}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <Text style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>{t('mob.loanNum', { id: loan.id })}</Text>
+                <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{t('mob.loanNum', { id: loan.id })}</Text>
                 <Pressable
                   onPress={() => router.push(`/loan/${loan.id}`)}
                   accessibilityRole="button"
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
                 >
-                  <Text style={{ color: p.primary, fontSize: 14, fontWeight: '700' }}>{t('mob.viewLoan')}</Text>
+                  <Text style={{ color: p.primary, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>{t('mob.viewLoan')}</Text>
                   <Ionicons name="chevron-forward" size={15} color={p.primary} />
                 </Pressable>
               </View>
@@ -65,7 +67,7 @@ export default function Dues(): React.ReactElement {
               <SectionHeader>{t('mob.membershipFee')}</SectionHeader>
               <Card>
                 <Row label={t('mob.membershipFee')} value={t('mob.feeDue')} />
-                <Text style={{ color: p.textMuted, fontSize: 13, marginTop: 6, lineHeight: 19 }}>
+                <Text style={{ color: p.textMuted, fontSize: 14, marginTop: 6, lineHeight: ty.lh(14), fontFamily: ty.family.regular }}>
                   {t('mob.membershipFeeDue')}
                 </Text>
               </Card>

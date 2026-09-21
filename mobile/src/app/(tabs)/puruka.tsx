@@ -85,7 +85,7 @@ function PostTile({ post, onPress }: { post: PurukaPost; onPress: () => void }):
         <View style={{ marginTop: 3 }}>
           {post.price !== null
             ? <Money cents={post.price} size={14.5} bold color={p.primary} />
-            : <Text style={{ color: p.primary, fontSize: 13, fontFamily: ty.family.bold, lineHeight: ty.lh(13) }}>{wanted ? t('mob.pkOpenBudget') : t('mob.pkNegotiable')}</Text>}
+            : <Text style={{ color: p.primary, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>{wanted ? t('mob.pkOpenBudget') : t('mob.pkNegotiable')}</Text>}
         </View>
         <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(12), marginTop: 3 }} numberOfLines={1}>
           {catLabel}{post.location ? ` · ${post.location}` : ''}
@@ -140,7 +140,7 @@ export default function Puruka(): React.ReactElement {
       {feed.isError && feed.data && <StaleBanner />}
 
       {/* Community tagline */}
-      <Text style={{ color: p.textMuted, fontSize: 13, fontFamily: ty.family.semibold, lineHeight: ty.lh(13), marginBottom: spacing.md - 2 }}>
+      <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.semibold, lineHeight: ty.lh(14), marginBottom: spacing.md - 2 }}>
         {t('mob.pkTagline')}
       </Text>
 
@@ -162,7 +162,7 @@ export default function Puruka(): React.ReactElement {
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: p.surface, borderColor: p.border, borderWidth: 1.5, borderRadius: radius.md, paddingHorizontal: spacing.md }}>
           <Ionicons name="search-outline" size={18} color={p.textMuted} />
           <TextInput
-            style={{ flex: 1, paddingVertical: spacing.md, paddingHorizontal: spacing.sm, fontSize: 15, fontFamily: ty.family.regular, color: p.text }}
+            style={{ flex: 1, paddingVertical: spacing.md, paddingHorizontal: spacing.sm, fontSize: 16, fontFamily: ty.family.regular, color: p.text }}
             placeholder={t('mob.pkSearch')}
             placeholderTextColor={p.textMuted}
             value={searchInput}
@@ -263,7 +263,7 @@ export default function Puruka(): React.ReactElement {
                 backgroundColor: selected ? p.primary : p.primarySoft
               }}
             >
-              <Text style={{ color: selected ? p.onPrimary : p.primary, fontSize: 13, fontFamily: ty.family.bold, lineHeight: ty.lh(13) }}>
+              <Text style={{ color: selected ? p.onPrimary : p.primary, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>
                 {chip.label}
               </Text>
             </ScalePressable>

@@ -7,7 +7,7 @@ import Animated, { FadeIn } from 'react-native-reanimated'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { dur } from '../motion'
 import { elevation, radius, spacing, usePalette } from '../theme'
-import { useType } from '../typography'
+import { interFamily, useType } from '../typography'
 import { ScalePressable } from './pressable'
 
 // Custom bottom bar (Material-3 style): every tab keeps its label — many
@@ -85,8 +85,8 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
                     position: 'absolute',
                     top: -2,
                     right: 6,
-                    minWidth: 16,
-                    height: 16,
+                    minWidth: 18,
+                    height: 18,
                     borderRadius: radius.pill,
                     backgroundColor: p.danger,
                     alignItems: 'center',
@@ -94,19 +94,28 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
                     paddingHorizontal: 4
                   }}
                 >
-                  <Text style={{ color: '#ffffff', fontSize: 9.5, fontFamily: ty.family.bold }}>
+                  <Text maxFontSizeMultiplier={1.2} style={{ color: '#ffffff', fontSize: 12, fontFamily: interFamily.bold }}>
                     {String(options.tabBarBadge)}
                   </Text>
                 </Animated.View>
               ) : null}
             </View>
+            {/* Three of the six Sinhala labels are ten glyphs, and one of them
+                (දැනුම්දීම්) has no space, so wrapping cannot save it. Shrinking
+                to fit beats the ellipsis this used to show — but the real fix
+                is shorter words, which is a Sinhala speaker's call, not a
+                developer's. See decision O1 in the requirements. */}
             <Text
-              numberOfLines={1}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+              maxFontSizeMultiplier={1.2}
               style={{
-                fontSize: 10.5,
+                fontSize: 12,
                 fontFamily: focused ? ty.family.bold : ty.family.semibold,
                 color: focused ? p.primary : p.textMuted,
-                maxWidth: 76
+                textAlign: 'center',
+                lineHeight: ty.lh(12)
               }}
             >
               {label}

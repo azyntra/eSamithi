@@ -43,7 +43,7 @@ export default function TabsLayout(): React.ReactElement {
         headerStyle: { backgroundColor: p.surface },
         headerTintColor: p.text,
         headerShadowVisible: false,
-        headerTitleStyle: { fontFamily: ty.family.bold, fontSize: 17 },
+        headerTitleStyle: { fontFamily: ty.family.bold, fontSize: 18 },
         sceneStyle: { backgroundColor: p.bg }
       }}
     >

@@ -6,11 +6,13 @@ import { useT, type TranslationKey } from '../i18n'
 import { usePalette } from '../theme'
 import { useSocietyInfo } from '../api/hooks'
 import { Card, Row, Screen, SectionHeader } from '../ui'
+import { useType } from '../typography'
 
 // Static help content (§3.4 how to pay, §4.4 how to claim, §6.4 FAQ/About)
 export default function Help(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const society = useSocietyInfo()
 
   const claims: Array<{ title: TranslationKey; body: TranslationKey }> = [
@@ -32,19 +34,19 @@ export default function Help(): React.ReactElement {
     <Screen>
       <SectionHeader>{t('mob.helpPayTitle')}</SectionHeader>
       <Card>
-        <Text style={{ color: p.text, fontSize: 15, lineHeight: 22 }}>{t('mob.helpPayBody')}</Text>
+        <Text style={{ color: p.text, fontSize: 16, lineHeight: ty.lh(16), fontFamily: ty.family.regular }}>{t('mob.helpPayBody')}</Text>
       </Card>
 
       <SectionHeader>{t('mob.helpClaimTitle')}</SectionHeader>
       <Card>
-        <Text style={{ color: p.textMuted, fontSize: 14, lineHeight: 20, marginBottom: 10 }}>{t('mob.helpClaimIntro')}</Text>
+        <Text style={{ color: p.textMuted, fontSize: 14, lineHeight: ty.lh(14), marginBottom: 10, fontFamily: ty.family.regular }}>{t('mob.helpClaimIntro')}</Text>
         {claims.map((c, i) => (
           <View key={c.title} style={{ paddingVertical: 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.border }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <Ionicons name="checkmark-circle-outline" size={17} color={p.success} />
-              <Text style={{ color: p.text, fontSize: 15, fontWeight: '700', flex: 1 }}>{t(c.title)}</Text>
+              <Text style={{ color: p.text, fontSize: 16, flex: 1, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{t(c.title)}</Text>
             </View>
-            <Text style={{ color: p.textMuted, fontSize: 14, lineHeight: 20, paddingLeft: 25 }}>{t(c.body)}</Text>
+            <Text style={{ color: p.textMuted, fontSize: 14, lineHeight: ty.lh(14), paddingLeft: 25, fontFamily: ty.family.regular }}>{t(c.body)}</Text>
           </View>
         ))}
       </Card>
@@ -63,8 +65,8 @@ export default function Help(): React.ReactElement {
       <Card>
         {faqs.map((f, i) => (
           <View key={f.q} style={{ paddingVertical: 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.border }}>
-            <Text style={{ color: p.text, fontSize: 15, fontWeight: '700', marginBottom: 4 }}>{t(f.q)}</Text>
-            <Text style={{ color: p.textMuted, fontSize: 14, lineHeight: 20 }}>{t(f.a)}</Text>
+            <Text style={{ color: p.text, fontSize: 16, marginBottom: 4, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{t(f.q)}</Text>
+            <Text style={{ color: p.textMuted, fontSize: 14, lineHeight: ty.lh(14), fontFamily: ty.family.regular }}>{t(f.a)}</Text>
           </View>
         ))}
       </Card>

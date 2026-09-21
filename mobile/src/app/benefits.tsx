@@ -4,10 +4,12 @@ import { useT } from '../i18n'
 import { usePalette } from '../theme'
 import { useBenefitsSchedule } from '../api/hooks'
 import { Card, EmptyText, ErrorView, Money, Screen, SkeletonCards, StaleBanner, Subtitle } from '../ui'
+import { useType } from '../typography'
 
 export default function Benefits(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const benefits = useBenefitsSchedule()
 
   if (benefits.isPending) return <Screen><SkeletonCards cards={2} /></Screen>
@@ -37,11 +39,11 @@ export default function Benefits(): React.ReactElement {
               borderTopColor: p.border
             }}
           >
-            <Text style={{ color: p.text, fontSize: 15, fontWeight: '600', flex: 1, marginRight: 10 }}>{b.name}</Text>
+            <Text style={{ color: p.text, fontSize: 16, flex: 1, marginRight: 10, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{b.name}</Text>
             {b.standard_payout > 0 ? (
               <Money cents={b.standard_payout} color={p.success} />
             ) : (
-              <Text style={{ color: p.textMuted, fontSize: 14 }}>—</Text>
+              <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>—</Text>
             )}
           </View>
         ))}

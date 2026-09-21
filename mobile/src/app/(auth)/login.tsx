@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import axios from 'axios'
 import { api, errorMessage } from '../../api/client'
@@ -7,10 +7,12 @@ import { useAuth } from '../../auth/AuthContext'
 import { useT } from '../../i18n'
 import { usePalette } from '../../theme'
 import { Banner, Button, Input, Subtitle, Title } from '../../ui'
+import { useType } from '../../typography'
 
 export default function Login(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
   const { signInWithTokens } = useAuth()
   const [nic, setNic] = useState('')
@@ -63,13 +65,13 @@ export default function Login(): React.ReactElement {
           <>
             <Banner kind="warning" text={t('mob.notSetUp')} />
             <Button label={t('mob.setUpNow')} variant="secondary" onPress={() => router.push('/(auth)/verify')} />
-            <Text style={{ height: 10 }} />
+            <View style={{ height: 10 }} />
           </>
         )}
-        {error !== '' && <Text style={{ color: p.danger, fontSize: 15, marginBottom: 10 }}>{error}</Text>}
+        {error !== '' && <Text style={{ color: p.danger, fontSize: 16, marginBottom: 10, fontFamily: ty.family.regular, lineHeight: ty.lh(16) }}>{error}</Text>}
         <Button label={t('mob.login')} onPress={submit} loading={busy} disabled={!nic.trim() || pin.length < 4} />
         <Pressable onPress={() => router.push('/(auth)/verify')} style={{ paddingVertical: 18, alignItems: 'center' }}>
-          <Text style={{ color: p.primary, fontSize: 15, fontWeight: '600' }}>{t('mob.forgotPin')}</Text>
+          <Text style={{ color: p.primary, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{t('mob.forgotPin')}</Text>
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>

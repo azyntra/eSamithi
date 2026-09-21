@@ -62,7 +62,7 @@ export default function ReceiptScreen(): React.ReactElement {
           <Text style={{ color: p.text, fontSize: 18, fontFamily: ty.family.extrabold, lineHeight: ty.lh(18), textAlign: 'center' }}>
             {r.society.name || 'eSamithi'}
           </Text>
-          <Text style={{ color: p.textMuted, fontSize: 13, fontFamily: ty.family.regular, lineHeight: ty.lh(13), marginTop: 4 }}>
+          <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14), marginTop: 4 }}>
             {title}
           </Text>
           {voided && (
@@ -127,7 +127,7 @@ export default function ReceiptScreen(): React.ReactElement {
       {/* This is a record, not a substitute for the office's paper receipt */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, backgroundColor: p.surfaceAlt, borderRadius: radius.md, padding: spacing.md, marginTop: spacing.md }}>
         <Ionicons name="information-circle-outline" size={17} color={p.textMuted} style={{ marginTop: 1 }} />
-        <Text style={{ color: p.textMuted, fontSize: 12.5, fontFamily: ty.family.regular, lineHeight: ty.lh(12.5), flex: 1 }}>
+        <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(12), flex: 1 }}>
           {t('mob.rcptFooterNote')}
         </Text>
       </View>

@@ -85,7 +85,7 @@ export default function More(): React.ReactElement {
       <View style={{ width: 34, height: 34, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md }}>
         <Ionicons name={item.icon} size={17} color={p.primary} />
       </View>
-      <Text style={{ color: p.text, fontSize: 15.5, fontFamily: ty.family.semibold, lineHeight: ty.lh(15.5), flex: 1 }}>{item.label}</Text>
+      <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16), flex: 1 }}>{item.label}</Text>
       <Ionicons name="chevron-forward" size={18} color={p.textMuted} />
     </ScalePressable>
   )
@@ -133,7 +133,7 @@ export default function More(): React.ReactElement {
                 color={isActive ? p.primary : p.textMuted}
                 style={{ marginRight: spacing.md }}
               />
-              <Text style={{ color: p.text, fontSize: 15, fontFamily: ty.family.semibold, lineHeight: ty.lh(15), flex: 1 }}>
+              <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16), flex: 1 }}>
                 {profile.name || profile.code || profile.slug}
               </Text>
               {isActive && (
@@ -154,7 +154,7 @@ export default function More(): React.ReactElement {
           }}
         >
           <Ionicons name="add-circle-outline" size={20} color={p.primary} style={{ marginRight: spacing.md }} />
-          <Text style={{ color: p.primary, fontSize: 15, fontFamily: ty.family.semibold, lineHeight: ty.lh(15) }}>{t('mob.samithiAdd')}</Text>
+          <Text style={{ color: p.primary, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{t('mob.samithiAdd')}</Text>
         </ScalePressable>
       </Card>
 
@@ -177,7 +177,7 @@ export default function More(): React.ReactElement {
           <SectionHeader>{t('mob.biometric')}</SectionHeader>
           <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <Ionicons name="finger-print-outline" size={22} color={p.primary} />
-            <Text style={{ color: p.textMuted, fontSize: 13, fontFamily: ty.family.regular, flex: 1, lineHeight: ty.lh(13) }}>{t('mob.biometricHint')}</Text>
+            <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, flex: 1, lineHeight: ty.lh(14) }}>{t('mob.biometricHint')}</Text>
             <Switch value={bioEnabled} onValueChange={toggleBiometric} trackColor={{ true: p.primary }} />
           </Card>
         </>
@@ -195,7 +195,7 @@ export default function More(): React.ReactElement {
 
       <View style={{ alignItems: 'center', marginTop: spacing.lg, gap: spacing.sm }}>
         <LogoTile size={34} />
-        <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular }}>
+        <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(12) }}>
           {t('mob.version', { v: Constants.expoConfig?.version ?? '1.0.0' })}
         </Text>
       </View>

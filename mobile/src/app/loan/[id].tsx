@@ -8,11 +8,13 @@ import { useLoan, useSocietyInfo } from '../../api/hooks'
 import { formatDate } from '../../lib/date'
 import { repaidFraction } from '../(tabs)/loans'
 import { Card, EmptyText, ErrorView, Money, ProgressBar, Row, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner, StatusBadge } from '../../ui'
+import { useType } from '../../typography'
 
 export default function LoanDetail(): React.ReactElement {
   const router = useRouter()
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const { id } = useLocalSearchParams<{ id: string }>()
   const loan = useLoan(parseInt(id ?? '0', 10))
   const society = useSocietyInfo()
@@ -36,10 +38,10 @@ export default function LoanDetail(): React.ReactElement {
       <Card>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <StatusBadge status={d.status} />
-          <Text style={{ color: p.textMuted, fontSize: 13 }}>{t('mob.loanIssued', { date: formatDate(d.date_issued) })}</Text>
+          <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.loanIssued', { date: formatDate(d.date_issued) })}</Text>
         </View>
         {d.is_migrated === 1 && (
-          <Text style={{ color: p.textMuted, fontSize: 13, fontStyle: 'italic', marginBottom: 8 }}>{t('mob.migratedLoan')}</Text>
+          <Text style={{ color: p.textMuted, fontSize: 14, fontStyle: 'italic', marginBottom: 8, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.migratedLoan')}</Text>
         )}
         <Row label={t('mob.originalAmount')} value={<Money cents={d.principal_amount} />} />
         <Row label={t('mob.principal')} value={<Money cents={d.principal_owed} />} />
@@ -51,7 +53,7 @@ export default function LoanDetail(): React.ReactElement {
         {(d.status === 'Active' || d.status === 'Overdue') && fraction !== null && (
           <>
             <ProgressBar value={fraction} color={d.status === 'Overdue' ? p.danger : p.success} />
-            <Text style={{ color: p.textMuted, fontSize: 12, marginTop: 4 }}>
+            <Text style={{ color: p.textMuted, fontSize: 12, marginTop: 4, fontFamily: ty.family.regular, lineHeight: ty.lh(12) }}>
               {t('mob.paidPercent', { p: Math.round(fraction * 100) })}
             </Text>
           </>
@@ -63,7 +65,7 @@ export default function LoanDetail(): React.ReactElement {
           <SectionHeader>{t('mob.guarantors')}</SectionHeader>
           <Card>
             {d.guarantors.map((name, i) => (
-              <Text key={i} style={{ color: p.text, fontSize: 15, paddingVertical: 6 }}>
+              <Text key={i} style={{ color: p.text, fontSize: 16, paddingVertical: 6, fontFamily: ty.family.regular, lineHeight: ty.lh(16) }}>
                 {name}
               </Text>
             ))}
@@ -85,13 +87,13 @@ export default function LoanDetail(): React.ReactElement {
               style={{ paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.border }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>{formatDate(payment.date)}</Text>
+                <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{formatDate(payment.date)}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Money cents={paid} bold color={p.success} />
                   <Ionicons name="chevron-forward" size={16} color={p.textMuted} />
                 </View>
               </View>
-              <Text style={{ color: p.textMuted, fontSize: 13 }}>
+              <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>
                 {t('mob.principal')}: {(payment.principal_paid / 100).toLocaleString()} · {t('mob.interest')}:{' '}
                 {(payment.interest_paid / 100).toLocaleString()} · {t('mob.fines')}: {(payment.fines_paid / 100).toLocaleString()}
               </Text>

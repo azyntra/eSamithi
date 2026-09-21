@@ -8,6 +8,7 @@ import { photoUrl } from '../api/client'
 import { useMyPurukaPosts, useUpdatePurukaPost, type PurukaPost } from '../api/hooks'
 import { categoryIcon } from './(tabs)/puruka'
 import { Badge, Banner, Button, EmptyState, ErrorView, Money, Screen, SkeletonCards, StaleBanner } from '../ui'
+import { useType } from '../typography'
 
 const EXPIRY_WARN_DAYS = 3
 
@@ -19,6 +20,7 @@ function daysUntil(dateStr: string): number {
 export default function MyPurukaPosts(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
   const posts = useMyPurukaPosts()
   const update = useUpdatePurukaPost()
@@ -89,16 +91,16 @@ export default function MyPurukaPosts(): React.ReactElement {
                 </View>
                 <View style={{ flex: 1, padding: 12, justifyContent: 'center' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={{ color: p.text, fontSize: 15, fontWeight: '700', flex: 1 }} numberOfLines={1}>{post.title}</Text>
+                    <Text style={{ color: p.text, fontSize: 16, flex: 1, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }} numberOfLines={1}>{post.title}</Text>
                     {statusBadge(post)}
                   </View>
                   <View style={{ marginTop: 4 }}>
                     {post.price !== null
                       ? <Money cents={post.price} size={14} bold color={p.primary} />
-                      : <Text style={{ color: p.primary, fontSize: 13, fontWeight: '700' }}>{t('mob.pkNegotiable')}</Text>}
+                      : <Text style={{ color: p.primary, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>{t('mob.pkNegotiable')}</Text>}
                   </View>
                   {!!post.expires_at && post.status === 'Active' && (
-                    <Text style={{ color: expiring ? p.warning : p.textMuted, fontSize: 12, marginTop: 3, fontWeight: expiring ? '700' : '400' }}>
+                    <Text style={{ color: expiring ? p.warning : p.textMuted, fontSize: 12, marginTop: 3, fontFamily: expiring ? ty.family.bold : ty.family.regular, lineHeight: ty.lh(12) }}>
                       {t('mob.pkExpires')}: {String(post.expires_at).split('T')[0]}
                     </Text>
                   )}
@@ -114,7 +116,7 @@ export default function MyPurukaPosts(): React.ReactElement {
                   style={{ backgroundColor: p.warningBg, paddingVertical: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 }}
                 >
                   <Ionicons name="refresh-outline" size={15} color={p.warning} />
-                  <Text style={{ color: p.warning, fontSize: 13, fontWeight: '700' }}>{t('mob.pkRenew')}</Text>
+                  <Text style={{ color: p.warning, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>{t('mob.pkRenew')}</Text>
                 </Pressable>
               )}
             </Pressable>

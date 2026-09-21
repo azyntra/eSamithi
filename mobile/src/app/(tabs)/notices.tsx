@@ -78,7 +78,7 @@ export default function Notices(): React.ReactElement {
                   backgroundColor: selected ? p.primary : p.primarySoft
                 }}
               >
-                <Text style={{ color: selected ? p.onPrimary : p.primary, fontSize: 13, fontFamily: ty.family.bold, lineHeight: ty.lh(13) }}>
+                <Text style={{ color: selected ? p.onPrimary : p.primary, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>
                   {chip.label}
                 </Text>
               </ScalePressable>
@@ -96,14 +96,14 @@ export default function Notices(): React.ReactElement {
           <Card key={n.id} style={{ borderLeftWidth: 4, borderLeftColor: meta.color }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm }}>
               <Ionicons name={meta.icon} size={18} color={meta.color} />
-              <Text style={{ color: meta.color, fontSize: 13, fontFamily: ty.family.bold, lineHeight: ty.lh(13), flex: 1 }}>{meta.label}</Text>
+              <Text style={{ color: meta.color, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14), flex: 1 }}>{meta.label}</Text>
               <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: interFamily.regular, flexShrink: 0, paddingRight: 2 }}>
                 {formatDate(n.created_at)}
               </Text>
             </View>
-            <Text style={{ color: p.text, fontSize: 17, fontFamily: ty.family.bold, lineHeight: ty.lh(17), marginBottom: spacing.xs }}>{n.title}</Text>
+            <Text style={{ color: p.text, fontSize: 18, fontFamily: ty.family.bold, lineHeight: ty.lh(18), marginBottom: spacing.xs }}>{n.title}</Text>
             {n.type === 'death' && n.deceased_name && (
-              <Text style={{ color: p.text, fontSize: 15, fontFamily: ty.family.semibold, lineHeight: ty.lh(15), marginBottom: spacing.xs }}>
+              <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16), marginBottom: spacing.xs }}>
                 {n.deceased_name}
               </Text>
             )}

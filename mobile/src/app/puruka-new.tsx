@@ -17,6 +17,7 @@ import {
 } from '../api/hooks'
 import { categoryIcon } from './(tabs)/puruka'
 import { Button, Input, Screen, SectionHeader, Segmented, useToast } from '../ui'
+import { useType } from '../typography'
 
 const MAX_PHOTOS = 3
 
@@ -31,6 +32,7 @@ async function compressPhoto(uri: string): Promise<string> {
 export default function PurukaNewPost(): React.ReactElement {
   const { t, lang } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
   const toast = useToast()
   const params = useLocalSearchParams<{ id?: string }>()
@@ -188,7 +190,7 @@ export default function PurukaNewPost(): React.ReactElement {
                 style={{ width: 86, height: 86, borderRadius: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: p.border, alignItems: 'center', justifyContent: 'center' }}
               >
                 <Ionicons name="camera-outline" size={24} color={p.textMuted} />
-                <Text style={{ color: p.textMuted, fontSize: 11, marginTop: 2 }}>{t('mob.pkAddPhoto')}</Text>
+                <Text style={{ color: p.textMuted, fontSize: 12, marginTop: 2, fontFamily: ty.family.regular, lineHeight: ty.lh(12) }}>{t('mob.pkAddPhoto')}</Text>
               </Pressable>
             )}
           </View>
@@ -197,7 +199,7 @@ export default function PurukaNewPost(): React.ReactElement {
 
       <Input label={t('mob.pkTitleField')} value={title} onChangeText={setTitle} placeholder={wanted ? t('mob.pkWantedTitlePh') : t('mob.pkTitlePh')} maxLength={120} />
 
-      <Text style={{ color: p.text, fontSize: 15, fontWeight: '600', marginBottom: 8 }}>{t('mob.pkCategory')}</Text>
+      <Text style={{ color: p.text, fontSize: 16, marginBottom: 8, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{t('mob.pkCategory')}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         {(categories.data ?? []).map((cat) => {
           const selected = categoryId === cat.id
@@ -219,7 +221,7 @@ export default function PurukaNewPost(): React.ReactElement {
               }}
             >
               <Ionicons name={categoryIcon(cat.code)} size={15} color={selected ? p.onPrimary : p.textMuted} />
-              <Text style={{ color: selected ? p.onPrimary : p.textMuted, fontSize: 13, fontWeight: '700' }}>
+              <Text style={{ color: selected ? p.onPrimary : p.textMuted, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>
                 {lang === 'si' ? cat.label_si : cat.label_en}
               </Text>
             </Pressable>
@@ -240,15 +242,15 @@ export default function PurukaNewPost(): React.ReactElement {
         <View style={{ backgroundColor: p.surfaceAlt, borderRadius: 12, padding: 12, marginBottom: 14, marginTop: -6, flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
           <Ionicons name="heart-outline" size={18} color={p.primary} style={{ marginTop: 1 }} />
           <View style={{ flex: 1 }}>
-            <Text style={{ color: p.primary, fontSize: 13, fontWeight: '700', marginBottom: 2 }}>{t('mob.pkTagline')}</Text>
-            <Text style={{ color: p.textMuted, fontSize: 12, lineHeight: 17 }}>{t('mob.pkFairPrice')}</Text>
+            <Text style={{ color: p.primary, fontSize: 14, marginBottom: 2, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>{t('mob.pkTagline')}</Text>
+            <Text style={{ color: p.textMuted, fontSize: 12, lineHeight: ty.lh(12), fontFamily: ty.family.regular }}>{t('mob.pkFairPrice')}</Text>
           </View>
         </View>
       )}
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16, marginTop: wanted ? 4 : 0 }}>
         <Switch value={negotiable} onValueChange={setNegotiable} trackColor={{ true: p.primary }} />
-        <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>{wanted ? t('mob.pkBudgetFlexible') : t('mob.pkNegotiable')}</Text>
+        <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{wanted ? t('mob.pkBudgetFlexible') : t('mob.pkNegotiable')}</Text>
       </View>
 
       <Input

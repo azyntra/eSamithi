@@ -8,12 +8,14 @@ import { resolveSamithiCode, type ResolveErrorKind, type SamithiProfile } from '
 import { useT } from '../../i18n'
 import { usePalette } from '../../theme'
 import { Button, Card, Input, Subtitle, Title } from '../../ui'
+import { useType } from '../../typography'
 
 // Samithi-code entry (multi-samithi): resolves the code via the directory
 // service and hands the resulting profile to the rest of the (auth) flow.
 export default function SamithiCode(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
   const { profiles, setPendingProfile } = useAuth()
   const insets = useSafeAreaInsets()
@@ -72,8 +74,8 @@ export default function SamithiCode(): React.ReactElement {
             <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Ionicons name="checkmark-circle" size={28} color={p.success} />
               <View style={{ flex: 1 }}>
-                <Text style={{ color: p.textMuted, fontSize: 13 }}>{t('mob.samithiFound')}</Text>
-                <Text style={{ color: p.text, fontSize: 17, fontWeight: '700', marginTop: 2 }}>{found.name}</Text>
+                <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.samithiFound')}</Text>
+                <Text style={{ color: p.text, fontSize: 18, marginTop: 2, fontFamily: ty.family.bold, lineHeight: ty.lh(18) }}>{found.name}</Text>
               </View>
             </Card>
             <View style={{ height: 16 }} />
@@ -95,12 +97,12 @@ export default function SamithiCode(): React.ReactElement {
               autoCapitalize="characters"
               autoCorrect={false}
             />
-            {error ? <Text style={{ color: p.danger, marginBottom: 12 }}>{error}</Text> : null}
+            {error ? <Text style={{ color: p.danger, fontSize: 16, marginBottom: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(16) }}>{error}</Text> : null}
             <Button label={busy ? t('mob.samithiChecking') : t('mob.samithiCheck')} onPress={submit} disabled={busy} />
 
             {profiles.length > 0 && (
               <>
-                <Text style={{ color: p.textMuted, fontSize: 13, fontWeight: '700', marginTop: 28, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                <Text style={{ color: p.textMuted, fontSize: 14, marginTop: 28, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>
                   {t('mob.samithiExisting')}
                 </Text>
                 <Card style={{ paddingVertical: 4 }}>
@@ -118,7 +120,7 @@ export default function SamithiCode(): React.ReactElement {
                       }}
                     >
                       <Ionicons name="people-circle-outline" size={24} color={p.primary} style={{ marginRight: 12 }} />
-                      <Text style={{ color: p.text, fontSize: 15, fontWeight: '600', flex: 1 }}>
+                      <Text style={{ color: p.text, fontSize: 16, flex: 1, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>
                         {profile.name || profile.code || profile.slug}
                       </Text>
                       <Ionicons name="chevron-forward" size={18} color={p.textMuted} />

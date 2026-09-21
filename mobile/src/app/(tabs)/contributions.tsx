@@ -7,6 +7,7 @@ import { usePalette } from '../../theme'
 import { useStatement, type LedgerRow } from '../../api/hooks'
 import { formatDate } from '../../lib/date'
 import { Card, EmptyState, ErrorView, Money, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner, StatusBadge } from '../../ui'
+import { useType } from '../../typography'
 
 // Group ledger rows by year-month, newest first (rows arrive date-desc)
 function groupByMonth(rows: LedgerRow[]): Array<{ key: string; rows: LedgerRow[] }> {
@@ -23,6 +24,7 @@ function groupByMonth(rows: LedgerRow[]): Array<{ key: string; rows: LedgerRow[]
 export default function Contributions(): React.ReactElement {
   const { t, monthsLong } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
   const statement = useStatement()
 
@@ -48,7 +50,7 @@ export default function Contributions(): React.ReactElement {
     <Screen refreshing={statement.isRefetching} onRefresh={() => statement.refetch()}>
       {statement.isError && <StaleBanner />}
       <Card>
-        <Text style={{ color: p.textMuted, fontSize: 13, marginBottom: 6 }}>{t('mob.totalContributed')}</Text>
+        <Text style={{ color: p.textMuted, fontSize: 14, marginBottom: 6, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.totalContributed')}</Text>
         <Money cents={total} size={22} bold color={p.success} />
       </Card>
 
@@ -73,8 +75,8 @@ export default function Contributions(): React.ReactElement {
                 }}
               >
                 <View style={{ flex: 1, marginRight: 10 }}>
-                  <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>{row.type_name}</Text>
-                  <Text style={{ color: p.textMuted, fontSize: 13, marginTop: 2 }}>{formatDate(row.date)}</Text>
+                  <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{row.type_name}</Text>
+                  <Text style={{ color: p.textMuted, fontSize: 14, marginTop: 2, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{formatDate(row.date)}</Text>
                   {row.status !== 'Active' && (
                     <View style={{ marginTop: 4 }}>
                       <StatusBadge status={row.status} />

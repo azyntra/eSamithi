@@ -5,10 +5,12 @@ import { usePalette } from '../theme'
 import { useSocietyInfo } from '../api/hooks'
 import { formatCurrency } from '../lib/money'
 import { Card, ErrorView, Row, Screen, SkeletonCards, StaleBanner, SectionHeader } from '../ui'
+import { useType } from '../typography'
 
 export default function Society(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const society = useSocietyInfo()
 
   if (society.isPending) return <Screen><SkeletonCards cards={2} /></Screen>
@@ -26,7 +28,7 @@ export default function Society(): React.ReactElement {
   return (
     <Screen refreshing={society.isRefetching} onRefresh={() => society.refetch()}>
       {society.isError && <StaleBanner />}
-      <Text style={{ color: p.text, fontSize: 22, fontWeight: '800', marginBottom: 16 }}>
+      <Text style={{ color: p.text, fontSize: 22, marginBottom: 16, fontFamily: ty.family.extrabold, lineHeight: ty.lh(22) }}>
         {d.society_name ?? 'Maranadhara Samithi'}
       </Text>
 

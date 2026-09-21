@@ -5,10 +5,12 @@ import { usePalette } from '../theme'
 import { useStatement } from '../api/hooks'
 import { formatDate } from '../lib/date'
 import { Card, EmptyState, ErrorView, Screen, SkeletonCards, StaleBanner, StatusBadge, Subtitle } from '../ui'
+import { useType } from '../typography'
 
 export default function Guarantees(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const statement = useStatement()
 
   if (statement.isPending) return <Screen><SkeletonCards cards={2} /></Screen>
@@ -31,9 +33,9 @@ export default function Guarantees(): React.ReactElement {
         <Card key={g.id}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flex: 1, marginRight: 10 }}>
-              <Text style={{ color: p.textMuted, fontSize: 13 }}>{t('mob.borrower')}</Text>
-              <Text style={{ color: p.text, fontSize: 16, fontWeight: '600', marginTop: 2 }}>{g.borrower_name}</Text>
-              <Text style={{ color: p.textMuted, fontSize: 13, marginTop: 2 }}>{t('mob.loanIssued', { date: formatDate(g.date_issued) })}</Text>
+              <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.borrower')}</Text>
+              <Text style={{ color: p.text, fontSize: 16, marginTop: 2, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{g.borrower_name}</Text>
+              <Text style={{ color: p.textMuted, fontSize: 14, marginTop: 2, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.loanIssued', { date: formatDate(g.date_issued) })}</Text>
             </View>
             <StatusBadge status={g.status} />
           </View>

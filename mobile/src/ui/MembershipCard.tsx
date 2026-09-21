@@ -55,7 +55,7 @@ export function MembershipCard({
         </Text>
         <Text
           numberOfLines={1}
-          style={{ color: 'rgba(255,255,255,0.8)', fontSize: compact ? 11 : 12.5, fontFamily: ty.family.bold, letterSpacing: 0.8, textTransform: 'uppercase' }}
+          style={{ color: 'rgba(255,255,255,0.8)', fontSize: compact ? 11 : 12.5, fontFamily: ty.family.bold, letterSpacing: 0.8, textTransform: 'uppercase', lineHeight: ty.lh(compact ? 11 : 12.5) }}
         >
           {societyName}
         </Text>
@@ -81,19 +81,19 @@ export function MembershipCard({
       <View style={{ backgroundColor: p.surface, padding: compact ? 16 : 20, flexDirection: 'row', gap: 16, alignItems: 'center' }}>
         <View style={{ flex: 1, gap: compact ? 8 : 10 }}>
           <View>
-            <Text style={{ color: p.textMuted, fontSize: compact ? 11 : 12, fontFamily: ty.family.semibold }}>{t('mob.nic')}</Text>
+            <Text style={{ color: p.textMuted, fontSize: compact ? 11 : 12, fontFamily: ty.family.semibold, lineHeight: ty.lh(compact ? 11 : 12) }}>{t('mob.nic')}</Text>
             <Text style={{ color: p.text, fontSize: compact ? 14 : 15, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>{profile.nic}</Text>
           </View>
           <View>
-            <Text style={{ color: p.textMuted, fontSize: compact ? 11 : 12, fontFamily: ty.family.semibold }}>{t('mob.joined')}</Text>
+            <Text style={{ color: p.textMuted, fontSize: compact ? 11 : 12, fontFamily: ty.family.semibold, lineHeight: ty.lh(compact ? 11 : 12) }}>{t('mob.joined')}</Text>
             <Text style={{ color: p.text, fontSize: compact ? 14 : 15, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>
               {formatDate(profile.date_of_joining)}
             </Text>
           </View>
           {!compact && (
             <View>
-              <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.semibold }}>{t('common.phone')}</Text>
-              <Text style={{ color: p.text, fontSize: 15, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>{profile.phone}</Text>
+              <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.semibold, lineHeight: ty.lh(12) }}>{t('common.phone')}</Text>
+              <Text style={{ color: p.text, fontSize: 16, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>{profile.phone}</Text>
             </View>
           )}
         </View>

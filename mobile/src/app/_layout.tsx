@@ -55,7 +55,7 @@ function RootNavigator(): React.ReactElement {
         headerStyle: { backgroundColor: p.surface },
         headerTintColor: p.text,
         headerShadowVisible: false,
-        headerTitleStyle: { fontFamily: ty.family.bold, fontSize: 17 },
+        headerTitleStyle: { fontFamily: ty.family.bold, fontSize: 18 },
         headerBackButtonDisplayMode: 'minimal',
         animation: reduce ? 'none' : 'slide_from_right',
         contentStyle: { backgroundColor: p.bg }

@@ -38,7 +38,7 @@ export default function SocietyFunds(): React.ReactElement {
       <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
         <Ionicons name={icon} size={19} color={color} />
       </View>
-      <Text style={{ color: p.text, fontSize: 15, fontWeight: '600', flex: 1, paddingRight: 8 }}>{label}</Text>
+      <Text style={{ color: p.text, fontSize: 16, flex: 1, paddingRight: 8, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{label}</Text>
       <Money cents={cents} size={16} bold />
     </View>
   )
@@ -49,17 +49,17 @@ export default function SocietyFunds(): React.ReactElement {
       style={{ paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.border }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ color: p.text, fontSize: 15, fontWeight: '700', flex: 1, paddingRight: 8 }} numberOfLines={1}>
+        <Text style={{ color: p.text, fontSize: 16, flex: 1, paddingRight: 8, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }} numberOfLines={1}>
           {fd.bank_name || t('mob.fundsFdBank')}
         </Text>
         <Money cents={fd.principal} size={15} bold color={p.primary} />
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 3, gap: 10 }}>
-        <Text style={{ color: p.textMuted, fontSize: 12, flex: 1 }} numberOfLines={1}>
+        <Text style={{ color: p.textMuted, fontSize: 12, flex: 1, fontFamily: ty.family.regular, lineHeight: ty.lh(12) }} numberOfLines={1}>
           {fd.fd_number ? `#${fd.fd_number}` : ''}{fd.interest_rate != null ? `${fd.fd_number ? ' · ' : ''}${fd.interest_rate}%` : ''}
         </Text>
         {fd.maturity_date && (
-          <Text style={{ color: p.textMuted, fontSize: 12, flexShrink: 0, paddingRight: 2 }}>
+          <Text style={{ color: p.textMuted, fontSize: 12, flexShrink: 0, paddingRight: 2, fontFamily: ty.family.regular, lineHeight: ty.lh(12) }}>
             {t('mob.fundsMatures', { date: formatDate(fd.maturity_date) })}
           </Text>
         )}
@@ -91,10 +91,10 @@ export default function SocietyFunds(): React.ReactElement {
         >
           eS
         </Text>
-        <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, fontFamily: ty.family.bold, lineHeight: ty.lh(12.5), letterSpacing: 0.8, textTransform: 'uppercase' }}>
+        <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: ty.family.bold, lineHeight: ty.lh(12), letterSpacing: 0.8, textTransform: 'uppercase' }}>
           {t('mob.fundsTotal')}
         </Text>
-        <Text style={{ color: '#fff', fontSize: 34, fontFamily: interFamily.extrabold, marginTop: 6, fontVariant: ['tabular-nums'] }}>
+        <Text style={{ color: '#fff', fontSize: 28, fontFamily: interFamily.extrabold, marginTop: 6, fontVariant: ['tabular-nums'] }}>
           Rs. {(d.total_funds / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </Text>
       </View>
@@ -115,7 +115,7 @@ export default function SocietyFunds(): React.ReactElement {
           : d.fixed_deposits.map(fdRow)}
       </Card>
 
-      <Text style={{ color: p.textMuted, fontSize: 12, textAlign: 'center', marginTop: 8, lineHeight: 18 }}>
+      <Text style={{ color: p.textMuted, fontSize: 12, textAlign: 'center', marginTop: 8, lineHeight: ty.lh(12), fontFamily: ty.family.regular }}>
         {t('mob.fundsNote')}
       </Text>
     </Screen>

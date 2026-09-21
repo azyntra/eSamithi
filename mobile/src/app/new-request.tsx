@@ -6,12 +6,14 @@ import { usePalette } from '../theme'
 import { useCreateRequest } from '../api/hooks'
 import { errorMessage } from '../api/client'
 import { Banner, Button, Input, Segmented, Subtitle } from '../ui'
+import { useType } from '../typography'
 
 type ReqType = 'loan' | 'correction'
 
 export default function NewRequest(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
+  const ty = useType()
   const router = useRouter()
   const create = useCreateRequest()
 
@@ -88,7 +90,7 @@ export default function NewRequest(): React.ReactElement {
               />
             )}
 
-            {error !== '' && <Text style={{ color: p.danger, fontSize: 15, marginBottom: 10 }}>{error}</Text>}
+            {error !== '' && <Text style={{ color: p.danger, fontSize: 16, marginBottom: 10, fontFamily: ty.family.regular, lineHeight: ty.lh(16) }}>{error}</Text>}
             <Button label={t('mob.reqSubmit')} onPress={submit} loading={create.isPending} disabled={!valid} />
           </>
         )}

@@ -176,7 +176,7 @@ export default function PurukaPostDetail(): React.ReactElement {
       </View>
 
       {!!item.description && (
-        <Text style={{ color: p.text, fontSize: 15, fontFamily: ty.family.regular, lineHeight: ty.lh(15), marginBottom: spacing.lg - 2 }}>{item.description}</Text>
+        <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.regular, lineHeight: ty.lh(16), marginBottom: spacing.lg - 2 }}>{item.description}</Text>
       )}
 
       <Card style={{ paddingVertical: 6 }}>
@@ -193,14 +193,14 @@ export default function PurukaPostDetail(): React.ReactElement {
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
         <View style={{ width: 44, height: 44, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           <BrandGradient rounded={radius.pill} />
-          <Text style={{ color: p.onPrimary, fontSize: 18, fontFamily: ty.family.extrabold }}>
+          <Text style={{ color: p.onPrimary, fontSize: 18, fontFamily: ty.family.extrabold, lineHeight: ty.lh(18) }}>
             {(item.seller_name || '?').charAt(0).toUpperCase()}
           </Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{item.seller_name}</Text>
           {!!item.seller_since && (
-            <Text style={{ color: p.textMuted, fontSize: 13, fontFamily: ty.family.regular, lineHeight: ty.lh(13), marginTop: 2 }}>
+            <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14), marginTop: 2 }}>
               {t('mob.pkMemberSince', { year: String(item.seller_since).slice(0, 4) })}
             </Text>
           )}
@@ -232,7 +232,7 @@ export default function PurukaPostDetail(): React.ReactElement {
         <>
           <Text
             onPress={askReport}
-            style={{ color: p.textMuted, fontSize: 13, fontFamily: ty.family.regular, textAlign: 'center', textDecorationLine: 'underline', paddingVertical: spacing.md - 2 }}
+            style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, textAlign: 'center', textDecorationLine: 'underline', paddingVertical: spacing.md - 2, lineHeight: ty.lh(14) }}
           >
             {t('mob.pkReport')}
           </Text>

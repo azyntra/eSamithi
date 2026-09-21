@@ -54,14 +54,14 @@ export default function Welcome(): React.ReactElement {
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <Animated.View entering={arrive(0)} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginBottom: spacing.xxl }}>
           <LogoTile size={64} />
-          <Text style={{ fontSize: 34, fontFamily: interFamily.extrabold, color: p.text }}>
-            e<Text style={{ color: p.primary }}>Samithi</Text>
+          <Text style={{ fontSize: 28, fontFamily: interFamily.extrabold, color: p.text }}>
+            e<Text style={{ color: p.primary, fontFamily: interFamily.extrabold }}>Samithi</Text>
           </Text>
         </Animated.View>
 
         <Animated.Text
           entering={arrive(1)}
-          style={{ fontSize: 26, fontFamily: ty.family.extrabold, lineHeight: ty.lh(26), color: p.text, marginBottom: spacing.md - 2 }}
+          style={{ fontSize: 28, fontFamily: ty.family.extrabold, lineHeight: ty.lh(28), color: p.text, marginBottom: spacing.md - 2 }}
         >
           {t('mob.welcomeTitle')}
         </Animated.Text>
@@ -89,10 +89,10 @@ export default function Welcome(): React.ReactElement {
             }}
           >
             <Ionicons name="people-circle-outline" size={16} color={p.primary} />
-            <Text style={{ color: p.text, fontSize: 13, fontFamily: ty.family.semibold, lineHeight: ty.lh(13) }}>
+            <Text style={{ color: p.text, fontSize: 14, fontFamily: ty.family.semibold, lineHeight: ty.lh(14) }}>
               {pendingProfile.name || pendingProfile.code || pendingProfile.slug}
             </Text>
-            <Text style={{ color: p.primary, fontSize: 13, fontFamily: ty.family.bold, lineHeight: ty.lh(13) }}>· {t('mob.samithiChange')}</Text>
+            <Text style={{ color: p.primary, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>· {t('mob.samithiChange')}</Text>
           </ScalePressable>
         </Animated.View>
       </View>
