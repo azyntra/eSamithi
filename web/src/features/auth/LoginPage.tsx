@@ -59,7 +59,12 @@ export function LoginPage({ code, redirect }: { code?: string; redirect?: string
     <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_500px] xl:grid-cols-[minmax(0,1fr)_560px]">
       <LoginHero />
 
-      <main className="flex flex-col items-center justify-center px-5 py-10 lg:px-8">
+      {/* Top-aligned rather than centred, with the offset scaling to the
+          window: centring a short column on a tall screen left a third of
+          the page empty above the mark before anything began. clamp keeps
+          a small window breathing and stops a very tall one pushing the
+          brand back into the middle. */}
+      <main className="flex flex-col items-center justify-start px-5 pb-10 pt-[clamp(1.5rem,9vh,6rem)] lg:px-8">
         {/* The brand used to sit on the photograph, which is why the top of it
             had to be darkened. It lives here now, above the form, on white —
             so the picture keeps its light and the mark keeps its contrast. */}
