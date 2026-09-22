@@ -4,7 +4,6 @@ import { Pause, Play } from 'lucide-react'
 import community from '@/assets/login/community.webp'
 import officer from '@/assets/login/officer.webp'
 import together from '@/assets/login/together.webp'
-import { BrandMark } from '@/components/BrandMark'
 import { useT, type TranslationKey } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
@@ -47,7 +46,7 @@ export function LoginHero() {
 
   return (
     <aside
-      className="relative hidden flex-col justify-between overflow-hidden bg-navy-950 p-10 text-white lg:flex xl:p-14"
+      className="relative hidden flex-col justify-end overflow-hidden bg-navy-950 p-10 text-white lg:flex xl:p-14"
       onPointerEnter={() => setHeld(true)}
       onPointerLeave={() => setHeld(false)}
       onFocusCapture={() => setHeld(true)}
@@ -71,33 +70,11 @@ export function LoginHero() {
         />
       </AnimatePresence>
 
-      {/* Two bands rather than a wash: dark where words sit, almost clear across
-          the middle so the photograph is actually visible. */}
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,9,16,0.9)_0%,rgba(5,9,16,0.78)_9%,rgba(5,9,16,0.3)_17%,rgba(5,9,16,0.08)_25%,rgba(5,9,16,0.08)_60%,rgba(5,9,16,0.45)_77%,rgba(5,9,16,0.88)_91%,rgba(5,9,16,0.95)_100%)]" />
-      {/* Only the corner the right-hand line sits in, so the rest of the
-          picture keeps its light. */}
-      <div className="absolute inset-0 bg-[radial-gradient(120%_58%_at_100%_0%,rgba(5,9,16,0.66)_0%,rgba(5,9,16,0.34)_42%,rgba(5,9,16,0)_72%)]" />
-
-      {/* One slim row of words at the top: the brand on the left, the line about
-          what this is on the right. Everything below it is the photograph. */}
-      <div className="relative flex items-start justify-between gap-8">
-        <div className="flex items-center gap-3">
-          <BrandMark size={44} />
-          <div className="leading-tight">
-            <div className="text-lg font-bold tracking-tight">eSamithi</div>
-            <div className="text-xs text-white/70">{t('login.platform')}</div>
-          </div>
-        </div>
-
-        <motion.p
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0, 0, 0, 1] }}
-          className="max-w-[15rem] pt-1 text-right text-[13.5px] leading-relaxed text-white"
-        >
-          {t('login.taglineSub')}
-        </motion.p>
-      </div>
+      {/* One band, along the bottom, where the caption and controls sit. The
+          top used to carry the brand and the tagline and so needed a scrim of
+          its own; both now live in the sign-in panel, which leaves the upper
+          two-thirds of the photograph undimmed. */}
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,9,16,0)_0%,rgba(5,9,16,0)_50%,rgba(5,9,16,0.18)_64%,rgba(5,9,16,0.55)_79%,rgba(5,9,16,0.86)_92%,rgba(5,9,16,0.94)_100%)]" />
 
       <div className="relative grid gap-5">
         <div className="flex items-end justify-between gap-6">

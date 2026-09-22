@@ -60,12 +60,20 @@ export function LoginPage({ code, redirect }: { code?: string; redirect?: string
       <LoginHero />
 
       <main className="flex flex-col items-center justify-center px-5 py-10 lg:px-8">
-        <div className="mb-8 flex items-center gap-3 lg:hidden">
-          <BrandMark size={40} />
-          <div className="leading-tight">
-            <div className="text-lg font-bold tracking-tight">eSamithi</div>
-            <div className="text-xs text-muted-foreground">{t('login.platform')}</div>
+        {/* The brand used to sit on the photograph, which is why the top of it
+            had to be darkened. It lives here now, above the form, on white —
+            so the picture keeps its light and the mark keeps its contrast. */}
+        <div className="mb-7 w-full max-w-[440px]">
+          <div className="flex items-center gap-3">
+            <BrandMark size={44} />
+            <div className="leading-tight">
+              <div className="text-xl font-bold tracking-tight">eSamithi</div>
+              <div className="text-xs text-muted-foreground">{t('login.platform')}</div>
+            </div>
           </div>
+          <p className="mt-3 max-w-[22rem] text-[13.5px] leading-relaxed text-muted-foreground">
+            {t('login.taglineSub')}
+          </p>
         </div>
 
         <Card className="w-full max-w-[440px] py-7 shadow-lg">
