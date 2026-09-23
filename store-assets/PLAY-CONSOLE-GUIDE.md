@@ -173,18 +173,58 @@ under the Societies Ordinance of Sri Lanka.
 
 ## 10. App access (for Google reviewers — the app needs credentials)
 
-Provide "All or some functionality is restricted" → add instructions:
-```
-eSamithi serves members of registered welfare societies. Reviewer test access:
+Provide "All or some functionality is restricted" → add the instructions below.
+**Paste them exactly.** Every label in quotes is the app's own English wording,
+checked on a clean Android 17 install on 23 Sep 2026.
 
-1. Open the app → enter samithi code: DEM-9361
-2. Log in as a member → NIC: 901234567V , PIN: 7391
-   (if asked to enrol instead: NIC 901234567V, date of birth 1990-01-15,
-    then choose any PIN)
-
-This demo society contains synthetic data only. Language can be switched to
-English from the More tab if it opens in Sinhala.
 ```
+eSamithi is for members of registered welfare societies, so it needs a
+society code and a member login. This demo society contains synthetic data.
+
+The app opens in Sinhala. Please switch it to English first:
+
+1. On the first screen, tap "EN" at the top-left.
+2. Tap "Get Started".
+3. In "Samithi code", enter:  DEM-9361
+   then tap "Find samithi".
+4. It shows "You are connecting to: eSamithi Demo Society". Tap "Continue".
+5. Tap "I already have a PIN".
+6. NIC number:  901234567V
+   PIN:         7391
+   then tap "Log in".
+
+You are now on the member's Home screen: dues status, membership card,
+contributions, loan balance and notices. The tabs along the bottom are
+Home, Puruka (marketplace), Contributions, Loans, Notices and More.
+```
+
+### Why this section was rewritten (vc7 rejection, 23 Sep 2026)
+
+vc7 was rejected for **Broken Functionality — "Loading problems: your app doesn't
+open or load."** The app itself was not broken: on a clean install on Android 17
+with 16 KB memory pages it opens, signs in and loads every screen. What broke was
+the reviewer's path into it, in two ways at once:
+
+1. **The PIN on file had stopped working.** The demo member's PIN had been reset to
+   something other than 7391, so a reviewer following these instructions could not
+   log in. Nothing past the login screen was reachable.
+2. **The instructions described a different app.** They said "Open the app → enter
+   samithi code", but 1.4.0 opens on a welcome screen, in Sinhala, with two Sinhala
+   buttons and no code field. They also said to switch to English "from the More
+   tab" — which only exists after logging in. A reviewer who does not read Sinhala
+   had no way to know which button led to the login.
+
+### Keep the reviewer account working
+
+- **DEMO-001 (NIC 901234567V) belongs to Google's reviewers. Never reset its PIN**,
+  and never use it for your own testing. Anyone can reset it with "Forgot PIN?" and
+  NIC + date of birth — which is exactly how the PIN on file stopped matching.
+- Five wrong PINs lock the account for 15 minutes; a reviewer who arrives during a
+  lockout sees a login that does not work.
+- **Before every submission**, log in once on a phone with the exact credentials
+  above. If it fails, fix the account before you submit, not after.
+- **Whenever the first-run screens change**, re-walk these steps word for word and
+  update the labels. The instructions must describe the build being reviewed.
 
 ## 11. Release
 
@@ -202,6 +242,7 @@ English from the More tab if it opens in Sinhala.
 - [ ] Privacy policy URL loads over HTTPS
 - [ ] App signing uses the exported EAS key (step 2)
 - [ ] Data safety + content rating + target audience + financial declaration done
-- [ ] App access demo credentials filled in and tested by you
+- [ ] App access instructions walked word for word on a real phone against THIS build
+- [ ] Demo login (DEM-9361 / 901234567V / 7391) succeeds immediately before submitting
 - [ ] Screenshots show demo data only
 - [ ] Internal-testing build verified: enrol, data loads, push arrives
