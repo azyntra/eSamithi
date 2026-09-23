@@ -95,6 +95,67 @@ for (const file of files) {
   })
 }
 
+// 7. Thread safety. UI-thread code — a useDerivedValue/useAnimatedStyle body, a
+//    gesture handler, a 'worklet' function — may only call other worklets.
+//    Calling one of our own plain JS helpers from there makes
+//    react-native-worklets throw "Tried to synchronously call a Remote
+//    Function"; React blanks the screen and the process carries on, so no
+//    crash report is ever filed. This shipped once: every Puruka listing with
+//    two or more photos opened blank. The web export cannot show it, because
+//    on web worklets run on the JS thread.
+{
+  const motionSrc = readFileSync(path.join(root, MOTION), 'utf8')
+  const fn = /export function timing\([\s\S]*?\{([\s\S]*?)\n\}/.exec(motionSrc)
+  if (!fn || !/'worklet'/.test(fn[1])) {
+    problems.push(`${MOTION}  timing() must carry the 'worklet' directive — it is called from UI-thread code`)
+  }
+}
+const KNOWN_WORKLETS = new Set(['timing'])
+const OPENERS = /(useDerivedValue|useAnimatedStyle|useAnimatedReaction|useAnimatedProps|\.on(?:Start|Update|End|Change|Begin|Finalize|TouchesDown|TouchesMove|TouchesUp))\s*\(/g
+function balanced(text, openIdx) {
+  // openIdx points at '(' or '{'; return the index just past its match
+  const open = text[openIdx], close = open === '(' ? ')' : '}'
+  let depth = 0
+  for (let i = openIdx; i < text.length; i++) {
+    if (text[i] === open) depth++
+    else if (text[i] === close && --depth === 0) return i + 1
+  }
+  return text.length
+}
+for (const file of files) {
+  const rel = path.relative(root, file)
+  const text = readFileSync(file, 'utf8')
+  // names this file imports from our own modules — the "remote functions"
+  const local = new Set()
+  for (const m of text.matchAll(/import\s+(?:(\w+)\s*,?\s*)?(?:\{([^}]*)\})?\s*from\s*'(\.[^']*)'/g)) {
+    if (m[1]) local.add(m[1])
+    for (const n of (m[2] || '').split(',')) {
+      const name = n.trim().replace(/^type\s+/, '').split(/\s+as\s+/).pop()
+      if (name && !/^type\b/.test(n.trim())) local.add(name)
+    }
+  }
+  // plus functions this file defines with a 'worklet' directive are fine
+  const ownWorklets = new Set([...text.matchAll(/(?:const|function)\s+(\w+)[^{]*\{\s*'worklet'/g)].map((m) => m[1]))
+  const regions = []
+  for (const m of text.matchAll(OPENERS)) {
+    const paren = m.index + m[0].length - 1
+    regions.push([paren, balanced(text, paren), m[1]])
+  }
+  for (const m of text.matchAll(/'worklet'/g)) {
+    const brace = text.lastIndexOf('{', m.index)
+    if (brace >= 0) regions.push([brace, balanced(text, brace), "'worklet' function"])
+  }
+  for (const [a, b, kind] of regions) {
+    const body = text.slice(a, b)
+    for (const c of body.matchAll(/\b([A-Za-z_]\w*)\s*\(/g)) {
+      const name = c[1]
+      if (!local.has(name) || KNOWN_WORKLETS.has(name) || ownWorklets.has(name)) continue
+      const line = text.slice(0, a + c.index).split('\n').length
+      problems.push(`${rel}:${line}  ${name}() is a plain JS function called from UI-thread code (${kind}) — this blanks the screen at runtime. Call it from JS (an effect) or make it a worklet`)
+    }
+  }
+}
+
 if (problems.length) {
   console.error(`check:motion failed with ${problems.length} problem(s):`)
   for (const p of problems) console.error('  - ' + p)

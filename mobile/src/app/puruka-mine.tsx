@@ -6,6 +6,7 @@ import { useT } from '../i18n'
 import { usePalette } from '../theme'
 import { photoUrl } from '../api/client'
 import { useMyPurukaPosts, useUpdatePurukaPost, type PurukaPost } from '../api/hooks'
+import { formatDate } from '../lib/date'
 import { categoryIcon } from './(tabs)/puruka'
 import { Banner, Button, EmptyState, ErrorView, Money, Screen, SkeletonCards, StaleBanner, StatusPill } from '../ui'
 import { useType } from '../typography'
@@ -89,7 +90,7 @@ export default function MyPurukaPosts(): React.ReactElement {
                   </View>
                   {!!post.expires_at && post.status === 'Active' && (
                     <Text style={{ color: expiring ? p.warning : p.textMuted, fontSize: 12, marginTop: 3, fontFamily: expiring ? ty.family.bold : ty.family.regular, lineHeight: ty.lh(12) }}>
-                      {t('mob.pkExpires')}: {String(post.expires_at).split('T')[0]}
+                      {t('mob.pkExpires')}: {formatDate(post.expires_at)}
                     </Text>
                   )}
                 </View>

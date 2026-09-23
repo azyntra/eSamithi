@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Alert, Dimensions, Linking, type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, Text, View } from 'react-native'
 import { Image } from 'expo-image'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { useAnimatedStyle, useDerivedValue, withTiming } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { dur, ease, timing, useReducedMotion } from '../../motion'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../i18n'
@@ -28,7 +28,14 @@ function whatsappNumber(phone: string): string {
 // ORIGIN of every sibling too — one swipe shuffled the whole row for 1.8 s.
 // Nothing here changes layout, so nothing else moves.
 function PagerDot({ active, activeColor, idleColor }: { active: boolean; activeColor: string; idleColor: string }): React.ReactElement {
-  const t = useDerivedValue(() => withTiming(active ? 1 : 0, timing(dur.micro, ease.standard)), [active])
+  // The animation is started from JS in an effect, and the UI-thread style only
+  // reads the value. This used to build the animation inside a useDerivedValue,
+  // which runs on the UI thread and called a plain JS helper from there — the
+  // listing screen went blank for any post with two or more photos.
+  const t = useSharedValue(active ? 1 : 0)
+  useEffect(() => {
+    t.value = withTiming(active ? 1 : 0, timing(dur.micro, ease.standard))
+  }, [active, t])
   const style = useAnimatedStyle(() => ({ transform: [{ scaleX: 0.35 + t.value * 0.65 }] }))
   return (
     <View style={{ width: 20, height: 7, alignItems: 'center', justifyContent: 'center' }}>

@@ -61,15 +61,27 @@ export const dur = {
 /** How far an entering element travels. Short, because ease.enter is front-loaded. */
 export const dist = { rise: 12 } as const
 
-/** withTiming config. Reduced motion is stated, not inherited by accident. */
-export const timing = (
+/**
+ * withTiming config. Reduced motion is stated, not inherited by accident.
+ *
+ * A worklet, so it is legal on the UI thread as well as the JS thread. The
+ * first version was a plain arrow function, and calling a plain JS function
+ * from UI-thread code (a useDerivedValue body, a gesture handler) makes
+ * react-native-worklets throw "Tried to synchronously call a Remote Function".
+ * React then blanks the screen and the process carries on, so no crash report
+ * is ever filed. That shipped: every Puruka listing with two or more photos
+ * opened to an empty screen, because the page dots called this from a
+ * useDerivedValue. The web export runs worklets on the JS thread and could
+ * never have shown it. scripts/check-motion.mjs now fails if this directive
+ * goes missing.
+ */
+export function timing(
   duration: number,
-  easing: EasingFunction = ease.standard
-): { duration: number; easing: EasingFunction; reduceMotion: ReduceMotion } => ({
-  duration,
-  easing,
-  reduceMotion: ReduceMotion.System
-})
+  easing?: EasingFunction
+): { duration: number; easing: EasingFunction; reduceMotion: ReduceMotion } {
+  'worklet'
+  return { duration, easing: easing ?? ease.standard, reduceMotion: ReduceMotion.System }
+}
 
 /**
  * The only spring in the app, stated in full so no future edit can half-

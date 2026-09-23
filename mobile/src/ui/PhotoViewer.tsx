@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { Modal, Text, useWindowDimensions, View } from 'react-native'
+import { Modal, Text, useWindowDimensions } from 'react-native'
 import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { dur, timing, useReducedMotion } from '../motion'
+import { useT } from '../i18n'
 import { radius, spacing } from '../theme'
 import { interFamily } from '../typography'
 import { ScalePressable } from './pressable'
@@ -13,6 +14,10 @@ import { ScalePressable } from './pressable'
 // Full-screen photo viewer: pinch to zoom, drag to pan, double-tap to
 // toggle zoom. One photo at a time with chevron navigation — deliberately
 // no swipe-pager, so pan and page gestures can never fight each other.
+
+// Built once, on the JS thread. The gesture handlers below run on the UI
+// thread and only ever capture this plain object.
+const GESTURE_SETTLE = timing(dur.gesture)
 
 function ZoomablePhoto({ uri }: { uri: string }): React.ReactElement {
   const { width, height } = useWindowDimensions()
@@ -28,10 +33,10 @@ function ZoomablePhoto({ uri }: { uri: string }): React.ReactElement {
 
   const reset = (): void => {
     'worklet'
-    scale.value = withTiming(1, timing(dur.gesture))
+    scale.value = withTiming(1, GESTURE_SETTLE)
     savedScale.value = 1
-    tx.value = withTiming(0, timing(dur.gesture))
-    ty.value = withTiming(0, timing(dur.gesture))
+    tx.value = withTiming(0, GESTURE_SETTLE)
+    ty.value = withTiming(0, GESTURE_SETTLE)
     savedTx.value = 0
     savedTy.value = 0
   }
@@ -65,7 +70,7 @@ function ZoomablePhoto({ uri }: { uri: string }): React.ReactElement {
       if (scale.value > 1) {
         reset()
       } else {
-        scale.value = withTiming(2.2, timing(dur.gesture))
+        scale.value = withTiming(2.2, GESTURE_SETTLE)
         savedScale.value = 2.2
       }
     })
@@ -96,6 +101,7 @@ export function PhotoViewer({
   visible: boolean
   onClose: () => void
 }): React.ReactElement {
+  const { t } = useT()
   const insets = useSafeAreaInsets()
   const reduce = useReducedMotion()
   const [index, setIndex] = useState(initialIndex)
@@ -108,13 +114,16 @@ export function PhotoViewer({
 
   return (
     <Modal visible={visible} transparent statusBarTranslucent animationType={reduce ? 'none' : 'fade'} onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.96)', justifyContent: 'center' }}>
+      {/* A Modal is a separate native window on Android, outside the app's
+          GestureHandlerRootView — without its own root, pinch, pan and
+          double-tap on the photo are silently never recognised. */}
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.96)', justifyContent: 'center' }}>
         {/* keyed so zoom state resets per photo */}
         {current ? <ZoomablePhoto key={current} uri={current} /> : null}
 
         <ScalePressable
           accessibilityRole="button"
-          accessibilityLabel="Close"
+          accessibilityLabel={t('common.close')}
           haptic="selection"
           onPress={onClose}
           style={{
@@ -149,6 +158,7 @@ export function PhotoViewer({
             {index > 0 && (
               <ScalePressable
                 accessibilityRole="button"
+                accessibilityLabel={t('common.previous')}
                 haptic="selection"
                 onPress={() => setIndex((i) => Math.max(0, i - 1))}
                 style={{ position: 'absolute', left: spacing.md, top: '50%', marginTop: -22, width: 44, height: 44, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}
@@ -159,6 +169,7 @@ export function PhotoViewer({
             {index < photos.length - 1 && (
               <ScalePressable
                 accessibilityRole="button"
+                accessibilityLabel={t('common.next')}
                 haptic="selection"
                 onPress={() => setIndex((i) => Math.min(photos.length - 1, i + 1))}
                 style={{ position: 'absolute', right: spacing.md, top: '50%', marginTop: -22, width: 44, height: 44, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}
@@ -168,7 +179,7 @@ export function PhotoViewer({
             )}
           </>
         )}
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   )
 }

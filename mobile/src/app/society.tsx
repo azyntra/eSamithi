@@ -44,8 +44,8 @@ export default function Society(): React.ReactElement {
 
       <SectionHeader>{t('mob.loanTerms')}</SectionHeader>
       <Card>
-        <Row label={t('mob.monthlyInterest')} value={`${d.monthly_interest_rate ?? '—'}%`} />
-        <Row label={t('mob.lateFine')} value={`${d.late_fine_rate ?? '—'}%`} />
+        <Row label={t('mob.monthlyInterest')} value={d.monthly_interest_rate == null ? '—' : `${d.monthly_interest_rate}%`} />
+        <Row label={t('mob.lateFine')} value={d.late_fine_rate == null ? '—' : `${d.late_fine_rate}%`} />
         <Row label={t('mob.maxLoan')} value={maxLoanCents ? formatCurrency(maxLoanCents) : '—'} />
         <Row label={t('mob.reqGuarantors')} value={d.required_guarantors ?? '—'} />
       </Card>

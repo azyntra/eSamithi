@@ -106,8 +106,8 @@ export default function LoanDetail(): React.ReactElement {
         <>
           <SectionHeader>{t('mob.loanTerms')}</SectionHeader>
           <Card>
-            <Row label={t('mob.monthlyInterest')} value={`${society.data.monthly_interest_rate ?? '—'}%`} />
-            <Row label={t('mob.lateFine')} value={`${society.data.late_fine_rate ?? '—'}%`} />
+            <Row label={t('mob.monthlyInterest')} value={society.data.monthly_interest_rate == null ? '—' : `${society.data.monthly_interest_rate}%`} />
+            <Row label={t('mob.lateFine')} value={society.data.late_fine_rate == null ? '—' : `${society.data.late_fine_rate}%`} />
           </Card>
         </>
       )}

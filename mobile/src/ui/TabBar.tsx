@@ -45,6 +45,11 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
         const { options } = descriptors[route.key]
         const label = options.title ?? route.name
         const focused = state.index === index
+        // A single word too wide for its slot must shrink, never wrap: Android
+        // breaks an unspaced word wherever it runs out of room ("Contributio" /
+        // "ns"), and a label that has already wrapped counts as fitting, so the
+        // shrink below never happens. Labels with a space may still use two lines.
+        const oneWord = !/\s/.test(label.trim())
         const icons = ICONS[route.name] ?? { active: 'ellipse', idle: 'ellipse-outline' }
 
         const onPress = (): void => {
@@ -106,9 +111,9 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
                 is shorter words, which is a Sinhala speaker's call, not a
                 developer's. See decision O1 in the requirements. */}
             <Text
-              numberOfLines={2}
+              numberOfLines={oneWord ? 1 : 2}
               adjustsFontSizeToFit
-              minimumFontScale={0.85}
+              minimumFontScale={oneWord ? 0.7 : 0.85}
               maxFontSizeMultiplier={1.2}
               style={{
                 fontSize: 12,
