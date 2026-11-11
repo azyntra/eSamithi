@@ -32,3 +32,26 @@ export interface ArrearsReport {
   // null in Migration Mode — historical fee payments were never entered
   membersWithoutFee: Array<{ id: number; society_id: string; full_name: string; phone: string | null }> | null
 }
+
+export type AppUsageStatus = 'online' | 'active' | 'occasional' | 'dormant' | 'not_enrolled' | 'blocked'
+export interface AppUsageMember {
+  id: number
+  society_id: string
+  full_name: string | null
+  phone: string | null
+  status: AppUsageStatus
+  enrolled: boolean
+  enrolled_at: string | null
+  first_seen_at: string | null
+  last_seen_at: string | null
+  platform: string | null
+  app_version: string | null
+  push_enabled: boolean
+  pin_locked: boolean
+}
+export interface AppUsageReport {
+  generated_at: string
+  thresholds: { online_minutes: number; active_days: number; occasional_days: number }
+  counts: Record<AppUsageStatus | 'total' | 'enrolled', number>
+  members: AppUsageMember[]
+}

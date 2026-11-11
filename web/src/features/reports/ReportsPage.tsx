@@ -19,11 +19,13 @@ import { formatCurrency, formatNumber } from '@/lib/format/currency'
 import { formatDate, todayIso } from '@/lib/format/dates'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
+import { filterUsage, STATUS_LABEL, usageRows } from './appUsage'
+import { AppUsageTab } from './AppUsageTab'
 import { buildReportHtml, type ReportSection } from './print'
-import { useAnnualReport, useArrearsReport, useMonthlyReport } from './queries'
+import { useAnnualReport, useAppUsageReport, useArrearsReport, useMonthlyReport } from './queries'
 import type { CategoryRow, Summary } from './types'
 
-import type { ArrearsTab, ReportTab } from './tabs'
+import type { AppUsageFilter, ArrearsTab, ReportTab } from './tabs'
 import { memberLabel } from '@/lib/members'
 export type { ArrearsTab, ReportTab }
 
@@ -96,26 +98,30 @@ const ReportSkeleton = () => (
 interface ReportsPageProps {
   tab: ReportTab
   arrearsTab: ArrearsTab
+  usageFilter: AppUsageFilter
   year: number
   month: number
-  onChange: (patch: { tab?: ReportTab; arrears?: ArrearsTab; year?: number; month?: number }) => void
+  onChange: (patch: { tab?: ReportTab; arrears?: ArrearsTab; usage?: AppUsageFilter; year?: number; month?: number }) => void
 }
 
-export function ReportsPage({ tab, arrearsTab, year, month, onChange }: ReportsPageProps) {
+export function ReportsPage({ tab, arrearsTab, usageFilter, year, month, onChange }: ReportsPageProps) {
   const { t, lang, monthsLong } = useT()
   const settings = useSettings()
   const monthly = useMonthlyReport(year, month, tab === 'monthly')
   const annual = useAnnualReport(year, tab === 'annual')
   const arrears = useArrearsReport(tab === 'arrears')
+  const usage = useAppUsageReport(tab === 'app')
+  const [usageQuery, setUsageQuery] = useState('')
+  const usageList = useMemo(() => (usage.data ? filterUsage(usage.data.members, usageFilter, usageQuery) : []), [usage.data, usageFilter, usageQuery])
   const [preview, setPreview] = useState<{ title: string; html: string } | null>(null)
 
   const societyName = settings.data?.society_name || 'eSamithi'
   const address = settings.data?.society_address ?? null
   const phone = settings.data?.society_phone ?? null
-  const active = tab === 'monthly' ? monthly : tab === 'annual' ? annual : arrears
+  const active = tab === 'monthly' ? monthly : tab === 'annual' ? annual : tab === 'arrears' ? arrears : usage
 
   const periodLabel = tab === 'monthly' ? `${monthsLong[month - 1]} ${year}` : tab === 'annual' ? String(year) : ''
-  const title = tab === 'monthly' ? t('reports.monthly') : tab === 'annual' ? t('reports.annual') : t('reports.arrears')
+  const title = tab === 'monthly' ? t('reports.monthly') : tab === 'annual' ? t('reports.annual') : tab === 'arrears' ? t('reports.arrears') : t('reports.appUsage')
 
   const categorySections = (s: Summary): ReportSection[] => [
     {
@@ -187,8 +193,19 @@ export function ReportsPage({ tab, arrearsTab, year, month, onChange }: ReportsP
         }
       ]
     }
+    if (tab === 'app' && usage.data) {
+      const group = usageFilter === 'all' ? t('reports.appAll') : t(STATUS_LABEL[usageFilter])
+      return [
+        {
+          title: `${group} (${usageList.length})`,
+          headers: [t('reports.societyId'), t('common.name'), t('common.phone'), t('common.status'), t('reports.appLastSeen'), t('reports.appSetupDate'), t('reports.appVersion')],
+          rows: usageRows(usageList, t, lang),
+          note: t('reports.appNote')
+        }
+      ]
+    }
     return null
-  }, [tab, monthly.data, annual.data, arrears.data]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tab, monthly.data, annual.data, arrears.data, usage.data, usageList, usageFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const print = () => {
     if (!sections) return
@@ -206,7 +223,7 @@ export function ReportsPage({ tab, arrearsTab, year, month, onChange }: ReportsP
         if (s.footer) lines.push(toCsv([], [s.footer]))
         lines.push('')
       }
-      downloadCsv(`${tab}-report-${periodLabel ? periodLabel.replace(/\s+/g, '-').toLowerCase() : todayIso()}.csv`, lines.join('\r\n'))
+      downloadCsv(`${tab === 'app' ? `app-usage-${usageFilter}` : tab}-report-${periodLabel ? periodLabel.replace(/\s+/g, '-').toLowerCase() : todayIso()}.csv`, lines.join('\r\n'))
       toast.success(t('ledger.exported', { count: sections.reduce((n, s) => n + s.rows.length, 0) }))
     } catch (e) {
       toast.error(errorMessage(e, t('ledger.exportFailed')))
@@ -235,9 +252,10 @@ export function ReportsPage({ tab, arrearsTab, year, month, onChange }: ReportsP
           <TabsTrigger value="monthly">{t('reports.monthly')}</TabsTrigger>
           <TabsTrigger value="annual">{t('reports.annual')}</TabsTrigger>
           <TabsTrigger value="arrears">{t('reports.arrears')}</TabsTrigger>
+          <TabsTrigger value="app">{t('reports.appUsage')}</TabsTrigger>
         </TabsList>
 
-        {tab !== 'arrears' && (
+        {(tab === 'monthly' || tab === 'annual') && (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-4 py-3">
             <span className="text-sm font-medium">{t('reports.period')}</span>
             {tab === 'monthly' && (
@@ -471,6 +489,14 @@ export function ReportsPage({ tab, arrearsTab, year, month, onChange }: ReportsP
                     </Card>
                   </TabsContent>
                 </Tabs>
+              )}
+            </TabsContent>
+
+            <TabsContent value="app">
+              {usage.isPending || !usage.data ? (
+                <ReportSkeleton />
+              ) : (
+                <AppUsageTab report={usage.data} rows={usageList} filter={usageFilter} onFilter={(f) => onChange({ usage: f })} query={usageQuery} onQuery={setUsageQuery} />
               )}
             </TabsContent>
           </>

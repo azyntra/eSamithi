@@ -2,6 +2,7 @@ const express = require('express');
 const { getPool } = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 const { isMigrationMode } = require('../lib/settings');
+const { usageStatus, ONLINE_SECONDS, ACTIVE_DAYS, OCCASIONAL_DAYS } = require('../lib/memberActivity');
 const router = express.Router();
 router.use(authMiddleware);
 
@@ -123,6 +124,69 @@ router.get('/arrears', async (req, res, next) => {
       })),
       fdsMaturing: fdsMaturing.map(f => ({ ...f, principal: Number(f.principal) })),
       membersWithoutFee
+    });
+  } catch (err) { next(err); }
+});
+
+// GET /api/v1/reports/app-usage — who is using the member mobile app.
+// Every active member, bucketed by enrolment (PIN set) and when the app last
+// talked to the server. "Installed" is not knowable per member (the store
+// only reports anonymous counts), so "not enrolled" is the closest signal:
+// the member has never completed NIC + date-of-birth + PIN setup.
+router.get('/app-usage', async (_req, res, next) => {
+  try {
+    const [rows] = await getPool().query(
+      `SELECT m.id, m.society_id, m.full_name, m.phone,
+              (m.pin_hash IS NOT NULL)                          AS enrolled,
+              (m.app_enabled IS NULL OR m.app_enabled = 1)      AS app_enabled,
+              (m.pin_locked_until IS NOT NULL AND m.pin_locked_until > NOW()) AS pin_locked,
+              UNIX_TIMESTAMP(m.pin_set_at)                      AS enrolled_ts,
+              UNIX_TIMESTAMP(a.first_seen_at)                   AS first_seen_ts,
+              UNIX_TIMESTAMP(a.last_seen_at)                    AS last_seen_ts,
+              TIMESTAMPDIFF(SECOND, a.last_seen_at, NOW())      AS seconds_ago,
+              a.app_version,
+              COALESCE(a.platform, p.platform)                  AS platform,
+              (p.member_id IS NOT NULL)                         AS push_enabled
+       FROM members m
+       LEFT JOIN member_app_activity a ON a.member_id = m.id
+       LEFT JOIN (SELECT member_id, MAX(platform) AS platform
+                  FROM member_push_tokens GROUP BY member_id) p ON p.member_id = m.id
+       WHERE m.is_active = 1 OR m.is_active IS NULL
+       ORDER BY m.full_name ASC, m.id ASC`
+    );
+
+    const iso = (ts) => (ts === null || ts === undefined ? null : new Date(Number(ts) * 1000).toISOString());
+    const counts = { total: 0, enrolled: 0, not_enrolled: 0, online: 0, active: 0, occasional: 0, dormant: 0, blocked: 0 };
+
+    const members = rows.map((r) => {
+      const enrolled = Number(r.enrolled) === 1;
+      const secondsAgo = r.seconds_ago === null ? null : Math.max(0, Number(r.seconds_ago));
+      const status = usageStatus({ enrolled, appEnabled: Number(r.app_enabled) === 1, secondsAgo });
+      counts.total += 1;
+      counts[status] += 1;
+      if (enrolled) counts.enrolled += 1;
+      return {
+        id: r.id,
+        society_id: r.society_id,
+        full_name: r.full_name,
+        phone: r.phone,
+        status,
+        enrolled,
+        enrolled_at: iso(r.enrolled_ts),
+        first_seen_at: iso(r.first_seen_ts),
+        last_seen_at: iso(r.last_seen_ts),
+        platform: r.platform || null,
+        app_version: r.app_version || null,
+        push_enabled: Number(r.push_enabled) === 1,
+        pin_locked: Number(r.pin_locked) === 1
+      };
+    });
+
+    res.json({
+      generated_at: new Date().toISOString(),
+      thresholds: { online_minutes: ONLINE_SECONDS / 60, active_days: ACTIVE_DAYS, occasional_days: OCCASIONAL_DAYS },
+      counts,
+      members
     });
   } catch (err) { next(err); }
 });

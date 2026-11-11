@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test test/isolation.test.js test/staffAuth.test.js",
+    "test": "node --test test/isolation.test.js test/staffAuth.test.js test/memberActivity.test.js",
     "test:db": "node --test test/staffAuth.db.test.js"
   },
   "dependencies": {

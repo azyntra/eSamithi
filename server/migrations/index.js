@@ -362,6 +362,27 @@ async function staffAuthEvents(pool) {
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 }
 
+// 017 — member app usage (the "who is using the app" report). One row per
+// member, stamped by memberAuthMiddleware at most once every few minutes.
+// Backfilled from member_refresh_tokens: every app open after the 15-minute
+// access token lapses rotates a refresh token, and those rows are never
+// deleted, so first/last use is recoverable back to launch.
+async function memberAppActivity(pool) {
+  await pool.query(`CREATE TABLE IF NOT EXISTS member_app_activity (
+    member_id     INT PRIMARY KEY,
+    first_seen_at TIMESTAMP   NULL DEFAULT NULL,
+    last_seen_at  TIMESTAMP   NULL DEFAULT NULL,
+    platform      VARCHAR(20) DEFAULT NULL,
+    app_version   VARCHAR(40) DEFAULT NULL,
+    KEY idx_maa_last_seen (last_seen_at),
+    FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  await pool.query(`INSERT IGNORE INTO member_app_activity (member_id, first_seen_at, last_seen_at)
+    SELECT member_id, MIN(created_at), MAX(created_at)
+    FROM member_refresh_tokens GROUP BY member_id`);
+}
+
 module.exports = [
   { id: '000_base_schema', up: baseSchema },
   { id: '004_loan_payment_wallet', up: loanPaymentWallet },
@@ -376,5 +397,6 @@ module.exports = [
   { id: '013_attendance_mode', up: attendanceMode },
   { id: '014_staff_sessions', up: staffSessions },
   { id: '015_staff_auth_events', up: staffAuthEvents },
-  { id: '016_loan_payment_bill_no', up: loanPaymentBillNo }
+  { id: '016_loan_payment_bill_no', up: loanPaymentBillNo },
+  { id: '017_member_app_activity', up: memberAppActivity }
 ];

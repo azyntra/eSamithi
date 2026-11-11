@@ -37,7 +37,7 @@ jobs:
       - name: Unit tests — tenant isolation + staff auth (no DB)
         working-directory: server
         # explicit files: node 20's --test has no glob support (node 21+)
-        run: node --test test/isolation.test.js test/staffAuth.test.js
+        run: node --test test/isolation.test.js test/staffAuth.test.js test/memberActivity.test.js
 
       - name: Migration runner from zero (two fake tenants)
         working-directory: server

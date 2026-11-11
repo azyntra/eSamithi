@@ -12,3 +12,8 @@ export function useAnnualReport(year: number, enabled: boolean) {
 export function useArrearsReport(enabled: boolean) {
   return useQuery({ queryKey: qk.reports('arrears', {}), queryFn: reportsApi.arrears, enabled, staleTime: 0 })
 }
+// The one live report: it answers "who is on the app right now", so it polls
+// while its tab is open (and only then — `enabled` follows the active tab).
+export function useAppUsageReport(enabled: boolean) {
+  return useQuery({ queryKey: qk.reports('app-usage', {}), queryFn: reportsApi.appUsage, enabled, staleTime: 0, refetchInterval: 30_000 })
+}

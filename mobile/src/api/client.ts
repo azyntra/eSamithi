@@ -1,6 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import Constants from 'expo-constants'
 import * as SecureStore from 'expo-secure-store'
+import { Platform } from 'react-native'
 import { refreshTokenKey } from '../lib/profiles'
 
 // API base comes from app.json → expo.extra: set "apiEnv" to a key of
@@ -75,12 +76,18 @@ export function registerSessionExpiredHandler(fn: () => void): void {
   onSessionExpired = fn
 }
 
+// Sent with every request so the office "App usage" report can show which
+// build and platform each member is on. Not an identifier — just the build.
+const APP_VERSION = Constants.expoConfig?.version ?? ''
+
 export const api = axios.create({ baseURL: API_URL, timeout: 20000 })
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   config.baseURL = currentApiUrl()
   const slug = currentSlug()
   if (slug) config.headers['X-Samithi'] = slug
+  config.headers['X-App-Platform'] = Platform.OS
+  if (APP_VERSION) config.headers['X-App-Version'] = APP_VERSION
   if (accessToken && !config.url?.startsWith('/member-auth/')) {
     config.headers.Authorization = `Bearer ${accessToken}`
   }

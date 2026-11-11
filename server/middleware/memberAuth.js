@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { touchMember } = require('../lib/memberActivity');
 
 // Auth for the member mobile app. Member tokens carry { member_id, typ:"member" }
 // and are deliberately NOT interchangeable with staff tokens: staff tokens have
@@ -27,6 +28,7 @@ function memberAuthMiddleware(req, res, next) {
       return res.status(403).json({ error: 'Token does not belong to this samithi' });
     }
     req.member = { id: decoded.member_id };
+    touchMember(req);
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid or expired token' });
