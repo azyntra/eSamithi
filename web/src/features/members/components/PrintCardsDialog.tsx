@@ -108,7 +108,7 @@ export function PrintCardsDialog({ open, onOpenChange }: { open: boolean; onOpen
 
           {scope === 'ids' && (
             <div className="grid gap-2">
-              <MemberPicker value={null} onChange={(id) => id !== null && setChosen((prev) => (prev.includes(id) ? prev : [...prev, id]))} exclude={chosen} placeholder={t('members.cardsAddMember')} allowClear={false} />
+              <MemberPicker value={null} onChange={(id) => id !== null && setChosen((prev) => (prev.includes(id) ? prev : [...prev, id]))} exclude={chosen} placeholder={t('members.cardsAddMember')} ariaLabel={t('members.cardsAddMember')} allowClear={false} />
               {chosen.length === 0 ? (
                 <p className="text-xs text-muted-foreground">{t('members.cardsChosenNone')}</p>
               ) : (

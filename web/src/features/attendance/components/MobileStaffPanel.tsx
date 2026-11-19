@@ -99,7 +99,7 @@ export function MobileStaffPanel({ className }: { className?: string }) {
 
       <div className="border-t border-border p-3">
         {canChange ? (
-          <MemberPicker value={null} onChange={(id) => void add(id)} exclude={rows.map((r) => r.id)} placeholder={t('att.mobileStaffAdd')} allowClear={false} disabled={setStaff.isPending} />
+          <MemberPicker value={null} onChange={(id) => void add(id)} exclude={rows.map((r) => r.id)} placeholder={t('att.mobileStaffAdd')} ariaLabel={t('att.mobileStaffAdd')} allowClear={false} disabled={setStaff.isPending} />
         ) : (
           <p className="text-xs text-muted-foreground">{t('att.mobileStaffViewOnly')}</p>
         )}

@@ -25,9 +25,12 @@ interface MemberPickerProps {
   invalid?: boolean
   allowClear?: boolean
   className?: string
+  // A combobox takes no name from its content, so a picker that is not
+  // inside a labelled Field must be named here (axe: button-name)
+  ariaLabel?: string
 }
 
-export function MemberPicker({ value, onChange, exclude = [], placeholder, id, disabled, invalid, allowClear = true, className }: MemberPickerProps) {
+export function MemberPicker({ value, onChange, exclude = [], placeholder, id, disabled, invalid, allowClear = true, className, ariaLabel }: MemberPickerProps) {
   const { t } = useT()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -45,6 +48,7 @@ export function MemberPicker({ value, onChange, exclude = [], placeholder, id, d
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={ariaLabel}
           aria-invalid={invalid || undefined}
           disabled={disabled}
           className={cn('h-9 w-full justify-between bg-card px-3 font-normal aria-invalid:border-destructive', !selected && 'text-subtle-foreground', className)}
