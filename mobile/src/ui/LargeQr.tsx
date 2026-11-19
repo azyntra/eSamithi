@@ -11,7 +11,9 @@ import { interFamily, useType } from '../typography'
 // scanners struggle with. Closes on a tap, the back button or a swipe down.
 //
 // Screen brightness goes to full while it is open and back afterwards
-// (FR-5.7). The brightness module is required lazily inside a try, so this
+// (FR-5.7). Only this app's window brightness is touched — never the
+// system setting — so android.permission.WRITE_SETTINGS stays blocked in
+// app.json (the expo-brightness plugin adds it for the system-wide calls). The brightness module is required lazily inside a try, so this
 // file also runs on an older binary that does not contain it.
 export function LargeQr({
   visible,
