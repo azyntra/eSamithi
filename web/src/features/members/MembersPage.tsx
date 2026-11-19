@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
-import { AlertTriangle, Eye, Pencil, Plus, ScanLine, Search, Trash2, Users } from 'lucide-react'
+import { AlertTriangle, Eye, Pencil, Plus, QrCode, ScanLine, Search, Trash2, Users } from 'lucide-react'
 import { DataTable } from '@/components/DataTable'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
@@ -17,9 +17,10 @@ import { useT } from '@/lib/i18n'
 import { formatNumber } from '@/lib/format/currency'
 import { DeleteMemberDialog } from './components/DeleteMemberDialog'
 import { MemberFormSheet } from './components/MemberForm'
+import { PrintCardsDialog } from './components/PrintCardsDialog'
 import { ScanCardDialog } from './components/ScanCardDialog'
 import { useMembersList } from './queries'
-import { isMemberActive, type Member } from './types'
+import { isAttendanceStaff, isMemberActive, type Member } from './types'
 
 interface MembersPageProps {
   q: string
@@ -37,6 +38,7 @@ export function MembersPage({ q, page, size, create = false, scan = false }: Mem
   const [formOpen, setFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | null>(null)
   const [scanOpen, setScanOpen] = useState(false)
+  const [cardsOpen, setCardsOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null)
 
   // Quick actions arrive as links: /members?create=1 and /members?scan=1
@@ -83,6 +85,11 @@ export function MembersPage({ q, page, size, create = false, scan = false }: Mem
               {row.original.full_name || '—'}
             </Link>
             {!isMemberActive(row.original) && <Badge variant="neutral">{t('common.inactive')}</Badge>}
+            {isAttendanceStaff(row.original) && (
+              <Badge variant="info" title={t('members.staffBadge')}>
+                <ScanLine /> <span className="sr-only sm:not-sr-only">{t('members.staffBadge')}</span>
+              </Badge>
+            )}
           </div>
         )
       },
@@ -145,6 +152,9 @@ export function MembersPage({ q, page, size, create = false, scan = false }: Mem
           <>
             <Button variant="secondary" onClick={() => setScanOpen(true)}>
               <ScanLine /> {t('members.scanCard')}
+            </Button>
+            <Button variant="secondary" onClick={() => setCardsOpen(true)}>
+              <QrCode /> {t('members.printCards')}
             </Button>
             <Button onClick={() => { setEditId(null); setFormOpen(true) }}>
               <Plus /> {t('members.add')}
@@ -209,6 +219,7 @@ export function MembersPage({ q, page, size, create = false, scan = false }: Mem
 
       <MemberFormSheet open={formOpen} onOpenChange={setFormOpen} memberId={editId} />
       <ScanCardDialog open={scanOpen} onOpenChange={setScanOpen} />
+      <PrintCardsDialog open={cardsOpen} onOpenChange={setCardsOpen} />
       <DeleteMemberDialog member={deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)} />
     </>
   )

@@ -79,6 +79,9 @@ function RootNavigator(): React.ReactElement {
         <Stack.Screen name="puruka-new" options={{ title: t('mob.pkNewPost') }} />
         <Stack.Screen name="puruka-mine" options={{ title: t('mob.pkMyPosts') }} />
         <Stack.Screen name="society-funds" options={{ title: t('mob.fundsTitle') }} />
+        <Stack.Screen name="attendance/index" options={{ title: t('mob.attTitle') }} />
+        <Stack.Screen name="attendance/new" options={{ title: t('mob.attNewEvent') }} />
+        <Stack.Screen name="attendance/[id]" options={{ title: t('mob.attTitle') }} />
       </Stack.Protected>
       <Stack.Protected guard={status !== 'signedIn'}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />

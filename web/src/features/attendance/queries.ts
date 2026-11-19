@@ -4,7 +4,9 @@ import { attendanceApi } from './api'
 import { presentDelta, type AttendanceMode, type AttendanceRow, type CreateEventPayload, type EventDetail, type SocietyEvent } from './types'
 
 export function useEvents() {
-  return useQuery({ queryKey: qk.events, queryFn: attendanceApi.events, staleTime: 30_000 })
+  // Polled: events and marks can now arrive from staff phones while the
+  // office has the page open
+  return useQuery({ queryKey: qk.events, queryFn: attendanceApi.events, staleTime: 30_000, refetchInterval: 30_000 })
 }
 
 export function useEventDetail(id: number | null) {
@@ -12,7 +14,8 @@ export function useEventDetail(id: number | null) {
     queryKey: qk.eventAttendance(id ?? 0),
     queryFn: () => attendanceApi.detail(id as number),
     enabled: id !== null && Number.isFinite(id) && id > 0,
-    staleTime: 10_000
+    staleTime: 10_000,
+    refetchInterval: 15_000
   })
 }
 

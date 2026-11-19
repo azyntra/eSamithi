@@ -62,6 +62,25 @@ export function useSetAppAccess(id: number) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: { app_enabled?: 0 | 1; reset_pin?: boolean }) => membersApi.setAppAccess(id, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.member(id) })
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: qk.member(id) }), qc.invalidateQueries({ queryKey: qk.appStaff }), qc.invalidateQueries({ queryKey: qk.members() })])
+  })
+}
+
+// Mobile attendance staff. Removing the permission must also drop the row
+// from the Attendance page's panel and the badge from the members list.
+export function useAppStaff(enabled = true) {
+  return useQuery({ queryKey: qk.appStaff, queryFn: membersApi.appStaff, enabled, staleTime: 30_000 })
+}
+
+export function useSetAppStaff() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, attendance }: { id: number; attendance: 0 | 1 }) => membersApi.setAppStaff(id, attendance),
+    onSuccess: (_r, { id }) =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: qk.member(id) }),
+        qc.invalidateQueries({ queryKey: qk.appStaff }),
+        qc.invalidateQueries({ queryKey: qk.members() })
+      ])
   })
 }

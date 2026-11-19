@@ -247,6 +247,16 @@ export function SettingsPage({ tab, onTabChange }: { tab: SettingsTab; onTabChan
                     </NativeSelect>
                   )}
                 </Field>
+                {form.app_attendance_enabled !== undefined && (
+                  <Field label={t('settings.appAttendance')} description={t('settings.appAttendanceHint')}>
+                    {({ id }) => (
+                      <NativeSelect id={id} value={form.app_attendance_enabled === '0' ? '0' : '1'} onChange={(e) => set('app_attendance_enabled', e.target.value)}>
+                        <option value="1">{t('settings.appAttendanceOn')}</option>
+                        <option value="0">{t('settings.appAttendanceOff')}</option>
+                      </NativeSelect>
+                    )}
+                  </Field>
+                )}
                 <div>
                   <Button type="submit" loading={update.isPending}>
                     <Save /> {t('settings.saveSettings')}

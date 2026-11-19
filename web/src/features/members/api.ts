@@ -1,5 +1,5 @@
 import { api } from '@/lib/api/client'
-import type { MemberPayload, MemberStatement, MembersPage, MemberWithDependents, SlimMember } from './types'
+import type { AppStaffMember, MemberPayload, MemberStatement, MembersPage, MemberWithDependents, QrCardMember, QrCardScope, SlimMember } from './types'
 
 export interface MembersListParams {
   search?: string
@@ -17,5 +17,9 @@ export const membersApi = {
   remove: (id: number) => api.delete<{ success: boolean }>(`/members/${id}`),
   checkUnique: (field: 'society_id' | 'nic', value: string, excludeId?: number) =>
     api.get<boolean>('/members/check-unique', { field, value, excludeId }),
-  setAppAccess: (id: number, body: { app_enabled?: 0 | 1; reset_pin?: boolean }) => api.put<{ success: boolean }>(`/members/${id}/app-access`, body)
+  setAppAccess: (id: number, body: { app_enabled?: 0 | 1; reset_pin?: boolean }) => api.put<{ success: boolean }>(`/members/${id}/app-access`, body),
+  // Attendance staff in the mobile app: Administrators and Staff may set it
+  setAppStaff: (id: number, attendance: 0 | 1) => api.put<{ success: boolean; attendance: 0 | 1; changed: boolean }>(`/members/${id}/app-staff`, { attendance }),
+  appStaff: () => api.get<AppStaffMember[]>('/members/app-staff'),
+  qrCards: (scope: QrCardScope, ids: number[] = []) => api.get<QrCardMember[]>('/members/qr-cards', { scope, ids: scope === 'ids' ? ids.join(',') : undefined })
 }

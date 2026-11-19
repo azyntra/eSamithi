@@ -170,6 +170,9 @@ export default function Home(): React.ReactElement {
       <SectionHeader>{t('mob.quickActions')}</SectionHeader>
       <Card>
         {([
+          // Attendance staff only (permissions from /me/profile); everyone
+          // else never sees the scanner exists (FR-2.2)
+          ...(prof.permissions?.includes('attendance') ? [{ href: '/attendance', icon: 'scan-outline', label: t('mob.attMenu') }] as const : []),
           { href: '/card', icon: 'id-card-outline', label: t('mob.memberCard') },
           { href: '/dues', icon: 'alert-circle-outline', label: t('mob.duesTitle') },
           { href: '/requests', icon: 'document-text-outline', label: t('mob.requests') },

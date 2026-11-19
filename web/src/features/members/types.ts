@@ -31,11 +31,37 @@ export interface Member {
   created_at: string
   app_enabled?: number | null
   pin_set_at?: string | null
+  // Nominated to mark attendance from the mobile app (migration 018)
+  app_staff_attendance?: number | null
+  app_staff_granted_at?: string | null
 }
 
 export interface MemberWithDependents extends Member {
   dependents: Dependent[]
+  app_staff_granted_by_name?: string | null
 }
+
+// One row of the Attendance page's "Mobile staff" panel
+export interface AppStaffMember {
+  id: number
+  society_id: string
+  full_name: string | null
+  phone: string | null
+  enrolled: boolean
+  app_enabled: boolean
+  is_active: boolean
+  granted_at: string | null
+  granted_by_name: string | null
+  last_seen_at: string | null
+}
+
+// All a printed QR card needs — see features/members/cards.ts
+export interface QrCardMember {
+  id: number
+  society_id: string
+  full_name: string | null
+}
+export type QrCardScope = 'all' | 'not_enrolled' | 'ids'
 
 export interface MembersPage {
   members: Member[]
@@ -90,3 +116,4 @@ export interface MemberStatement {
 
 export const isMemberActive = (m: Pick<Member, 'is_active'>): boolean => m.is_active == null || Number(m.is_active) === 1
 export const isAppEnabled = (m: Pick<Member, 'app_enabled'>): boolean => m.app_enabled == null || Number(m.app_enabled) === 1
+export const isAttendanceStaff = (m: Pick<Member, 'app_staff_attendance'>): boolean => Number(m.app_staff_attendance ?? 0) === 1

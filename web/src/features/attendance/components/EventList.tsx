@@ -1,4 +1,4 @@
-import { CalendarCheck, Plus, Trash2, Users } from 'lucide-react'
+import { CalendarCheck, Plus, Smartphone, Trash2, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -75,6 +75,11 @@ export function EventList({
                       <span className="tnum inline-flex items-center gap-1 text-xs text-muted-foreground" title={t('att.present')}>
                         <Users className="size-3" /> {ev.attendee_count}
                       </span>
+                      {ev.created_by_member_id ? (
+                        <span className="inline-flex text-muted-foreground" title={ev.created_by_name ? t('att.createdInApp', { name: ev.created_by_name }) : undefined}>
+                          <Smartphone className="size-3" aria-label={t('att.sourceMobile')} />
+                        </span>
+                      ) : null}
                       {ev.attendance_mode === 'absent' && (
                         <Badge variant="warning" className="text-[11px]">
                           {t('att.modeAbsent')}

@@ -4,6 +4,7 @@ const { memberAuthMiddleware } = require('../middleware/memberAuth');
 const { getMemberStatement } = require('../lib/memberQueries');
 const { accrueLoan, getRates } = require('../lib/loanAccrual');
 const { getSetting, isMigrationMode } = require('../lib/settings');
+const { attendancePermission } = require('../middleware/attendanceStaff');
 
 // Member self-service API for the mobile app. Every query is hard-scoped to
 // req.member.id — a member can only ever read their own rows.
@@ -29,7 +30,16 @@ router.get('/profile', async (req, res, next) => {
        FROM dependents WHERE member_id = ?`,
       [req.member.id]
     );
-    res.json({ ...members[0], is_active: members[0].is_active === null ? 1 : Number(members[0].is_active), dependents });
+    // What this member may do beyond their own records. The app shows the
+    // attendance scanner only when 'attendance' is listed; the server checks
+    // the same permission again on every attendance call.
+    const permissions = [];
+    // A lookup failure (e.g. a server one migration behind) must never take
+    // the whole profile down with it — it just means "no extra permissions".
+    const staff = await attendancePermission(req.member.id).catch(() => ({ allowed: false }));
+    if (staff.allowed) permissions.push('attendance');
+
+    res.json({ ...members[0], is_active: members[0].is_active === null ? 1 : Number(members[0].is_active), dependents, permissions });
   } catch (err) { next(err); }
 });
 

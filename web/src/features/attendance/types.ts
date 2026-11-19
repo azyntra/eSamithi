@@ -17,6 +17,9 @@ export interface SocietyEvent {
   attendee_count: number
   created_by?: number | null
   created_at?: string | null
+  // Set when an attendance-staff member created the event from the mobile app
+  created_by_member_id?: number | null
+  created_by_name?: string | null
 }
 
 export interface AttendanceRow {
@@ -26,6 +29,9 @@ export interface AttendanceRow {
   nic?: string | null
   phone: string | null
   marked_at: string | null
+  // Who made the mark and from where; null on the side the method derives
+  marked_by_name?: string | null
+  source?: 'office' | 'app' | null
 }
 
 export interface EventDetail {

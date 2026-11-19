@@ -7,6 +7,7 @@ export const qk = {
   member: (id: number) => ['member', id] as const,
   memberStatement: (id: number) => ['member-statement', id] as const,
   membersSlim: ['members-slim'] as const,
+  appStaff: ['app-staff'] as const,
   income: (filters?: object) => (filters ? (['income', filters] as const) : (['income'] as const)),
   expenses: (filters?: object) => (filters ? (['expenses', filters] as const) : (['expenses'] as const)),
   incomeTypes: ['income-types'] as const,

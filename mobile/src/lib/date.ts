@@ -34,3 +34,12 @@ export function formatDate(value: string | null | undefined): string {
   }
   return s
 }
+
+// Clock time of a server timestamp (ISO, UTC) in the phone's own time zone,
+// 24-hour — when a member was marked at an event. '' when unknown.
+export function formatTime(value: string | null | undefined): string {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}

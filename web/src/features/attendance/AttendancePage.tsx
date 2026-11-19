@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, CalendarCheck, Download, ScanLine, Users } from 'lucide-react'
+import { AlertTriangle, CalendarCheck, Download, ScanLine, Smartphone, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { EmptyState } from '@/components/EmptyState'
@@ -17,6 +17,7 @@ import { formatNumber } from '@/lib/format/currency'
 import { useT } from '@/lib/i18n'
 import { CreateEventDialog } from './components/CreateEventDialog'
 import { EventList } from './components/EventList'
+import { MobileStaffPanel } from './components/MobileStaffPanel'
 import { RosterTable } from './components/RosterTable'
 import { ScanPanel } from './components/ScanPanel'
 import { useDeleteEvent, useEventDetail, useEvents, useMarkMember, useSetMode, useUnmarkMember } from './queries'
@@ -108,9 +109,10 @@ export function AttendancePage({ eventId, view, search, create = false, onNaviga
   function exportCsv() {
     const ev = detail.data?.event
     if (!ev) return
+    const sourceLabel = (s: AttendanceRow['source']) => (s === 'app' ? t('att.sourceMobile') : s === 'office' ? t('att.sourceOffice') : '')
     const csv = toCsv(
-      [t('common.societyId'), t('members.fullName'), t('common.phone'), view === 'present' ? t('att.present') : t('att.absent'), t('att.time')],
-      exportRows.map((r) => [r.society_id, r.full_name, r.phone ?? '', view === 'present' ? t('att.present') : t('att.absent'), r.marked_at ? formatTime(r.marked_at) : ''])
+      [t('common.societyId'), t('members.fullName'), t('common.phone'), view === 'present' ? t('att.present') : t('att.absent'), t('att.time'), t('att.markedBy'), t('att.source')],
+      exportRows.map((r) => [r.society_id, r.full_name, r.phone ?? '', view === 'present' ? t('att.present') : t('att.absent'), r.marked_at ? formatTime(r.marked_at) : '', r.marked_by_name ?? '', sourceLabel(r.source)])
     )
     downloadCsv(`${ev.title.replace(/[^\w඀-෿-]+/g, '_')}-${String(ev.event_date).slice(0, 10)}-${view}.csv`, csv)
     toast.success(t('att.exported', { count: exportRows.length }))
@@ -129,15 +131,18 @@ export function AttendancePage({ eventId, view, search, create = false, onNaviga
       />
 
       <div className="grid min-h-0 items-start gap-4 lg:grid-cols-[300px_1fr]">
-        <EventList
-          events={events.data ?? []}
-          loading={events.isPending}
-          selectedId={eventId}
-          onSelect={(id) => onNavigate({ event: id, q: '' })}
-          onCreate={() => setShowCreate(true)}
-          onDelete={setDeleteTarget}
-          className="lg:max-h-[calc(100vh-13rem)]"
-        />
+        <div className="grid min-h-0 gap-4">
+          <EventList
+            events={events.data ?? []}
+            loading={events.isPending}
+            selectedId={eventId}
+            onSelect={(id) => onNavigate({ event: id, q: '' })}
+            onCreate={() => setShowCreate(true)}
+            onDelete={setDeleteTarget}
+            className="lg:max-h-[calc(100vh-24rem)]"
+          />
+          <MobileStaffPanel />
+        </div>
 
         <Card className="min-w-0">
           <CardContent className="grid gap-4">
@@ -161,6 +166,11 @@ export function AttendancePage({ eventId, view, search, create = false, onNaviga
                       <span aria-hidden> · </span>
                       {detail.data.event.type === 'meeting' ? t('att.typeMeeting') : detail.data.event.type === 'funeral' ? t('att.typeFuneral') : t('att.typeOther')}
                     </p>
+                    {detail.data.event.created_by_member_id && detail.data.event.created_by_name && (
+                      <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Smartphone className="size-3" /> {t('att.createdInApp', { name: detail.data.event.created_by_name })}
+                      </p>
+                    )}
                   </div>
                   {turnout !== null && (
                     <Badge variant={turnout >= 60 ? 'success' : turnout >= 30 ? 'warning' : 'danger'} className="tnum">

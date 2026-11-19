@@ -1,5 +1,5 @@
 import React from 'react'
-import { Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { useT } from '../i18n'
 import { elevation, radius, usePalette } from '../theme'
@@ -15,11 +15,14 @@ import { Badge, BrandGradient } from './index'
 export function MembershipCard({
   profile,
   societyName,
-  compact = false
+  compact = false,
+  onQrPress
 }: {
   profile: Profile
   societyName: string
   compact?: boolean
+  // When set, the QR tile becomes a button (the card screen opens the large view)
+  onQrPress?: () => void
 }): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
@@ -98,9 +101,15 @@ export function MembershipCard({
           )}
         </View>
         {/* White tile keeps the QR quiet zone in dark mode too */}
-        <View style={{ backgroundColor: '#ffffff', padding: compact ? 8 : 10, borderRadius: radius.md, ...(compact ? null : { shadowColor: p.shadow, ...elevation.sm }) }}>
+        <Pressable
+          disabled={!onQrPress}
+          onPress={onQrPress}
+          accessibilityRole={onQrPress ? 'button' : undefined}
+          accessibilityLabel={onQrPress ? t('mob.cardLargeLabel') : undefined}
+          style={({ pressed }) => ({ backgroundColor: '#ffffff', padding: compact ? 8 : 10, borderRadius: radius.md, opacity: pressed ? 0.85 : 1, ...(compact ? null : { shadowColor: p.shadow, ...elevation.sm }) })}
+        >
           <QRCode value={profile.society_id || String(profile.id)} size={compact ? 82 : 110} backgroundColor="#ffffff" color="#0f172a" />
-        </View>
+        </Pressable>
       </View>
     </View>
   )

@@ -4,6 +4,7 @@
 //
 //   node docs/build-pdf.mjs ESAMITHI-WEB-APP-REQUIREMENTS
 //   node docs/build-pdf.mjs            # every .md here that already has a .pdf
+//   PW_CHANNEL=chrome node docs/build-pdf.mjs <name>   # use the installed Chrome
 //
 // marked comes from npx rather than a dependency: no app package should carry
 // a docs tool in its lockfile. Chromium comes from web/, which already has it
@@ -94,7 +95,9 @@ const names = asked.length
       .map((f) => f.replace(/\.md$/, ''))
       .filter((n) => existsSync(path.join(here, `${n}.pdf`)))
 
-const browser = await chromium.launch()
+// PW_CHANNEL=chrome uses the installed Chrome, as the end-to-end lane does,
+// for machines where Playwright's own Chromium was never downloaded.
+const browser = await chromium.launch(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {})
 try {
   for (const name of names) {
     const out = await build(name, browser)

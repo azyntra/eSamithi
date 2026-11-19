@@ -26,6 +26,9 @@ export interface Profile {
   bank_account_number: string | null
   is_active: number
   dependents: Dependent[]
+  // Extra things this member may do in the app. 'attendance' = the office
+  // has nominated them to mark attendance. Absent on older servers.
+  permissions?: string[]
 }
 
 export interface LedgerRow {
@@ -437,4 +440,101 @@ export function useReportPurukaPost() {
     mutationFn: async ({ id, reason }: { id: number; reason: string }) =>
       (await api.post(`/puruka/${id}/report`, { reason })).data
   })
+}
+
+// ── Attendance marking (attendance staff only) ──────────────────────────
+// docs/MOBILE-STAFF-ATTENDANCE-REQUIREMENTS.md. The server re-checks the
+// permission on every call; the app only decides what to show.
+
+export type AttendanceEventType = 'meeting' | 'funeral' | 'other'
+export type AttendanceMode = 'present' | 'absent'
+
+export interface AttendanceEvent {
+  id: number
+  type: AttendanceEventType
+  title: string
+  event_date: string // YYYY-MM-DD
+  attendance_mode: AttendanceMode
+  created_by_name: string | null
+  attendee_count?: number
+}
+
+export interface AttendanceRosterRow {
+  member_id: number
+  society_id: string
+  full_name: string | null
+  marked_at: string | null
+  marked_by_name: string | null
+  source: 'office' | 'app' | null
+  mine: boolean
+}
+
+export interface AttendanceRoster {
+  event: AttendanceEvent
+  present: AttendanceRosterRow[]
+  absent: AttendanceRosterRow[]
+}
+
+export interface AttendanceMarkResult {
+  success: boolean
+  member: { id: number; society_id: string; full_name: string | null; is_active: number }
+  already: boolean
+  marked_at: string | null
+  marked_by_name: string | null
+  mine: boolean
+  meaning: AttendanceMode
+}
+
+export interface AttendanceLookupRow {
+  member_id: number
+  society_id: string
+  full_name: string | null
+}
+
+export const attendanceKeys = {
+  events: ['me', 'attendance', 'events'] as const,
+  roster: (id: number) => ['me', 'attendance', 'roster', id] as const
+}
+
+export function useAttendanceEvents(enabled = true) {
+  return useQuery({
+    queryKey: attendanceKeys.events,
+    queryFn: async () => (await api.get<{ today: string; events: AttendanceEvent[] }>('/me/attendance/events')).data,
+    enabled,
+    staleTime: 15_000,
+    refetchInterval: 30_000
+  })
+}
+
+export function useCreateAttendanceEvent() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (body: { type: AttendanceEventType; title: string; event_date: string; attendance_mode: AttendanceMode }) =>
+      (await api.post<{ success: boolean; id: number }>('/me/attendance/events', body)).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: attendanceKeys.events })
+  })
+}
+
+// Polled while open: the office scanner and other staff phones mark the
+// same event at the same time.
+export function useAttendanceRoster(id: number, enabled = true) {
+  return useQuery({
+    queryKey: attendanceKeys.roster(id),
+    queryFn: async () => (await api.get<AttendanceRoster>(`/me/attendance/events/${id}`)).data,
+    enabled: enabled && Number.isFinite(id) && id > 0,
+    staleTime: 5_000,
+    refetchInterval: 15_000
+  })
+}
+
+export async function markAttendance(eventId: number, body: { society_id?: string; member_id?: number; client_ref?: string }): Promise<AttendanceMarkResult> {
+  return (await api.post<AttendanceMarkResult>(`/me/attendance/events/${eventId}/marks`, body)).data
+}
+
+export async function unmarkAttendance(eventId: number, memberId: number): Promise<void> {
+  await api.delete(`/me/attendance/events/${eventId}/marks/${memberId}`)
+}
+
+export async function lookupAttendanceMembers(q: string): Promise<AttendanceLookupRow[]> {
+  return (await api.get<AttendanceLookupRow[]>('/me/attendance/members', { params: { q } })).data
 }

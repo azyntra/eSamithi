@@ -383,6 +383,54 @@ async function memberAppActivity(pool) {
     FROM member_refresh_tokens GROUP BY member_id`);
 }
 
+// 018 — attendance marking from the member app (requirements:
+// docs/MOBILE-STAFF-ATTENDANCE-REQUIREMENTS.md §7.1). A member the office has
+// nominated as attendance staff can create events and mark attendance from
+// their phone. Everything is additive: marked_by keeps meaning "office user
+// id", a phone mark leaves it NULL and fills marked_by_member_id instead.
+async function mobileAttendance(pool) {
+  const hasColumn = async (table, column) => {
+    const [cols] = await pool.query(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      [table, column]
+    );
+    return cols.length > 0;
+  };
+
+  if (!(await hasColumn('members', 'app_staff_attendance'))) {
+    await pool.query(`ALTER TABLE members
+      ADD COLUMN app_staff_attendance TINYINT   NOT NULL DEFAULT 0,
+      ADD COLUMN app_staff_granted_at TIMESTAMP NULL DEFAULT NULL,
+      ADD COLUMN app_staff_granted_by INT       NULL DEFAULT NULL`);
+  }
+  if (!(await hasColumn('event_attendance', 'marked_by_member_id'))) {
+    await pool.query(`ALTER TABLE event_attendance
+      ADD COLUMN marked_by_member_id INT         NULL DEFAULT NULL,
+      ADD COLUMN source              VARCHAR(10) NOT NULL DEFAULT 'office',
+      ADD COLUMN client_ref          CHAR(36)    NULL DEFAULT NULL`);
+  }
+  if (!(await hasColumn('society_events', 'created_by_member_id'))) {
+    await pool.query('ALTER TABLE society_events ADD COLUMN created_by_member_id INT NULL DEFAULT NULL');
+  }
+
+  // Who granted or removed the permission, and why. No FKs: the trail must
+  // outlive a deleted member or user.
+  await pool.query(`CREATE TABLE IF NOT EXISTS member_staff_events (
+    id         INT PRIMARY KEY AUTO_INCREMENT,
+    member_id  INT         NOT NULL,
+    action     VARCHAR(10) NOT NULL,
+    by_user_id INT         NULL DEFAULT NULL,
+    by_name    VARCHAR(255) NULL DEFAULT NULL,
+    reason     VARCHAR(40) NULL DEFAULT NULL,
+    created_at TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_mse_member (member_id, created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  // Society-wide switch (FR-1.9); settings PUT only updates existing keys
+  await pool.query("INSERT IGNORE INTO settings (`key`, `value`) VALUES ('app_attendance_enabled', '1')");
+}
+
 module.exports = [
   { id: '000_base_schema', up: baseSchema },
   { id: '004_loan_payment_wallet', up: loanPaymentWallet },
@@ -398,5 +446,6 @@ module.exports = [
   { id: '014_staff_sessions', up: staffSessions },
   { id: '015_staff_auth_events', up: staffAuthEvents },
   { id: '016_loan_payment_bill_no', up: loanPaymentBillNo },
-  { id: '017_member_app_activity', up: memberAppActivity }
+  { id: '017_member_app_activity', up: memberAppActivity },
+  { id: '018_mobile_attendance', up: mobileAttendance }
 ];

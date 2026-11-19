@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Search, Trash2, Undo2, UserMinus, UserPlus } from 'lucide-react'
+import { Search, Smartphone, Trash2, Undo2, UserMinus, UserPlus } from 'lucide-react'
 import { DataTable } from '@/components/DataTable'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -65,6 +65,25 @@ export function RosterTable({
         meta: { width: '140px' },
         cell: ({ row }) => <span className="tnum text-muted-foreground">{markedView ? (row.original.marked_at ? formatTime(row.original.marked_at) : '—') : row.original.phone || '—'}</span>
       },
+      ...(markedView
+        ? [
+            {
+              id: 'marked_by',
+              accessorFn: (r: AttendanceRow) => r.marked_by_name ?? '',
+              header: t('att.markedBy'),
+              cell: ({ row }: { row: { original: AttendanceRow } }) => (
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  {row.original.marked_by_name || '—'}
+                  {row.original.source === 'app' && (
+                    <Badge variant="info" className="text-[10px]">
+                      <Smartphone /> {t('att.sourceMobile')}
+                    </Badge>
+                  )}
+                </span>
+              )
+            } satisfies ColumnDef<AttendanceRow, unknown>
+          ]
+        : []),
       {
         id: 'actions',
         header: t('common.actions'),

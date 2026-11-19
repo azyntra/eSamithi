@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, Briefcase, HandCoins, Heart, IdCard, Landmark, MapPin, Pencil, Phone, ShieldCheck, Smartphone, Trash2, User, UserRound, Users } from 'lucide-react'
+import { ArrowLeft, Briefcase, HandCoins, Heart, IdCard, Landmark, MapPin, Pencil, Phone, QrCode, ScanLine, ShieldCheck, Smartphone, Trash2, User, UserRound, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { EmptyState } from '@/components/EmptyState'
@@ -17,10 +17,12 @@ import { formatCurrency } from '@/lib/format/currency'
 import { formatDate } from '@/lib/format/dates'
 import { useT, type TranslationKey } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
+import { AttendanceStaffCard } from './components/AttendanceStaffCard'
 import { DeleteMemberDialog } from './components/DeleteMemberDialog'
+import { useCardPrint } from './components/PrintCardsDialog'
 import { MemberFormSheet } from './components/MemberForm'
 import { useMember, useMemberStatement, useSetAppAccess } from './queries'
-import { isAppEnabled, isMemberActive, type MemberStatement, type MemberWithDependents } from './types'
+import { isAppEnabled, isAttendanceStaff, isMemberActive, type MemberStatement, type MemberWithDependents } from './types'
 
 import type { MemberTab } from './tabs'
 import { memberLabel } from '@/lib/members'
@@ -58,7 +60,8 @@ export function MemberPage({ memberId, tab }: { memberId: number; tab: MemberTab
   const { user } = useSession()
   const isAdmin = user?.role === 'admin'
   const member = useMember(memberId)
-  const effectiveTab: MemberTab = tab === 'app' && !isAdmin ? 'overview' : tab
+  const effectiveTab: MemberTab = tab
+  const cards = useCardPrint()
   const statement = useMemberStatement(memberId, effectiveTab === 'statement')
   const [editOpen, setEditOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -122,6 +125,11 @@ export function MemberPage({ memberId, tab }: { memberId: number; tab: MemberTab
               </Badge>
             )}
             {isMemberActive(m) ? <Badge variant="success">{t('vmember.activeMember')}</Badge> : <Badge variant="neutral">{t('members.inactive')}</Badge>}
+            {isAttendanceStaff(m) && (
+              <Badge variant="info">
+                <ScanLine /> {t('members.staffBadge')}
+              </Badge>
+            )}
             {m.date_of_joining && <span>{t('members.memberSince', { date: formatDate(m.date_of_joining, lang) })}</span>}
           </div>
         </div>
@@ -131,6 +139,9 @@ export function MemberPage({ memberId, tab }: { memberId: number; tab: MemberTab
           </Button>
           <Button variant="secondary" onClick={() => setEditOpen(true)}>
             <Pencil /> {t('members.edit')}
+          </Button>
+          <Button variant="secondary" loading={cards.building} onClick={() => void cards.print([{ id: m.id, society_id: m.society_id, full_name: m.full_name }])}>
+            <QrCode /> {t('vmember.printCard')}
           </Button>
           <Button variant="ghost" className="text-danger hover:bg-danger-soft hover:text-danger" onClick={() => setDeleting(true)} aria-label={t('members.delete')}>
             <Trash2 />
@@ -149,11 +160,9 @@ export function MemberPage({ memberId, tab }: { memberId: number; tab: MemberTab
           <TabsTrigger value="dependents">
             <Users /> {t('members.tabDependents')} <span className="tnum ml-1 rounded-full bg-muted px-1.5 text-[11px] text-muted-foreground">{m.dependents.length}</span>
           </TabsTrigger>
-          {isAdmin && (
-            <TabsTrigger value="app">
-              <Smartphone /> {t('members.tabApp')}
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="app">
+            <Smartphone /> {t('members.tabApp')}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -223,12 +232,14 @@ export function MemberPage({ memberId, tab }: { memberId: number; tab: MemberTab
           )}
         </TabsContent>
 
-        {isAdmin && (
-          <TabsContent value="app">
-            <AppAccessCard member={m} />
-          </TabsContent>
-        )}
+        <TabsContent value="app">
+          <div className="grid gap-4">
+            <AppAccessCard member={m} canManage={isAdmin} />
+            <AttendanceStaffCard member={m} />
+          </div>
+        </TabsContent>
       </Tabs>
+      {cards.preview}
 
       <MemberFormSheet open={editOpen} onOpenChange={setEditOpen} memberId={memberId} />
       <DeleteMemberDialog member={deleting ? m : null} onOpenChange={(o) => !o && setDeleting(false)} onDeleted={() => void navigate({ to: '/members', search: { q: undefined, page: undefined, size: undefined } })} />
@@ -328,7 +339,7 @@ function StatementTab({ loading, error, data, onRetry }: { memberId: number; loa
   )
 }
 
-function AppAccessCard({ member }: { member: MemberWithDependents }) {
+function AppAccessCard({ member, canManage }: { member: MemberWithDependents; canManage: boolean }) {
   const { t, lang } = useT()
   const setAccess = useSetAppAccess(member.id)
   const [confirm, setConfirm] = useState<'disable' | 'reset' | null>(null)
@@ -352,6 +363,9 @@ function AppAccessCard({ member }: { member: MemberWithDependents }) {
         <CardContent className="grid gap-4">
           <Row label={t('vmember.appAccess')} value={enabled ? <Badge variant="success">{t('vmember.appEnabled')}</Badge> : <Badge variant="danger">{t('vmember.appDisabled')}</Badge>} />
           <Row label={t('vmember.appPin')} value={member.pin_set_at ? t('vmember.appPinSet', { date: formatDate(member.pin_set_at, lang) }) : t('vmember.appPinNotSet')} />
+          {!canManage ? (
+            <p className="text-xs text-muted-foreground">{t('members.appAdminOnly')}</p>
+          ) : (
           <div className="flex flex-wrap gap-2 pt-1">
             {enabled ? (
               <Button variant="secondary" disabled={setAccess.isPending} onClick={() => setConfirm('disable')}>
@@ -368,6 +382,7 @@ function AppAccessCard({ member }: { member: MemberWithDependents }) {
               </Button>
             )}
           </div>
+          )}
         </CardContent>
       </Card>
       <ConfirmDialog

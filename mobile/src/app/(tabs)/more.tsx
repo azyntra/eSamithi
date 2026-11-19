@@ -7,6 +7,7 @@ import * as SecureStore from 'expo-secure-store'
 import * as LocalAuthentication from 'expo-local-authentication'
 import { BIOMETRIC_KEY, useAuth } from '../../auth/AuthContext'
 import { useT } from '../../i18n'
+import { useProfile } from '../../api/hooks'
 import { radius, spacing, usePalette, useThemeMode, type ThemeMode } from '../../theme'
 import { useType } from '../../typography'
 import { Card, LangToggle, LogoTile, ScalePressable, Screen, SectionHeader, Segmented } from '../../ui'
@@ -53,7 +54,10 @@ export default function More(): React.ReactElement {
   }
 
   // Grouped destinations: my things / my society
+  const profile = useProfile()
+  const isAttendanceStaff = profile.data?.permissions?.includes('attendance') === true
   const personal: NavItem[] = [
+    ...(isAttendanceStaff ? [{ href: '/attendance' as Href, icon: 'scan-outline' as const, label: t('mob.attMenu') }] : []),
     { href: '/card', icon: 'id-card-outline', label: t('mob.memberCard') },
     { href: '/profile', icon: 'person-outline', label: t('mob.myProfile') },
     { href: '/puruka-mine', icon: 'pricetags-outline', label: t('mob.pkMyPosts') },

@@ -26,6 +26,7 @@ const reportsRoutes = require('./routes/reports.routes');
 // Member mobile app (self-service; token type isolated from staff auth)
 const memberAuthRoutes = require('./routes/memberAuth.routes');
 const meRoutes = require('./routes/me.routes');
+const meAttendanceRoutes = require('./routes/meAttendance.routes');
 // v2: staff-authored notices + member request review queue
 const announcementsRoutes = require('./routes/announcements.routes');
 const memberRequestsRoutes = require('./routes/memberRequests.routes');
@@ -113,6 +114,7 @@ app.use('/api/v1/loans', loansRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/reports', reportsRoutes);
 app.use('/api/v1/member-auth', memberAuthRoutes);
+app.use('/api/v1/me/attendance', meAttendanceRoutes);
 app.use('/api/v1/me', meRoutes);
 app.use('/api/v1/announcements', announcementsRoutes);
 app.use('/api/v1/member-requests', memberRequestsRoutes);
@@ -126,7 +128,11 @@ app.use('/api/v1/internal', internalRoutes);
 app.use((err, _req, res, _next) => {
   console.error('[API Error]', err.message);
   const status = err.statusCode || 500;
-  res.status(status).json({ error: err.message || 'Internal server error' });
+  // `code` is only echoed for errors we raised ourselves (they carry a
+  // statusCode); a driver error's code (ER_…) stays on the server.
+  const body = { error: err.message || 'Internal server error' };
+  if (err.statusCode && typeof err.code === 'string') body.code = err.code;
+  res.status(status).json(body);
 });
 
 // ── Start Server ─────────────────────────────────────────────

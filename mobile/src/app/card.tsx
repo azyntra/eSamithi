@@ -7,6 +7,7 @@ import { usePalette } from '../theme'
 import { useProfile, useSocietyInfo } from '../api/hooks'
 import { Button, ErrorView, Screen, SkeletonCards, StaleBanner, useToast } from '../ui'
 import { MembershipCard } from '../ui/MembershipCard'
+import { LargeQr } from '../ui/LargeQr'
 import { useType } from '../typography'
 
 // Digital membership card — something members can show at the office or a
@@ -22,6 +23,7 @@ export default function MemberCardScreen(): React.ReactElement {
   const society = useSocietyInfo()
   const shotRef = useRef<View>(null)
   const [sharing, setSharing] = useState(false)
+  const [large, setLarge] = useState(false)
 
   const shareCard = async (): Promise<void> => {
     if (sharing) return
@@ -63,14 +65,24 @@ export default function MemberCardScreen(): React.ReactElement {
         collapsable={false}
         style={{ backgroundColor: p.bg, padding: 14, margin: -14, borderRadius: 0 }}
       >
-        <MembershipCard profile={profile.data!} societyName={society.data?.society_name ?? 'Maranadhara Samithi'} />
+        <MembershipCard profile={profile.data!} societyName={society.data?.society_name ?? 'Maranadhara Samithi'} onQrPress={() => setLarge(true)} />
       </View>
+      <Text style={{ color: p.textMuted, fontSize: 14, textAlign: 'right', marginTop: 8, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>
+        {t('mob.cardTapEnlarge')}
+      </Text>
       <View style={{ marginTop: 16 }}>
         <Button label={t('mob.cardShare')} icon="share-social-outline" onPress={shareCard} loading={sharing} />
       </View>
       <Text style={{ color: p.textMuted, fontSize: 14, textAlign: 'center', marginTop: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>
         {t('mob.cardShowOffice')}
       </Text>
+      <LargeQr
+        visible={large}
+        onClose={() => setLarge(false)}
+        value={profile.data!.society_id || String(profile.data!.id)}
+        societyId={profile.data!.society_id}
+        name={profile.data!.full_name}
+      />
     </Screen>
   )
 }
