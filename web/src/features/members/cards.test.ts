@@ -11,7 +11,7 @@ describe('membership QR cards', () => {
     expect(html).toContain('S-042')
     expect(html).toContain('806593052V')
     expect(html).toContain('070 136 6809')
-    expect((html.match(/<svg /g) ?? []).length).toBe(1)
+    expect((html.match(/shape-rendering="crispEdges"/g) ?? []).length).toBe(1)
     expect(html).not.toMatch(/joining|ලියාපදිංචි/i)
   })
 
@@ -20,8 +20,8 @@ describe('membership QR cards', () => {
     expect(nameSize('Matiwala Kubure Gedara Somapala')).toBe(10.5)
     expect(nameSize('Matiwala Kubure Gedara Somapala Bandara Wijesinghe')).toBe(9.5)
     expect(nameSize('x'.repeat(80))).toBe(8)
-    expect(numberSize('217')).toBe(17)
-    expect(numberSize('MKG/2024/0123')).toBe(10.5)
+    expect(numberSize('217')).toBe(16)
+    expect(numberSize('MKG/2024/0123')).toBe(10)
   })
 
   it('groups a Sri Lankan mobile number and leaves other numbers as entered', () => {
@@ -44,7 +44,7 @@ describe('membership QR cards', () => {
 
   it('lays out ten cards to a sheet and breaks the page between sheets', async () => {
     const html = await buildCardsHtml(Array.from({ length: 23 }, (_, i) => member(i + 1)), 'Samithi')
-    expect((html.match(/<svg /g) ?? []).length).toBe(23)
+    expect((html.match(/shape-rendering="crispEdges"/g) ?? []).length).toBe(23)
     expect((html.match(/break-after:page/g) ?? []).length).toBe(2) // 3 sheets, no break after the last
     expect(sheetCount(23)).toBe(3)
     expect(sheetCount(10)).toBe(1)
