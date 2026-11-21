@@ -170,7 +170,10 @@ export async function buildCardsHtml(members: CardMember[], societyName: string)
       `<div style="display:grid;grid-template-columns:${CARD_W}mm ${CARD_W}mm;gap:${GUTTER}mm ${GUTTER + 1}mm;justify-content:center;${last ? '' : 'break-after:page;'}">${cards.slice(i, i + CARDS_PER_SHEET).join('')}</div>`
     )
   }
-  return `<style>@page{size:A4;margin:6mm 10mm}body{padding:0 !important}</style>${sheets.join('')}`
+  // On screen the preview pane can be narrower than a two-card sheet (≈ 700 px):
+  // shrink it to fit there. Print is untouched.
+  const screen = '@media screen and (max-width:740px){body{zoom:.78}}@media screen and (max-width:580px){body{zoom:.6}}@media screen and (max-width:440px){body{zoom:.45}}'
+  return `<style>@page{size:A4;margin:6mm 10mm}body{padding:0 !important}${screen}</style>${sheets.join('')}`
 }
 
 export const sheetCount = (members: number): number => Math.ceil(members / CARDS_PER_SHEET)

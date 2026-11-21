@@ -41,7 +41,7 @@ export function useCardPrint() {
     }
   }
 
-  const preview = <PrintPreview open={html !== null} onOpenChange={(o) => !o && setHtml(null)} title={t('members.cardsDocTitle')} html={html} />
+  const preview = <PrintPreview wide open={html !== null} onOpenChange={(o) => !o && setHtml(null)} title={t('members.cardsDocTitle')} html={html} />
   return { print, building, preview }
 }
 

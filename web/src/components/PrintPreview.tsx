@@ -4,16 +4,18 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useT } from '@/lib/i18n'
 import { printDocument, printHtml } from '@/lib/print/print'
+import { cn } from '@/lib/utils'
 
 interface PrintPreviewProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
   html: string | null // receipt body html
+  wide?: boolean // A4 sheets (e.g. membership cards) rather than a receipt column
 }
 
 // Receipt / voucher preview in a sandboxed iframe; Enter or the button prints.
-export function PrintPreview({ open, onOpenChange, title, html }: PrintPreviewProps) {
+export function PrintPreview({ open, onOpenChange, title, html, wide = false }: PrintPreviewProps) {
   const { t, lang } = useT()
   const [printing, setPrinting] = useState(false)
   const doc = useMemo(() => (html ? printDocument(html, title, lang) : ''), [html, title, lang])
@@ -42,7 +44,7 @@ export function PrintPreview({ open, onOpenChange, title, html }: PrintPreviewPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[92vh] flex-col gap-3 p-0 sm:max-w-[560px]">
+      <DialogContent className={cn('flex max-h-[92vh] flex-col gap-3 p-0', wide ? 'sm:max-w-[820px]' : 'sm:max-w-[560px]')}>
         <DialogHeader className="px-5 pt-5">
           <DialogTitle className="flex items-center gap-2">
             <Printer className="size-4 text-primary" /> {title}

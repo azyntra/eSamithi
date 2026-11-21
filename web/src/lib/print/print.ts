@@ -22,30 +22,39 @@ table{border-collapse:collapse}
 }
 
 // Print through a hidden iframe so the app page itself never has to enter a
-// print mode; resolved once the print dialog closes (or after a safety timeout).
+// print mode. Resolves as soon as the print dialog has been opened: Chrome does
+// not reliably fire `afterprint` (notably after "Save as PDF"), and the button
+// that waits on this must not keep spinning once the dialog is up. The frame
+// itself stays until the dialog closes (afterprint) or a long safety timeout.
 export function printHtml(html: string): Promise<void> {
   return new Promise((resolve) => {
     const frame = document.createElement('iframe')
     frame.setAttribute('aria-hidden', 'true')
     frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;'
     document.body.appendChild(frame)
-    let done = false
-    const finish = () => {
-      if (done) return
-      done = true
+    let removed = false
+    const cleanup = () => {
+      if (removed) return
+      removed = true
       window.setTimeout(() => frame.remove(), 500)
-      resolve()
     }
     frame.onload = () => {
       const win = frame.contentWindow
-      if (!win) return finish()
-      win.onafterprint = finish
+      if (!win) {
+        cleanup()
+        return resolve()
+      }
+      win.onafterprint = cleanup
       // Give bundled fonts a moment to load before the dialog snapshots the page
       const ready = (win.document as Document & { fonts?: FontFaceSet }).fonts?.ready ?? Promise.resolve()
       void ready.then(() => {
-        win.focus()
-        win.print()
-        window.setTimeout(finish, 60_000)
+        try {
+          win.focus()
+          win.print() // blocks in most browsers until the dialog closes; returns at once in others
+        } finally {
+          resolve()
+          window.setTimeout(cleanup, 10 * 60_000)
+        }
       })
     }
     frame.srcdoc = html
