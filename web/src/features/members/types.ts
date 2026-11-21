@@ -60,6 +60,8 @@ export interface QrCardMember {
   id: number
   society_id: string
   full_name: string | null
+  nic: string | null
+  phone: string | null
 }
 export type QrCardScope = 'all' | 'not_enrolled' | 'ids'
 

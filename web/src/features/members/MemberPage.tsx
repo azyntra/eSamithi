@@ -140,7 +140,7 @@ export function MemberPage({ memberId, tab }: { memberId: number; tab: MemberTab
           <Button variant="secondary" onClick={() => setEditOpen(true)}>
             <Pencil /> {t('members.edit')}
           </Button>
-          <Button variant="secondary" loading={cards.building} onClick={() => void cards.print([{ id: m.id, society_id: m.society_id, full_name: m.full_name }])}>
+          <Button variant="secondary" loading={cards.building} onClick={() => void cards.print([{ id: m.id, society_id: m.society_id, full_name: m.full_name, nic: m.nic, phone: m.phone }])}>
             <QrCode /> {t('vmember.printCard')}
           </Button>
           <Button variant="ghost" className="text-danger hover:bg-danger-soft hover:text-danger" onClick={() => setDeleting(true)} aria-label={t('members.delete')}>

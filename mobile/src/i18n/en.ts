@@ -737,6 +737,7 @@ export const en = {
   'mob.alreadyEnrolled': 'I already have a PIN',
   'mob.verifyTitle': 'Verify your identity',
   'mob.verifySubtitle': 'Enter your NIC number and date of birth as registered with the society.',
+  'mob.memberNo': 'Membership No.',
   'mob.nic': 'NIC number',
   'mob.nicPlaceholder': 'e.g. 851234567V',
   'mob.dob': 'Date of birth',

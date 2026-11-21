@@ -224,8 +224,8 @@ router.get('/app-staff', async (_req, res, next) => {
 });
 
 // GET /api/v1/members/qr-cards?scope=all|not_enrolled|ids&ids=1,2,3
-// The minimum needed to print membership QR cards: society ID and name.
-// Nothing else about a member is put on paper that can be lost.
+// What a printed membership card shows: society ID (also the QR), name, NIC
+// and phone. Societies asked for NIC and phone so the card doubles as an ID.
 router.get('/qr-cards', async (req, res, next) => {
   try {
     const scope = String(req.query.scope || 'all');
@@ -243,7 +243,7 @@ router.get('/qr-cards', async (req, res, next) => {
       throw Object.assign(new Error('Invalid scope'), { statusCode: 400 });
     }
     const [rows] = await getPool().query(
-      `SELECT id, society_id, full_name FROM members WHERE ${where.join(' AND ')} ORDER BY society_id ASC, id ASC`,
+      `SELECT id, society_id, full_name, nic, phone FROM members WHERE ${where.join(' AND ')} ORDER BY society_id ASC, id ASC`,
       params
     );
     res.json(rows);

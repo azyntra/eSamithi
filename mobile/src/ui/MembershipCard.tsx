@@ -5,7 +5,6 @@ import { useT } from '../i18n'
 import { elevation, radius, usePalette } from '../theme'
 import { interFamily, useType } from '../typography'
 import type { Profile } from '../api/hooks'
-import { formatDate } from '../lib/date'
 import { Badge, BrandGradient } from './index'
 
 // The branded membership card, shared by the Home page (compact) and the
@@ -62,16 +61,14 @@ export function MembershipCard({
         >
           {societyName}
         </Text>
+        {/* The whole name, wrapped — members read a cut-off name as a wrong one */}
         <Text
-          numberOfLines={1}
+          numberOfLines={compact ? 2 : 3}
           style={{ color: '#ffffff', fontSize: compact ? 19 : 24, fontFamily: ty.family.extrabold, lineHeight: ty.lh(compact ? 19 : 24), marginTop: compact ? 4 : 7 }}
         >
           {profile.full_name}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: compact ? 5 : 7 }}>
-          <Text style={{ color: 'rgba(255,255,255,0.92)', fontSize: compact ? 13 : 15, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>
-            {profile.society_id}
-          </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: compact ? 6 : 8 }}>
           <Badge
             text={active ? t('common.active') : t('common.inactive')}
             color={active ? p.success : p.danger}
@@ -84,14 +81,19 @@ export function MembershipCard({
       <View style={{ backgroundColor: p.surface, padding: compact ? 16 : 20, flexDirection: 'row', gap: 16, alignItems: 'center' }}>
         <View style={{ flex: 1, gap: compact ? 8 : 10 }}>
           <View>
-            <Text style={{ color: p.textMuted, fontSize: compact ? 11 : 12, fontFamily: ty.family.semibold, lineHeight: ty.lh(compact ? 11 : 12) }}>{t('mob.nic')}</Text>
-            <Text style={{ color: p.text, fontSize: compact ? 14 : 15, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>{profile.nic}</Text>
+            <Text style={{ color: p.textMuted, fontSize: compact ? 11 : 12, fontFamily: ty.family.semibold, lineHeight: ty.lh(compact ? 11 : 12) }}>{t('mob.memberNo')}</Text>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+              style={{ color: p.text, fontSize: compact ? 22 : 28, fontFamily: interFamily.extrabold, lineHeight: ty.lh(compact ? 22 : 28) }}
+            >
+              {profile.society_id}
+            </Text>
           </View>
           <View>
-            <Text style={{ color: p.textMuted, fontSize: compact ? 11 : 12, fontFamily: ty.family.semibold, lineHeight: ty.lh(compact ? 11 : 12) }}>{t('mob.joined')}</Text>
-            <Text style={{ color: p.text, fontSize: compact ? 14 : 15, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>
-              {formatDate(profile.date_of_joining)}
-            </Text>
+            <Text style={{ color: p.textMuted, fontSize: compact ? 11 : 12, fontFamily: ty.family.semibold, lineHeight: ty.lh(compact ? 11 : 12) }}>{t('mob.nic')}</Text>
+            <Text style={{ color: p.text, fontSize: compact ? 14 : 15, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>{profile.nic}</Text>
           </View>
           {!compact && (
             <View>
@@ -108,7 +110,7 @@ export function MembershipCard({
           accessibilityLabel={onQrPress ? t('mob.cardLargeLabel') : undefined}
           style={({ pressed }) => ({ backgroundColor: '#ffffff', padding: compact ? 8 : 10, borderRadius: radius.md, opacity: pressed ? 0.85 : 1, ...(compact ? null : { shadowColor: p.shadow, ...elevation.sm }) })}
         >
-          <QRCode value={profile.society_id || String(profile.id)} size={compact ? 82 : 110} backgroundColor="#ffffff" color="#0f172a" />
+          <QRCode value={profile.society_id || String(profile.id)} size={compact ? 96 : 132} backgroundColor="#ffffff" color="#0f172a" />
         </Pressable>
       </View>
     </View>

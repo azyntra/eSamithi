@@ -191,7 +191,7 @@ into version 1. It is office-app work only and needs no app release.
 | FR-7.1 | Manual marking (FR-4.8) remains available for anyone with neither phone nor card. | M |
 | FR-7.2 | **Print one card**: Member page gets a "Print QR card" action. | M |
 | FR-7.3 | **Print many**: Member Registry gets "Print QR cards" with a choice of **all active members**, **members who have not set up the app** (the same group as "Not set up" in the App Usage report), or **selected members**. | M |
-| FR-7.4 | Card content: society name, member's full name, society ID, and the QR code. No NIC, phone, address or bank details. | M |
+| FR-7.4 | Card content: society name, member's full name (wrapped, never cut off), membership number, NIC, phone number, and the QR code. No address, date of joining or bank details. NIC and phone were added on 21 November 2026 at the societies' request, so the card also serves as a member ID. | M |
 | FR-7.5 | Card layout: standard ID-card size (85.6 × 54 mm), ten per A4 sheet with light cut lines, QR at least 30 mm square with a white margin, printed black on white so photocopies still scan. | M |
 | FR-7.6 | The printed QR carries exactly the same content as the QR in the app, so phone scanners and office USB scanners read both without knowing the difference. | M |
 | FR-7.7 | Opens in the existing print preview; prints in the officer's chosen language; unnamed members print with their society ID only. | M |

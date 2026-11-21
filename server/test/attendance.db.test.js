@@ -290,11 +290,11 @@ test('an event outside the window is invisible to phones and closed to marks', a
   assert.strictEqual(office.status, 200);
 });
 
-test('printed-card data is society ID and name, nothing more', async () => {
+test('printed-card data is society ID, name, NIC and phone — nothing more', async () => {
   const all = await call('GET', '/members/qr-cards?scope=all', tokens.att_user);
   const mine = all.body.filter((r) => String(r.society_id).startsWith('ATT-'));
   assert.deepStrictEqual(mine.map((r) => r.society_id), ['ATT-001', 'ATT-002', 'ATT-003']);
-  assert.deepStrictEqual(Object.keys(mine[0]).sort(), ['full_name', 'id', 'society_id']);
+  assert.deepStrictEqual(Object.keys(mine[0]).sort(), ['full_name', 'id', 'nic', 'phone', 'society_id']);
 
   const picked = await call('GET', `/members/qr-cards?scope=ids&ids=${members.gone},${members.plain}`, tokens.att_user);
   assert.deepStrictEqual(picked.body.map((r) => r.society_id), ['ATT-003', 'ATT-004']);

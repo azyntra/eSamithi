@@ -741,6 +741,7 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'mob.alreadyEnrolled': 'මට දැනටමත් PIN අංකයක් ඇත',
   'mob.verifyTitle': 'අනන්‍යතාවය තහවුරු කරන්න',
   'mob.verifySubtitle': 'සමිතියේ ලියාපදිංචි වී ඇති පරිදි ඔබේ ජා.හැ. අංකය සහ උපන් දිනය ඇතුළත් කරන්න.',
+  'mob.memberNo': 'සාමාජික අංකය',
   'mob.nic': 'ජා.හැ. අංකය',
   'mob.nicPlaceholder': 'උදා: 851234567V',
   'mob.dob': 'උපන් දිනය',
