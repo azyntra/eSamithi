@@ -3,6 +3,8 @@ import { KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native'
 import { useRouter } from 'expo-router'
 import { api, errorMessage } from '../../api/client'
 import { setEnrollToken } from '../../auth/enrollSession'
+import { useAuth } from '../../auth/AuthContext'
+import { rememberNic } from '../../lib/rememberedNic'
 import { useT } from '../../i18n'
 import { usePalette } from '../../theme'
 import { Button, Input, Subtitle, Title } from '../../ui'
@@ -14,6 +16,7 @@ export default function Verify(): React.ReactElement {
   const p = usePalette()
   const ty = useType()
   const router = useRouter()
+  const { pendingProfile, activeProfile } = useAuth()
   const [nic, setNic] = useState('')
   const [dob, setDob] = useState('')
   const [error, setError] = useState('')
@@ -32,6 +35,7 @@ export default function Verify(): React.ReactElement {
         date_of_birth: dob.trim()
       })
       setEnrollToken(res.data.enroll_token)
+      rememberNic(pendingProfile?.slug ?? activeProfile?.slug, nic)
       router.push('/(auth)/set-pin')
     } catch (err) {
       setError(errorMessage(err, t('mob.errorLoad')))

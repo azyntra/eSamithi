@@ -1,5 +1,5 @@
 import React, { useId } from 'react'
-import { Modal, Pressable, ScrollView, Text, View, type StyleProp, type ViewStyle } from 'react-native'
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -606,6 +606,38 @@ export function MemberHeader({ name, sub }: { name: string; sub: string }): Reac
       <Avatar name={name} size={72} />
       <Text style={{ color: p.text, fontSize: typeScale.title, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.title), marginTop: spacing.md, textAlign: 'center' }}>{name}</Text>
       <Text style={{ color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.caption), textAlign: 'center' }}>{sub}</Text>
+    </View>
+  )
+}
+
+// Shown while the app restores the session and while the fingerprint prompt
+// is up: the same gradient and white eS tile as Welcome and the splash, so
+// launch reads as one continuous brand moment instead of a bare spinner.
+export function BrandLoading(): React.ReactElement {
+  const p = usePalette()
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <HeroGradient />
+      <LogoChip size={96} />
+      <ActivityIndicator color={p.onHero} style={{ marginTop: spacing.xxl }} />
+    </View>
+  )
+}
+
+// Two-tone line illustration for empty states (redesign §3.6): a tinted disc,
+// a white plate with the subject icon, and three small accents. Drawn from
+// tokens, so it follows the theme and needs no image download.
+export function EmptyIllustration({ icon }: { icon: IconName }): React.ReactElement {
+  const p = usePalette()
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 120, height: 120, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ position: 'absolute', width: 112, height: 112, borderRadius: 56, backgroundColor: p.primarySoft }} />
+      <View style={{ position: 'absolute', top: 10, right: 12, width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: p.primary }} />
+      <View style={{ position: 'absolute', bottom: 16, left: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: p.primary }} />
+      <View style={{ position: 'absolute', top: 22, left: 14, width: 6, height: 6, borderRadius: 3, backgroundColor: p.borderStrong }} />
+      <View style={{ width: 64, height: 64, borderRadius: radius.md + 4, backgroundColor: p.surface, borderWidth: 1.5, borderColor: p.primary, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-6deg' }] }}>
+        <Ionicons name={icon} size={30} color={p.primary} />
+      </View>
     </View>
   )
 }

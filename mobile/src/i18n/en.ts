@@ -1182,7 +1182,16 @@ export const en = {
   'mob.pickDate': 'Choose a date',
   'mob.pinStepChoose': 'Choose a PIN of 4 to 6 digits',
   'mob.pinStepConfirm': 'Enter the same PIN again',
-  'mob.continue': 'Continue'
+  'mob.continue': 'Continue',
+  'mob.notYou': 'Not you?',
+  'mob.whatsNewTitle': 'What’s new in eSamithi',
+  'mob.whatsNewTabs': 'The app has a fresh look and five tabs. Everything about your money is now in one place.',
+  'mob.whatsNewHome': 'Your status, card and latest notice',
+  'mob.whatsNewMoney': 'Contributions, loans and payouts together',
+  'mob.whatsNewNotices': 'Society news, meetings and death notices',
+  'mob.whatsNewPuruka': 'Buy and sell between members',
+  'mob.whatsNewMe': 'Your profile, requests and settings',
+  'mob.gotIt': 'Got it'
 }
 
 export type TranslationKey = keyof typeof en

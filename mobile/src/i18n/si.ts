@@ -1185,5 +1185,14 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'mob.pickDate': 'දිනයක් තෝරන්න',
   'mob.pinStepChoose': 'ඉලක්කම් 4 සිට 6 දක්වා PIN අංකයක් තෝරන්න',
   'mob.pinStepConfirm': 'එම PIN අංකය නැවත ඇතුළත් කරන්න',
-  'mob.continue': 'ඉදිරියට'
+  'mob.continue': 'ඉදිරියට',
+  'mob.notYou': 'ඔබ නොවේද?',
+  'mob.whatsNewTitle': 'eSamithi හි අලුත් දේ',
+  'mob.whatsNewTabs': 'යෙදුමට අලුත් පෙනුමක් සහ ටැබ් පහක් ඇත. ඔබේ මුදල් ගැන සියල්ල දැන් එකම තැනක.',
+  'mob.whatsNewHome': 'ඔබේ තත්ත්වය, කාඩ්පත සහ නවතම නිවේදනය',
+  'mob.whatsNewMoney': 'දායකත්වය, ණය සහ ප්‍රතිලාභ එකට',
+  'mob.whatsNewNotices': 'සමිති පුවත්, රැස්වීම් සහ මරණ දැන්වීම්',
+  'mob.whatsNewPuruka': 'සාමාජිකයින් අතර ගනුදෙනු',
+  'mob.whatsNewMe': 'ඔබේ පැතිකඩ, ඉල්ලීම් සහ සැකසුම්',
+  'mob.gotIt': 'හරි'
 }

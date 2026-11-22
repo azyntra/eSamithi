@@ -12,7 +12,10 @@ import { useAnnouncements, useDues, useProfile, useSocietyInfo, useStatement, ty
 import { isOpenLoan, loanOwed } from '../../lib/loans'
 import { useNoticesSeen } from '../../lib/noticesSeen'
 import {
+  BottomSheet,
+  Button,
   ErrorView,
+  ListRow,
   HeroGradient,
   LogoChip,
   QuickAction,
@@ -34,6 +37,8 @@ import { NoticeCard } from '../../ui/NoticeCard'
 // who you are and your status; everything below is one tap from its detail.
 
 const HIDE_KEY = 'esamithi.hideAmounts'
+// One-time sheet introducing the five-tab layout (redesign §12)
+const WHATS_NEW_KEY = 'esamithi.seen.fiveTabs'
 
 type ActivityRow = LedgerRow & { direction: 'in' | 'out' }
 
@@ -52,6 +57,7 @@ export default function Home(): React.ReactElement {
   const { seenId } = useNoticesSeen()
   const card = useCardStyle()
   const [hidden, setHidden] = useState(false)
+  const [whatsNew, setWhatsNew] = useState(false)
 
   // White status-bar icons over the hero, only while Home is on screen
   useFocusEffect(
@@ -60,6 +66,22 @@ export default function Home(): React.ReactElement {
       return () => setStatusBarStyle(scheme === 'dark' ? 'light' : 'dark')
     }, [scheme])
   )
+
+  useEffect(() => {
+    try {
+      SecureStore.getItemAsync(WHATS_NEW_KEY).then((v) => { if (v !== '1') setWhatsNew(true) }).catch(() => {})
+    } catch {
+      // no secure storage (web preview): skip the sheet
+    }
+  }, [])
+  const closeWhatsNew = (): void => {
+    setWhatsNew(false)
+    try {
+      SecureStore.setItemAsync(WHATS_NEW_KEY, '1').catch(() => {})
+    } catch {
+      // shown again next time; harmless
+    }
+  }
 
   useEffect(() => {
     try {
@@ -268,6 +290,18 @@ export default function Home(): React.ReactElement {
           </>
         ) : null}
       </View>
+      <BottomSheet visible={whatsNew} onClose={closeWhatsNew} title={t('mob.whatsNewTitle')} footer={<Button label={t('mob.gotIt')} onPress={closeWhatsNew} />}>
+        <Text style={{ color: p.textMuted, fontSize: typeScale.body, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.body), marginBottom: spacing.md }}>{t('mob.whatsNewTabs')}</Text>
+        {([
+          ['home-outline', 'mob.tabHome', 'mob.whatsNewHome'],
+          ['wallet-outline', 'mob.tabMoney', 'mob.whatsNewMoney'],
+          ['notifications-outline', 'mob.tabNotices', 'mob.whatsNewNotices'],
+          ['storefront-outline', 'mob.tabPuruka', 'mob.whatsNewPuruka'],
+          ['person-circle-outline', 'mob.tabMe', 'mob.whatsNewMe']
+        ] as const).map(([icon, label, sub], i) => (
+          <ListRow key={label} first={i === 0} icon={icon} label={t(label)} sublabel={t(sub)} />
+        ))}
+      </BottomSheet>
     </Screen>
   )
 }

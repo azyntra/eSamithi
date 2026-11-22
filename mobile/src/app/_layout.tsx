@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from '../auth/AuthContext'
 import { NoticesSeenProvider } from '../lib/noticesSeen'
 import { ThemeProvider, usePalette, useThemeMode } from '../theme'
 import { useType } from '../typography'
-import { LoadingView } from '../ui'
+import { BrandLoading } from '../ui'
 import { ToastProvider } from '../ui/toast'
 import '../lib/queryFocus' // wires app-foreground → React Query refetch
 import '../lib/errorReporter' // global JS crash reports → /client-errors
@@ -45,7 +45,7 @@ function RootNavigator(): React.ReactElement {
   })
 
   // Cold start: still exchanging the stored refresh token (or loading fonts)
-  if (status === 'loading' || (!fontsLoaded && !fontsError)) return <LoadingView />
+  if (status === 'loading' || (!fontsLoaded && !fontsError)) return <BrandLoading />
 
   return (
     <>

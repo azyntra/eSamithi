@@ -39,6 +39,7 @@ export { ScalePressable } from './pressable'
 export { ToastProvider, useToast } from './toast'
 export { TabBar } from './TabBar'
 export * from './v2'
+import { EmptyIllustration } from './v2'
 
 // ---- Brand ---------------------------------------------------------------
 
@@ -531,18 +532,17 @@ export function ProgressBar({ value, color }: { value: number; color?: string })
   )
 }
 
-// Friendly icon + message for empty lists
-export function EmptyState({ icon, text }: { icon: keyof typeof Ionicons.glyphMap; text: string }): React.ReactElement {
+// Friendly illustration + message (+ optional next step) for empty lists
+export function EmptyState({ icon, text, actionLabel, onAction }: { icon: keyof typeof Ionicons.glyphMap; text: string; actionLabel?: string; onAction?: () => void }): React.ReactElement {
   const p = usePalette()
   const ty = useType()
   return (
-    <Animated.View entering={FadeIn.duration(dur.enter)} style={{ alignItems: 'center', paddingVertical: spacing.xxxl + 4, gap: spacing.lg - 2 }}>
-      <View style={{ width: 72, height: 72, borderRadius: radius.pill, backgroundColor: p.surfaceAlt, borderWidth: 1, borderColor: p.border, alignItems: 'center', justifyContent: 'center' }}>
-        <Ionicons name={icon} size={30} color={p.primary} />
-      </View>
+    <Animated.View entering={FadeIn.duration(dur.enter)} style={{ alignItems: 'center', paddingVertical: spacing.xxl, gap: spacing.lg - 2 }}>
+      <EmptyIllustration icon={icon} />
       <Text style={{ color: p.textMuted, fontSize: typeScale.body, fontFamily: ty.family.regular, textAlign: 'center', paddingHorizontal: spacing.xxl, lineHeight: ty.lh(typeScale.body) }}>
         {text}
       </Text>
+      {actionLabel && onAction ? <Button label={actionLabel} variant="secondary" onPress={onAction} /> : null}
     </Animated.View>
   )
 }
