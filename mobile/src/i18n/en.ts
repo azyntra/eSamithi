@@ -737,7 +737,6 @@ export const en = {
   'mob.alreadyEnrolled': 'I already have a PIN',
   'mob.verifyTitle': 'Verify your identity',
   'mob.verifySubtitle': 'Enter your NIC number and date of birth as registered with the society.',
-  'mob.cardTapQr': 'Tap the QR to enlarge it',
   'mob.cardTitle': 'Membership card',
   'mob.memberNo': 'Membership No.',
   'mob.nic': 'NIC number',

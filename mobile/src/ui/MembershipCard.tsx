@@ -33,17 +33,25 @@ export function formatPhone(phone: string | null | undefined): string {
   return /^0\d{9}$/.test(d) ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : raw
 }
 
+// Android sizes a percentage-sized Svg against nothing useful when the Svg
+// itself is absolutely positioned (it drew ~300 × 34 dp and left white text on
+// white). So the absolute fill is a View, and the Svg fills that — the same
+// pattern as BrandGradient in ./index.tsx.
+const FILL = { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 } as const
+
 function CardGradient({ id }: { id: string }): React.ReactElement {
   return (
-    <Svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }} pointerEvents="none">
-      <Defs>
-        <LinearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0" stopColor={CARD_BLUE} />
-          <Stop offset="1" stopColor={CARD_DEEP} />
-        </LinearGradient>
-      </Defs>
-      <Rect width="100%" height="100%" fill={`url(#${id})`} />
-    </Svg>
+    <View pointerEvents="none" style={FILL}>
+      <Svg width="100%" height="100%" pointerEvents="none">
+        <Defs>
+          <LinearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%">
+            <Stop offset="0" stopColor={CARD_BLUE} />
+            <Stop offset="1" stopColor={CARD_DEEP} />
+          </LinearGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill={`url(#${id})`} />
+      </Svg>
+    </View>
   )
 }
 
@@ -102,11 +110,13 @@ export function MembershipCard({
       {/* Header */}
       <View style={{ paddingHorizontal: pad, paddingTop: compact ? 14 : 18, paddingBottom: compact ? 26 : 30 }}>
         <CardGradient id={compact ? 'cardHeadC' : 'cardHead'} />
-        <Svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }} viewBox="0 0 100 40" preserveAspectRatio="xMaxYMin slice" pointerEvents="none">
-          <Circle cx="92" cy="2" r="22" fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="0.8" />
-          <Circle cx="92" cy="2" r="31" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="0.8" />
-          <Circle cx="92" cy="2" r="40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="0.8" />
-        </Svg>
+        <View pointerEvents="none" style={FILL}>
+          <Svg width="100%" height="100%" viewBox="0 0 100 40" preserveAspectRatio="xMaxYMin slice" pointerEvents="none">
+            <Circle cx="92" cy="2" r="22" fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="0.8" />
+            <Circle cx="92" cy="2" r="31" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="0.8" />
+            <Circle cx="92" cy="2" r="40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="0.8" />
+          </Svg>
+        </View>
         <Text pointerEvents="none" style={{ position: 'absolute', right: 8, top: compact ? -24 : -20, fontSize: 100, fontFamily: interFamily.extrabold, color: 'rgba(255,255,255,0.08)' }}>
           eS
         </Text>
@@ -124,9 +134,11 @@ export function MembershipCard({
           </View>
         </View>
         {/* Curved edge into the body */}
-        <Svg width="100%" height={compact ? 14 : 16} viewBox="0 0 100 10" preserveAspectRatio="none" style={{ position: 'absolute', left: 0, right: 0, bottom: -1 }} pointerEvents="none">
-          <Path d="M0 10V7.5C18 1.5 38 1 58 4.5S88 8.5 100 3V10Z" fill={p.surface} />
-        </Svg>
+        <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: compact ? 14 : 16 }}>
+          <Svg width="100%" height="100%" viewBox="0 0 100 10" preserveAspectRatio="none" pointerEvents="none">
+            <Path d="M0 10V7.5C18 1.5 38 1 58 4.5S88 8.5 100 3V10Z" fill={p.surface} />
+          </Svg>
+        </View>
       </View>
 
       {/* Body */}
@@ -151,14 +163,9 @@ export function MembershipCard({
               </Text>
             </View>
             {/* Compact: NIC sits beside the QR. Full: NIC and phone get their own
-                full-width rows below, so long numbers are never cut off. */}
+                full-width rows below, so long numbers are never cut off. (The
+                card screen says "tap the code" under the card, so no hint here.) */}
             {compact && profile.nic ? detail('card-outline', t('mob.nic'), profile.nic) : null}
-            {!compact && onQrPress ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 2 }}>
-                <Ionicons name="expand-outline" size={16} color={p.textMuted} />
-                <Text style={{ flex: 1, color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(12) }}>{t('mob.cardTapQr')}</Text>
-              </View>
-            ) : null}
           </View>
 
           {/* White tile keeps the QR quiet zone in dark mode too */}
