@@ -1,5 +1,7 @@
 # eSamithi Member Mobile App — UI/UX & Motion Refresh
 
+> **Superseded for look, layout and navigation by [`MOBILE-APP-REDESIGN-REQUIREMENTS.md`](MOBILE-APP-REDESIGN-REQUIREMENTS.md) (22 Nov 2026).** The motion, Sinhala-typography and Android-trap rules below remain in force.
+
 **Status:** Draft for approval · **Date:** 21 September 2026 · **App:** eSamithi Member 1.3.1 (Android versionCode 6)
 **Owner:** Sachira · **Applies to:** `mobile/` (Expo SDK 57, React Native 0.86)
 **Depends on:** `MEMBER-MOBILE-APP-REQUIREMENTS.md` (what the app does) · `ESAMITHI-WEB-APP-REQUIREMENTS.md` §4 (the shared design system this aligns to)
