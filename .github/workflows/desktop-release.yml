@@ -4,9 +4,19 @@ name: Desktop release
 #   git tag desktop-v1.4.0 && git push origin desktop-v1.4.0
 # The Windows installer + electron-updater feed files land as a workflow
 # artifact; publish them to the /updates/ feed once it moves to the domain.
+#
+# Run by hand (Actions → Desktop release → Run workflow) with "shell" ticked to
+# build the Phase 5 thin shell (src/main/shell.ts, loads app.esamithi.com) for a
+# test PC. Nothing here publishes to the update feed; that stays a manual step.
 on:
   push:
     tags: ['desktop-v*']
+  workflow_dispatch:
+    inputs:
+      shell:
+        description: 'Build the thin shell (ESAMITHI_SHELL=1)'
+        type: boolean
+        default: true
 
 jobs:
   windows:
@@ -20,9 +30,11 @@ jobs:
       - run: npm ci
       - name: Build Windows installer
         run: npm run build:win
+        env:
+          ESAMITHI_SHELL: ${{ inputs.shell && '1' || '' }}
       - uses: actions/upload-artifact@v4
         with:
-          name: esamithi-windows-${{ github.ref_name }}
+          name: esamithi-windows-${{ github.ref_name }}${{ inputs.shell && '-shell' || '' }}
           path: |
             dist/*.exe
             dist/*.blockmap
