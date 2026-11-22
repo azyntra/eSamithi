@@ -17,9 +17,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 // Files allowed to carry literal colours, and why
 const ALLOW = new Map([
   // The camera viewfinder sits on live video, not on a themed surface
-  ['src/app/attendance/[id].tsx', 'camera overlay'],
-  // Hero card on the brand gradient; restyled in redesign phase 5
-  ['src/app/society-funds.tsx', 'until phase 5']
+  ['src/app/attendance/[id].tsx', 'camera overlay']
 ])
 
 function walk(dir, out = []) {

@@ -1160,7 +1160,23 @@ export const en = {
   'mob.pkNeedCategory': 'Please choose a category',
   'mob.pkSegActive': 'Active',
   'mob.pkSegSold': 'Sold',
-  'mob.pkSegExpired': 'Expired'
+  'mob.pkSegExpired': 'Expired',
+  'mob.contactSection': 'Contact',
+  'mob.membershipSection': 'Membership',
+  'mob.tapToReveal': 'Show',
+  'mob.askCorrection': 'Ask for a correction',
+  'mob.reqSent': 'Sent',
+  'mob.reqDecided': 'Decided',
+  'mob.reqDone': 'Done',
+  'mob.reqWillReply': 'The office will reply here.',
+  'mob.directions': 'Directions',
+  'mob.callShort': 'Call',
+  'mob.reqLoanHint': 'Ask the office for a loan. They decide and reply here.',
+  'mob.reqCorrectionHint': 'Tell the office what is wrong in your records.',
+  'mob.reqMaxLoan': 'The society lends up to {amount}.',
+  'mob.reqPendingLimit': 'You can have up to 3 requests waiting at a time.',
+  'mob.reqPurposePh': 'e.g. paddy cultivation, house repair',
+  'mob.reqBackToList': 'Back to my requests'
 }
 
 export type TranslationKey = keyof typeof en

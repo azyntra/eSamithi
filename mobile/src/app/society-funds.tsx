@@ -2,18 +2,21 @@ import React from 'react'
 import { Text, View } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../i18n'
-import { elevation, radius, usePalette } from '../theme'
+import { radius, spacing, type as typeScale, usePalette } from '../theme'
 import { interFamily, useType } from '../typography'
-import { useSocietyFunds, useSocietyInfo, type SocietyFundFD } from '../api/hooks'
+import { useSocietyFunds, useSocietyInfo } from '../api/hooks'
 import { formatDate } from '../lib/date'
-import { BrandGradient, Card, EmptyText, ErrorView, Money, Screen, SectionHeader, SkeletonCards, StaleBanner, Subtitle } from '../ui'
+import { formatCurrency } from '../lib/money'
+import { AmountHero, Callout, DateBlock, ErrorView, GroupLabel, Screen, SkeletonCards, StaleBanner, useCardStyle } from '../ui'
 
-// Society financial transparency for members: headline funds + a cash/FD
-// breakdown with the fixed deposits itemised. Read-only.
+// Society funds (redesign §6.6.7): the total on a plain card (the gradient is
+// reserved for Home, the card and the primary button), a cash-vs-deposits bar
+// with a legend, and each fixed deposit with its maturity date.
 export default function SocietyFunds(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
   const ty = useType()
+  const card = useCardStyle()
   const funds = useSocietyFunds()
   const society = useSocietyInfo()
 
@@ -27,97 +30,56 @@ export default function SocietyFunds(): React.ReactElement {
   }
 
   const d = funds.data!
+  const total = Math.max(1, d.cash_total + d.fd_total)
+  const cashShare = d.cash_total / total
 
-  const BreakdownRow = ({ icon, label, cents, color }: {
-    icon: keyof typeof Ionicons.glyphMap
-    label: string
-    cents: number
-    color: string
-  }): React.ReactElement => (
-    <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12 }}>
-      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-        <Ionicons name={icon} size={19} color={color} />
-      </View>
-      <Text style={{ color: p.text, fontSize: 16, flex: 1, paddingRight: 8, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{label}</Text>
-      <Money cents={cents} size={16} bold />
-    </View>
-  )
-
-  const fdRow = (fd: SocietyFundFD, i: number): React.ReactElement => (
-    <View
-      key={fd.id}
-      style={{ paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.border }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ color: p.text, fontSize: 16, flex: 1, paddingRight: 8, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }} numberOfLines={1}>
-          {fd.bank_name || t('mob.fundsFdBank')}
-        </Text>
-        <Money cents={fd.principal} size={15} bold color={p.primary} />
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 3, gap: 10 }}>
-        <Text style={{ color: p.textMuted, fontSize: 12, flex: 1, fontFamily: ty.family.regular, lineHeight: ty.lh(12) }} numberOfLines={1}>
-          {fd.fd_number ? `#${fd.fd_number}` : ''}{fd.interest_rate != null ? `${fd.fd_number ? ' · ' : ''}${fd.interest_rate}%` : ''}
-        </Text>
-        {fd.maturity_date && (
-          <Text style={{ color: p.textMuted, fontSize: 12, flexShrink: 0, paddingRight: 2, fontFamily: ty.family.regular, lineHeight: ty.lh(12) }}>
-            {t('mob.fundsMatures', { date: formatDate(fd.maturity_date) })}
-          </Text>
-        )}
-      </View>
+  const legend = (color: string, label: string, cents: number): React.ReactElement => (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 40 }}>
+      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: color }} />
+      <Text style={{ flex: 1, color: p.text, fontSize: typeScale.body, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.body) }}>{label}</Text>
+      <Text style={{ color: p.text, fontSize: typeScale.body, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>{formatCurrency(cents)}</Text>
     </View>
   )
 
   return (
     <Screen refreshing={funds.isRefetching} onRefresh={() => funds.refetch()}>
       {funds.isError && <StaleBanner />}
-      <Subtitle>{t('mob.fundsIntro', { society: society.data?.society_name ?? 'Maranadhara Samithi' })}</Subtitle>
+      <Callout icon="eye-outline" tone="brand" text={t('mob.fundsIntro', { society: society.data?.society_name ?? 'Maranadhara Samithi' })} />
 
-      {/* Headline: total society funds — brand-gradient hero */}
-      <View
-        style={{
-          borderRadius: radius.lg,
-          padding: 22,
-          marginBottom: 16,
-          overflow: 'hidden',
-          backgroundColor: p.navy,
-          shadowColor: p.navy,
-          ...elevation.md
-        }}
-      >
-        <BrandGradient />
-        <Text
-          pointerEvents="none"
-          style={{ position: 'absolute', right: -4, top: -22, fontSize: 100, fontFamily: interFamily.extrabold, color: 'rgba(255,255,255,0.08)' }}
-        >
-          eS
-        </Text>
-        <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontFamily: ty.family.bold, lineHeight: ty.lh(12), letterSpacing: 0.8, textTransform: 'uppercase' }}>
-          {t('mob.fundsTotal')}
-        </Text>
-        <Text style={{ color: '#fff', fontSize: 28, fontFamily: interFamily.extrabold, marginTop: 6, fontVariant: ['tabular-nums'] }}>
-          Rs. {(d.total_funds / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </Text>
+      <AmountHero icon="business-outline" label={t('mob.fundsTotal')} cents={d.total_funds} />
+
+      <View style={[card, { padding: spacing.lg }]}>
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ flexDirection: 'row', height: 12, borderRadius: 6, overflow: 'hidden', backgroundColor: p.border, marginBottom: spacing.md }}>
+          <View style={{ flex: cashShare, backgroundColor: p.success }} />
+          <View style={{ flex: 1 - cashShare, backgroundColor: p.primary }} />
+        </View>
+        {legend(p.success, t('mob.fundsCash'), d.cash_total)}
+        {legend(p.primary, t('mob.fundsFd'), d.fd_total)}
       </View>
 
-      {/* Breakdown */}
-      <Card style={{ paddingVertical: 4 }}>
-        <BreakdownRow icon="cash-outline" label={t('mob.fundsCash')} cents={d.cash_total} color={p.success} />
-        <View style={{ borderTopWidth: 1, borderTopColor: p.border }}>
-          <BreakdownRow icon="lock-closed-outline" label={t('mob.fundsFd')} cents={d.fd_total} color={p.primary} />
-        </View>
-      </Card>
+      <GroupLabel>{t('mob.fundsFdList')}</GroupLabel>
+      <View style={[card, { paddingHorizontal: spacing.lg }]}>
+        {d.fixed_deposits.length === 0 ? (
+          <Text style={{ color: p.textMuted, fontSize: typeScale.body, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.body), textAlign: 'center', paddingVertical: spacing.xl }}>{t('mob.fundsNoFd')}</Text>
+        ) : d.fixed_deposits.map((fd, i) => (
+          <View key={fd.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 68, paddingVertical: spacing.sm, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.border }}>
+            {fd.maturity_date ? <DateBlock date={fd.maturity_date} tone="brand" /> : (
+              <View style={{ width: 44, height: 50, borderRadius: radius.sm + 2, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="lock-closed-outline" size={20} color={p.primary} />
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text numberOfLines={2} style={{ color: p.text, fontSize: typeScale.body, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.body) }}>{fd.bank_name || t('mob.fundsFdBank')}</Text>
+              <Text style={{ color: p.textMuted, fontSize: typeScale.micro, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.micro) }}>
+                {[fd.fd_number ? `#${fd.fd_number}` : null, fd.interest_rate != null ? `${fd.interest_rate}%` : null, fd.maturity_date ? t('mob.fundsMatures', { date: formatDate(fd.maturity_date) }) : null].filter(Boolean).join(' · ')}
+              </Text>
+            </View>
+            <Text style={{ color: p.text, fontSize: typeScale.body, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>{formatCurrency(fd.principal)}</Text>
+          </View>
+        ))}
+      </View>
 
-      {/* Itemised fixed deposits */}
-      <SectionHeader>{t('mob.fundsFdList')}</SectionHeader>
-      <Card style={{ paddingVertical: 4 }}>
-        {d.fixed_deposits.length === 0
-          ? <EmptyText>{t('mob.fundsNoFd')}</EmptyText>
-          : d.fixed_deposits.map(fdRow)}
-      </Card>
-
-      <Text style={{ color: p.textMuted, fontSize: 12, textAlign: 'center', marginTop: 8, lineHeight: ty.lh(12), fontFamily: ty.family.regular }}>
-        {t('mob.fundsNote')}
-      </Text>
+      <Text style={{ color: p.textMuted, fontSize: typeScale.micro, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.micro), textAlign: 'center', marginTop: spacing.md }}>{t('mob.fundsNote')}</Text>
     </Screen>
   )
 }

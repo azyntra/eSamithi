@@ -556,3 +556,54 @@ export function Fab({ icon, label, onPress }: { icon: IconName; label: string; o
     </View>
   )
 }
+
+// Label above value, so long values (addresses, names, bank details) wrap
+// instead of truncating (redesign §6.6.1)
+export function DetailRow({ icon, label, value, first, right }: { icon?: IconName; label: string; value: string | null | undefined; first?: boolean; right?: React.ReactNode }): React.ReactElement {
+  const p = usePalette()
+  const ty = useType()
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 56, paddingVertical: spacing.sm, borderTopWidth: first ? 0 : 1, borderTopColor: p.border }}>
+      {icon ? (
+        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={icon} size={18} color={p.primary} />
+        </View>
+      ) : null}
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: p.textMuted, fontSize: typeScale.micro, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.micro) }}>{label}</Text>
+        <Text style={{ color: p.text, fontSize: typeScale.body, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.body) }}>{value && String(value).trim() ? value : '—'}</Text>
+      </View>
+      {right}
+    </View>
+  )
+}
+
+// Quiet information box with an optional action
+export function Callout({ icon = 'information-circle-outline', text, tone, children }: { icon?: IconName; text: string; tone?: 'brand' | 'warning'; children?: React.ReactNode }): React.ReactElement {
+  const p = usePalette()
+  const ty = useType()
+  const bg = tone === 'brand' ? p.primarySoft : tone === 'warning' ? p.warningBg : p.surfaceAlt
+  const fg = tone === 'brand' ? p.primaryOnSoft : tone === 'warning' ? p.warning : p.textMuted
+  return (
+    <View style={{ backgroundColor: bg, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md }}>
+      <View style={{ flexDirection: 'row', gap: spacing.sm + 2 }}>
+        <Ionicons name={icon} size={20} color={fg} />
+        <Text style={{ flex: 1, color: fg, fontSize: typeScale.caption, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.caption) }}>{text}</Text>
+      </View>
+      {children ? <View style={{ marginTop: spacing.sm }}>{children}</View> : null}
+    </View>
+  )
+}
+
+// The member header used by Profile: avatar, name, member number
+export function MemberHeader({ name, sub }: { name: string; sub: string }): React.ReactElement {
+  const p = usePalette()
+  const ty = useType()
+  return (
+    <View style={{ alignItems: 'center', paddingVertical: spacing.lg }}>
+      <Avatar name={name} size={72} />
+      <Text style={{ color: p.text, fontSize: typeScale.title, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.title), marginTop: spacing.md, textAlign: 'center' }}>{name}</Text>
+      <Text style={{ color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.caption), textAlign: 'center' }}>{sub}</Text>
+    </View>
+  )
+}

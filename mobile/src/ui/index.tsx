@@ -407,7 +407,8 @@ export function Input(props: TextInputProps & { label: string; error?: string })
   const ty = useType()
   const { label, error, style, onFocus, onBlur, ...rest } = props
   const [focused, setFocused] = useState(false)
-  const borderColor = error ? p.danger : focused ? p.primary : p.border
+  // 3:1 against the surface when idle, so the field's edge is visible outdoors
+  const borderColor = error ? p.danger : focused ? p.primary : p.borderStrong
   return (
     <View style={{ marginBottom: spacing.lg - 2 }}>
       <Text style={{ color: p.text, fontSize: typeScale.body, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.body), marginBottom: spacing.sm - 2 }}>

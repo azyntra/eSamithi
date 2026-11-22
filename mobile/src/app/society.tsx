@@ -1,16 +1,19 @@
 import React from 'react'
-import { Text } from 'react-native'
+import { Linking, Text, View } from 'react-native'
 import { useT } from '../i18n'
-import { usePalette } from '../theme'
+import { spacing, type as typeScale, usePalette } from '../theme'
+import { useType } from '../typography'
 import { useSocietyInfo } from '../api/hooks'
 import { formatCurrency } from '../lib/money'
-import { Card, ErrorView, Row, Screen, SkeletonCards, StaleBanner, SectionHeader } from '../ui'
-import { useType } from '../typography'
+import { Button, DetailRow, ErrorView, GroupLabel, LogoTile, Screen, SkeletonCards, StaleBanner, useCardStyle } from '../ui'
 
+// About the society (redesign §6.6.6): who they are, how to reach them, the
+// loan rules.
 export default function Society(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
   const ty = useType()
+  const card = useCardStyle()
   const society = useSocietyInfo()
 
   if (society.isPending) return <Screen><SkeletonCards cards={2} /></Screen>
@@ -24,31 +27,48 @@ export default function Society(): React.ReactElement {
 
   const d = society.data!
   const maxLoanCents = d.max_loan_limit ? Number(d.max_loan_limit) : null
+  const phone = d.society_phone?.trim()
+  const address = d.society_address?.trim()
 
   return (
     <Screen refreshing={society.isRefetching} onRefresh={() => society.refetch()}>
       {society.isError && <StaleBanner />}
-      <Text style={{ color: p.text, fontSize: 22, marginBottom: 16, fontFamily: ty.family.extrabold, lineHeight: ty.lh(22) }}>
-        {d.society_name ?? 'Maranadhara Samithi'}
-      </Text>
+      <View style={{ alignItems: 'center', paddingVertical: spacing.lg }}>
+        <LogoTile size={64} />
+        <Text accessibilityRole="header" style={{ color: p.text, fontSize: typeScale.title, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.title), marginTop: spacing.md, textAlign: 'center' }}>
+          {d.society_name ?? 'Maranadhara Samithi'}
+        </Text>
+      </View>
 
-      {(d.society_phone || d.society_address) && (
+      {phone || address ? (
         <>
-          <SectionHeader>{t('mob.officeContact')}</SectionHeader>
-          <Card>
-            {d.society_phone ? <Row label={t('common.phone')} value={d.society_phone} /> : null}
-            {d.society_address ? <Row label={t('mob.address')} value={d.society_address} /> : null}
-          </Card>
+          <GroupLabel>{t('mob.officeContact')}</GroupLabel>
+          <View style={[card, { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg }]}>
+            {phone ? <DetailRow first icon="call-outline" label={t('common.phone')} value={phone} /> : null}
+            {address ? <DetailRow first={!phone} icon="location-outline" label={t('mob.address')} value={address} /> : null}
+            <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm }}>
+              {phone ? (
+                <View style={{ flex: 1 }}>
+                  <Button label={t('mob.callShort')} icon="call-outline" onPress={() => { Linking.openURL(`tel:${phone.replace(/\s/g, '')}`).catch(() => {}) }} />
+                </View>
+              ) : null}
+              {address ? (
+                <View style={{ flex: 1 }}>
+                  <Button label={t('mob.directions')} icon="navigate-outline" variant="secondary" onPress={() => { Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(address)}`).catch(() => {}) }} />
+                </View>
+              ) : null}
+            </View>
+          </View>
         </>
-      )}
+      ) : null}
 
-      <SectionHeader>{t('mob.loanTerms')}</SectionHeader>
-      <Card>
-        <Row label={t('mob.monthlyInterest')} value={d.monthly_interest_rate == null ? '—' : `${d.monthly_interest_rate}%`} />
-        <Row label={t('mob.lateFine')} value={d.late_fine_rate == null ? '—' : `${d.late_fine_rate}%`} />
-        <Row label={t('mob.maxLoan')} value={maxLoanCents ? formatCurrency(maxLoanCents) : '—'} />
-        <Row label={t('mob.reqGuarantors')} value={d.required_guarantors ?? '—'} />
-      </Card>
+      <GroupLabel>{t('mob.loanTerms')}</GroupLabel>
+      <View style={[card, { paddingHorizontal: spacing.lg }]}>
+        <DetailRow first icon="trending-up-outline" label={t('mob.monthlyInterest')} value={d.monthly_interest_rate == null ? '—' : `${d.monthly_interest_rate}%`} />
+        <DetailRow icon="warning-outline" label={t('mob.lateFine')} value={d.late_fine_rate == null ? '—' : `${d.late_fine_rate}%`} />
+        <DetailRow icon="wallet-outline" label={t('mob.maxLoan')} value={maxLoanCents ? formatCurrency(maxLoanCents) : '—'} />
+        <DetailRow icon="people-outline" label={t('mob.reqGuarantors')} value={d.required_guarantors ?? '—'} />
+      </View>
     </Screen>
   )
 }

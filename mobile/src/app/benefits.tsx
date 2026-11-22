@@ -1,15 +1,17 @@
 import React from 'react'
 import { Text, View } from 'react-native'
 import { useT } from '../i18n'
-import { usePalette } from '../theme'
+import { spacing, type as typeScale, usePalette } from '../theme'
+import { interFamily } from '../typography'
 import { useBenefitsSchedule } from '../api/hooks'
-import { Card, EmptyText, ErrorView, Money, Screen, SkeletonCards, StaleBanner, Subtitle } from '../ui'
-import { useType } from '../typography'
+import { formatCurrency } from '../lib/money'
+import { Callout, EmptyState, ErrorView, ListRow, Screen, SkeletonCards, StaleBanner, useCardStyle } from '../ui'
 
+// What the society pays out, and how much (redesign §6.6.4)
 export default function Benefits(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
-  const ty = useType()
+  const card = useCardStyle()
   const benefits = useBenefitsSchedule()
 
   if (benefits.isPending) return <Screen><SkeletonCards cards={2} /></Screen>
@@ -21,33 +23,31 @@ export default function Benefits(): React.ReactElement {
     )
   }
 
+  const rows = benefits.data!
   return (
     <Screen refreshing={benefits.isRefetching} onRefresh={() => benefits.refetch()}>
       {benefits.isError && <StaleBanner />}
-      <Subtitle>{t('mob.benefitsSubtitle')}</Subtitle>
-      {benefits.data!.length === 0 && <EmptyText>—</EmptyText>}
-      <Card style={{ paddingVertical: 4 }}>
-        {benefits.data!.map((b, i) => (
-          <View
-            key={`${b.code ?? b.name}-${i}`}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingVertical: 13,
-              borderTopWidth: i === 0 ? 0 : 1,
-              borderTopColor: p.border
-            }}
-          >
-            <Text style={{ color: p.text, fontSize: 16, flex: 1, marginRight: 10, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{b.name}</Text>
-            {b.standard_payout > 0 ? (
-              <Money cents={b.standard_payout} color={p.success} />
-            ) : (
-              <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>—</Text>
-            )}
-          </View>
-        ))}
-      </Card>
+      <Callout icon="gift-outline" tone="brand" text={t('mob.benefitsSubtitle')} />
+      {rows.length === 0 ? <EmptyState icon="gift-outline" text={t('mob.noBenefits')} /> : (
+        <View style={[card, { paddingHorizontal: spacing.lg }]}>
+          {rows.map((b, i) => {
+            const paid = b.standard_payout > 0
+            return (
+            <ListRow
+              key={`${b.code ?? b.name}-${i}`}
+              first={i === 0}
+              icon="gift-outline"
+              label={b.name}
+              right={
+                <Text style={{ color: paid ? p.success : p.textMuted, fontSize: typeScale.body, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>
+                  {paid ? formatCurrency(b.standard_payout) : '—'}
+                </Text>
+              }
+            />
+            )
+          })}
+        </View>
+      )}
     </Screen>
   )
 }

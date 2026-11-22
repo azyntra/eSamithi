@@ -1163,5 +1163,21 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'mob.pkNeedCategory': 'කරුණාකර කාණ්ඩයක් තෝරන්න',
   'mob.pkSegActive': 'සක්‍රිය',
   'mob.pkSegSold': 'විකුණූ',
-  'mob.pkSegExpired': 'කල් ඉකුත්'
+  'mob.pkSegExpired': 'කල් ඉකුත්',
+  'mob.contactSection': 'සම්බන්ධතා',
+  'mob.membershipSection': 'සාමාජිකත්වය',
+  'mob.tapToReveal': 'පෙන්වන්න',
+  'mob.askCorrection': 'නිවැරදි කිරීමක් ඉල්ලන්න',
+  'mob.reqSent': 'යැව්වා',
+  'mob.reqDecided': 'තීරණය කළා',
+  'mob.reqDone': 'අවසන්',
+  'mob.reqWillReply': 'කාර්යාලය මෙහි පිළිතුරු දෙනු ඇත.',
+  'mob.directions': 'මාර්ගය',
+  'mob.callShort': 'අමතන්න',
+  'mob.reqLoanHint': 'කාර්යාලයෙන් ණයක් ඉල්ලන්න. ඔවුන් තීරණය කර මෙහි පිළිතුරු දෙනු ඇත.',
+  'mob.reqCorrectionHint': 'ඔබේ වාර්තාවල ඇති වැරැද්ද කාර්යාලයට කියන්න.',
+  'mob.reqMaxLoan': 'සමිතිය {amount} දක්වා ණය දෙයි.',
+  'mob.reqPendingLimit': 'වරකට ඉල්ලීම් 3 ක් දක්වා බලා සිටිය හැක.',
+  'mob.reqPurposePh': 'උදා: වී වගාව, නිවාස අලුත්වැඩියා',
+  'mob.reqBackToList': 'මගේ ඉල්ලීම් වෙත'
 }
