@@ -64,10 +64,10 @@ function RootNavigator(): React.ReactElement {
       <Stack.Protected guard={status === 'signedIn'}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="loan/[id]" options={{ title: t('nav.loans') }} />
+        <Stack.Screen name="notice/[id]" options={{ title: t('mob.noticeTitle') }} />
         <Stack.Screen name="receipt/[kind]/[id]" options={{ title: t('mob.rcptTitle') }} />
         <Stack.Screen name="profile" options={{ title: t('mob.myProfile') }} />
         <Stack.Screen name="benefits" options={{ title: t('mob.benefits') }} />
-        <Stack.Screen name="payouts" options={{ title: t('mob.payouts') }} />
         <Stack.Screen name="guarantees" options={{ title: t('mob.guarantees') }} />
         <Stack.Screen name="society" options={{ title: t('mob.societyInfo') }} />
         <Stack.Screen name="help" options={{ title: t('mob.help') }} />

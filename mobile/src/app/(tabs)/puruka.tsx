@@ -72,7 +72,7 @@ function PostTile({ post, onPress }: { post: PurukaPost; onPress: () => void }):
         )}
         {post.status === 'Sold' ? (
           <View style={{ position: 'absolute', top: 8, left: 8 }}>
-            <Badge text={wanted ? t('mob.pkFound') : t('mob.pkSold')} color="#fff" bg={p.danger} />
+            <Badge text={wanted ? t('mob.pkFound') : t('mob.pkSold')} color={p.onPrimary} bg={p.danger} />
           </View>
         ) : wanted ? (
           <View style={{ position: 'absolute', top: 8, left: 8 }}>
@@ -197,7 +197,7 @@ export default function Puruka(): React.ReactElement {
             haptic="impact"
             style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
           >
-            <Ionicons name="add" size={26} color={p.onPrimary} />
+            <Ionicons name="add" size={26} color={p.onHero} />
           </ScalePressable>
         </View>
       </View>

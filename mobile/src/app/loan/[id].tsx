@@ -6,7 +6,7 @@ import { useT } from '../../i18n'
 import { usePalette } from '../../theme'
 import { useLoan, useSocietyInfo } from '../../api/hooks'
 import { formatDate } from '../../lib/date'
-import { repaidFraction } from '../(tabs)/loans'
+import { repaidFraction } from '../../lib/loans'
 import { Card, EmptyText, ErrorView, Money, ProgressBar, Row, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner, StatusPill } from '../../ui'
 import { useType } from '../../typography'
 

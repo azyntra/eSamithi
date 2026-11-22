@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
+  FlatList,
   RefreshControl,
   ScrollView,
   Text,
@@ -37,6 +38,7 @@ import { ScalePressable } from './pressable'
 export { ScalePressable } from './pressable'
 export { ToastProvider, useToast } from './toast'
 export { TabBar } from './TabBar'
+export * from './v2'
 
 // ---- Brand ---------------------------------------------------------------
 
@@ -64,10 +66,11 @@ export function BrandGradient({ rounded = 0, style }: { rounded?: number; style?
 
 // The eS launcher tile, in-app (Welcome hero, About footer)
 export function LogoTile({ size = 64 }: { size?: number }): React.ReactElement {
+  const p = usePalette()
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <BrandGradient rounded={size * 0.27} />
-      <Text style={{ color: '#ffffff', fontFamily: interFamily.extrabold, fontSize: size * 0.4, marginTop: -size * 0.02 }}>eS</Text>
+      <Text style={{ color: p.onHero, fontFamily: interFamily.extrabold, fontSize: size * 0.4, marginTop: -size * 0.02 }}>eS</Text>
     </View>
   )
 }
@@ -118,6 +121,7 @@ export function ListScreen<T>({
   renderItem,
   keyExtractor,
   header,
+  footer,
   empty,
   refreshing,
   onRefresh,
@@ -127,6 +131,7 @@ export function ListScreen<T>({
   renderItem: (item: T, index: number) => React.ReactElement
   keyExtractor: (item: T, index: number) => string
   header?: React.ReactElement
+  footer?: React.ReactElement
   empty?: React.ReactElement
   refreshing?: boolean
   onRefresh?: () => void
@@ -135,12 +140,15 @@ export function ListScreen<T>({
   const p = usePalette()
   const insets = useSafeAreaInsets()
   return (
-    <Animated.FlatList
-      entering={FadeIn.duration(dur.content)}
+    // The fade sits on a wrapper: Reanimated's animated FlatList with an
+    // entering animation throws on web (preview), and a View fades the same.
+    <Animated.View entering={FadeIn.duration(dur.content)} style={{ flex: 1, backgroundColor: p.bg }}>
+    <FlatList
       data={data as T[]}
       renderItem={({ item, index }) => renderItem(item, index)}
       keyExtractor={keyExtractor}
       ListHeaderComponent={header}
+      ListFooterComponent={footer}
       ListEmptyComponent={empty}
       style={{ flex: 1, backgroundColor: p.bg }}
       contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xxxl }}
@@ -153,6 +161,7 @@ export function ListScreen<T>({
         onRefresh ? <RefreshControl refreshing={refreshing ?? false} onRefresh={onRefresh} tintColor={p.primary} colors={[p.primary]} /> : undefined
       }
     />
+    </Animated.View>
   )
 }
 
@@ -281,7 +290,8 @@ export function Button({
 }): React.ReactElement {
   const p = usePalette()
   const ty = useType()
-  const fg = variant === 'secondary' ? p.primaryOnSoft : p.onPrimary
+  // White on the (always deep-blue) gradient; navy-or-white on the solid fills
+  const fg = variant === 'secondary' ? p.primaryOnSoft : variant === 'danger' ? p.onPrimary : p.onHero
   const isPrimary = variant === 'primary'
   // The gradient is a sibling BEHIND the Pressable, not a child on top of it.
   // On Fabric/Android an SVG child intercepts touches over its whole area
@@ -737,7 +747,8 @@ export function ListRow({
 
 // Filter and category chips. There were three implementations, two of them
 // byte-identical copies and a third at a different radius and weight.
-// 44 dp minimum so a thumb can actually hit it.
+// 44 dp minimum so a thumb can actually hit it. Selected = brand tint with a
+// check (redesign §5), so selection never relies on colour alone.
 export function Chip({
   label,
   icon,
@@ -765,11 +776,13 @@ export function Chip({
         minHeight: 44,
         paddingHorizontal: spacing.lg - 2,
         borderRadius: radius.pill,
-        backgroundColor: selected ? p.primary : p.primarySoft
+        borderWidth: 1,
+        borderColor: selected ? p.primarySoft : p.border,
+        backgroundColor: selected ? p.primarySoft : p.surface
       }}
     >
-      {icon ? <Ionicons name={icon} size={16} color={selected ? p.onPrimary : p.primaryOnSoft} /> : null}
-      <Text style={{ color: selected ? p.onPrimary : p.primaryOnSoft, fontSize: typeScale.caption, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.caption) }}>
+      {selected ? <Ionicons name="checkmark" size={16} color={p.primaryOnSoft} /> : icon ? <Ionicons name={icon} size={16} color={p.textMuted} /> : null}
+      <Text style={{ color: selected ? p.primaryOnSoft : p.text, fontSize: typeScale.caption, fontFamily: selected ? ty.family.bold : ty.family.semibold, lineHeight: ty.lh(typeScale.caption) }}>
         {label}
       </Text>
     </ScalePressable>

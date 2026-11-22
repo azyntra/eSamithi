@@ -11,7 +11,7 @@ import path from 'node:path'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const TYPOGRAPHY = 'src/typography.tsx'
-const SCALE = new Set([12, 14, 16, 18, 22, 28])
+const SCALE = new Set([12, 14, 16, 18, 22, 28, 34])
 // The ghost "eS" watermark is decorative, not type.
 const EXEMPT_SIZES = new Set([100])
 const problems = []

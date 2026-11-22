@@ -56,3 +56,8 @@ jobs:
       - name: Contrast gate
         working-directory: mobile
         run: node scripts/check-contrast.mjs
+      # Screens take colours from the palette only, so the contrast gate and
+      # dark mode see every colour a member sees.
+      - name: Token gate
+        working-directory: mobile
+        run: node scripts/check-tokens.mjs

@@ -67,7 +67,7 @@ export default function ReceiptScreen(): React.ReactElement {
           </Text>
           {voided && (
             <View style={{ marginTop: spacing.sm }}>
-              <Badge text={t('mob.voided')} color="#fff" bg={p.danger} />
+              <Badge text={t('mob.voided')} color={p.onPrimary} bg={p.danger} />
             </View>
           )}
         </View>

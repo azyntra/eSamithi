@@ -30,8 +30,13 @@ export default function TabsLayout(): React.ReactElement {
     registerPushToken()
     const Notifications = getNotifications()
     if (!Notifications) return
-    const sub = Notifications.addNotificationResponseReceivedListener(() => {
-      router.push('/(tabs)/notices')
+    // A notice push carries { type: 'announcement', id }: open that notice.
+    // Anything else (or an older server without an id) lands on the list.
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = (response?.notification?.request?.content?.data ?? {}) as { type?: string; id?: number | string }
+      const id = Number(data.id)
+      if (data.type === 'announcement' && Number.isFinite(id) && id > 0) router.push(`/notice/${id}`)
+      else router.push('/(tabs)/notices')
     })
     return () => sub.remove()
   }, [router, activeProfile?.slug])
@@ -40,6 +45,8 @@ export default function TabsLayout(): React.ReactElement {
     <Tabs
       tabBar={(props) => <TabBar {...props} />}
       screenOptions={{
+        // Tab screens draw their own large title in the page (redesign §5)
+        headerShown: false,
         headerStyle: { backgroundColor: p.surface },
         headerTintColor: p.text,
         headerShadowVisible: false,
@@ -47,16 +54,15 @@ export default function TabsLayout(): React.ReactElement {
         sceneStyle: { backgroundColor: p.bg }
       }}
     >
-      {/* Home draws its own greeting header inside the screen */}
-      <Tabs.Screen name="index" options={{ title: t('mob.tabHome'), headerShown: false }} />
-      <Tabs.Screen name="puruka" options={{ title: t('mob.tabPuruka') }} />
-      <Tabs.Screen name="contributions" options={{ title: t('mob.tabContributions') }} />
-      <Tabs.Screen name="loans" options={{ title: t('mob.tabLoans') }} />
+      <Tabs.Screen name="index" options={{ title: t('mob.tabHome') }} />
+      <Tabs.Screen name="money" options={{ title: t('mob.tabMoney') }} />
       <Tabs.Screen
         name="notices"
         options={{ title: t('mob.tabNotices'), tabBarBadge: unread > 0 ? (unread > 9 ? '9+' : String(unread)) : undefined }}
       />
-      <Tabs.Screen name="more" options={{ title: t('mob.tabMore') }} />
+      {/* Puruka keeps its native header until its own redesign phase */}
+      <Tabs.Screen name="puruka" options={{ title: t('mob.tabPuruka'), headerShown: true }} />
+      <Tabs.Screen name="me" options={{ title: t('mob.tabMe') }} />
     </Tabs>
   )
 }

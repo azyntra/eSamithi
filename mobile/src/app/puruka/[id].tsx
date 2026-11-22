@@ -83,7 +83,7 @@ export default function PurukaPostDetail(): React.ReactElement {
 
   const statusBadge = (): React.ReactElement | null => {
     // "Sold" reads as "Found" on a wanted post — the requester got their item
-    if (item.status === 'Sold') return <Badge text={wanted ? t('mob.pkFound') : t('mob.pkSold')} color="#fff" bg={p.danger} />
+    if (item.status === 'Sold') return <Badge text={wanted ? t('mob.pkFound') : t('mob.pkSold')} color={p.onPrimary} bg={p.danger} />
     if (item.status === 'Inactive') return <Badge text={t('mob.pkInactive')} color={p.warning} bg={p.warningBg} />
     if (item.status === 'Removed') return <Badge text={t('mob.pkRemoved')} color={p.danger} bg={p.dangerBg} />
     // Active wanted posts wear a standing "WANTED" pill for context
@@ -200,7 +200,7 @@ export default function PurukaPostDetail(): React.ReactElement {
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
         <View style={{ width: 44, height: 44, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           <BrandGradient rounded={radius.pill} />
-          <Text style={{ color: p.onPrimary, fontSize: 18, fontFamily: ty.family.extrabold, lineHeight: ty.lh(18) }}>
+          <Text style={{ color: p.onHero, fontSize: 18, fontFamily: ty.family.extrabold, lineHeight: ty.lh(18) }}>
             {(item.seller_name || '?').charAt(0).toUpperCase()}
           </Text>
         </View>

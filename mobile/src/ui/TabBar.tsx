@@ -16,11 +16,10 @@ import { ScalePressable } from './pressable'
 
 const ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; idle: keyof typeof Ionicons.glyphMap }> = {
   index: { active: 'home', idle: 'home-outline' },
-  puruka: { active: 'storefront', idle: 'storefront-outline' },
-  contributions: { active: 'cash', idle: 'cash-outline' },
-  loans: { active: 'business', idle: 'business-outline' },
+  money: { active: 'wallet', idle: 'wallet-outline' },
   notices: { active: 'notifications', idle: 'notifications-outline' },
-  more: { active: 'grid', idle: 'grid-outline' }
+  puruka: { active: 'storefront', idle: 'storefront-outline' },
+  me: { active: 'person-circle', idle: 'person-circle-outline' }
 }
 
 export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarProps): React.ReactElement {
@@ -93,23 +92,23 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
                     minWidth: 18,
                     height: 18,
                     borderRadius: radius.pill,
-                    backgroundColor: p.danger,
+                    backgroundColor: p.primary,
+                    borderWidth: 2,
+                    borderColor: p.surface,
                     alignItems: 'center',
                     justifyContent: 'center',
                     paddingHorizontal: 4
                   }}
                 >
-                  <Text maxFontSizeMultiplier={1.2} style={{ color: '#ffffff', fontSize: 12, fontFamily: interFamily.bold }}>
+                  <Text maxFontSizeMultiplier={1.2} style={{ color: p.onPrimary, fontSize: 12, fontFamily: interFamily.bold }}>
                     {String(options.tabBarBadge)}
                   </Text>
                 </Animated.View>
               ) : null}
             </View>
-            {/* Three of the six Sinhala labels are ten glyphs, and one of them
-                (දැනුම්දීම්) has no space, so wrapping cannot save it. Shrinking
-                to fit beats the ellipsis this used to show — but the real fix
-                is shorter words, which is a Sinhala speaker's call, not a
-                developer's. See decision O1 in the requirements. */}
+            {/* Five slots of ~72 dp: every label fits on one line at 12 sp
+                (decision O1 picked the short Sinhala words). A label that is
+                still too wide shrinks rather than wrapping mid-word. */}
             <Text
               numberOfLines={oneWord ? 1 : 2}
               adjustsFontSizeToFit
@@ -118,7 +117,7 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
               style={{
                 fontSize: 12,
                 fontFamily: focused ? ty.family.bold : ty.family.semibold,
-                color: focused ? p.primary : p.textMuted,
+                color: focused ? p.primaryOnSoft : p.textMuted,
                 textAlign: 'center',
                 lineHeight: ty.lh(12)
               }}

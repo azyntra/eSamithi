@@ -179,7 +179,7 @@ export default function PurukaNewPost(): React.ReactElement {
                   accessibilityRole="button"
                   style={{ position: 'absolute', top: -6, right: -6, backgroundColor: p.danger, borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <Ionicons name="close" size={13} color="#fff" />
+                  <Ionicons name="close" size={13} color={p.onPrimary} />
                 </Pressable>
               </View>
             ))}
