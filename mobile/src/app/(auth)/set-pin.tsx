@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
-import { KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { api, errorMessage } from '../../api/client'
 import { getEnrollToken, setEnrollToken } from '../../auth/enrollSession'
 import { useAuth } from '../../auth/AuthContext'
 import { useT } from '../../i18n'
 import { usePalette } from '../../theme'
-import { Button, Input, Subtitle, Title } from '../../ui'
+import { Button, Subtitle, Title } from '../../ui'
+import { PinDots, PinPad } from '../../ui/auth'
 import { useType } from '../../typography'
 
 export default function SetPin(): React.ReactElement {
@@ -19,11 +20,17 @@ export default function SetPin(): React.ReactElement {
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  // Step 1 chooses the PIN, step 2 repeats it
+  const [confirming, setConfirming] = useState(false)
 
   const submit = async (): Promise<void> => {
     setError('')
     if (pin !== confirm) {
       setError(t('mob.pinMismatch'))
+      // Start again from the first PIN
+      setPin('')
+      setConfirm('')
+      setConfirming(false)
       return
     }
     const enrollToken = getEnrollToken()
@@ -49,29 +56,18 @@ export default function SetPin(): React.ReactElement {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={{ flex: 1, backgroundColor: p.bg }} contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled">
-        <Title>{t('mob.setPinTitle')}</Title>
-        <Subtitle>{t('mob.setPinSubtitle')}</Subtitle>
-        <Input
-          label={t('mob.pin')}
-          value={pin}
-          onChangeText={setPin}
-          keyboardType="number-pad"
-          secureTextEntry
-          maxLength={6}
-        />
-        <Input
-          label={t('mob.confirmPin')}
-          value={confirm}
-          onChangeText={setConfirm}
-          keyboardType="number-pad"
-          secureTextEntry
-          maxLength={6}
-        />
-        {error !== '' && <Text style={{ color: p.danger, fontSize: 16, marginBottom: 10, fontFamily: ty.family.regular, lineHeight: ty.lh(16) }}>{error}</Text>}
-        <Button label={t('mob.savePin')} onPress={submit} loading={busy} disabled={pin.length < 4} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <ScrollView style={{ flex: 1, backgroundColor: p.bg }} contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
+      <Title>{t('mob.setPinTitle')}</Title>
+      <Subtitle>{confirming ? t('mob.pinStepConfirm') : t('mob.pinStepChoose')}</Subtitle>
+      <PinDots value={confirming ? confirm : pin} error={error !== ''} />
+      {error !== '' && <Text accessibilityLiveRegion="polite" style={{ color: p.danger, fontSize: 16, marginBottom: 10, textAlign: 'center', fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{error}</Text>}
+      <PinPad value={confirming ? confirm : pin} onChange={(v) => { setError(''); if (confirming) setConfirm(v); else setPin(v) }} />
+      <View style={{ height: 20 }} />
+      {confirming ? (
+        <Button label={t('mob.savePin')} onPress={submit} loading={busy} disabled={confirm.length < 4} />
+      ) : (
+        <Button label={t('mob.continue')} onPress={() => setConfirming(true)} disabled={pin.length < 4} />
+      )}
+    </ScrollView>
   )
 }

@@ -67,9 +67,11 @@ export function HeroGradient({ rounded = 0, bottomOnly = false }: { rounded?: nu
 // The white eS tile used on gradients (hero, Me card)
 export function LogoChip({ size = 36 }: { size?: number }): React.ReactElement {
   const p = usePalette()
+  // The letters grow with the tile, staying on the type scale
+  const letters = size >= 80 ? typeScale.hero : size >= 44 ? typeScale.heading : typeScale.caption
   return (
     <View style={{ width: size, height: size, borderRadius: size * 0.28, backgroundColor: p.onHero, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: p.heroStart, fontFamily: interFamily.extrabold, fontSize: size >= 44 ? typeScale.heading : typeScale.caption, letterSpacing: -0.5 }}>eS</Text>
+      <Text style={{ color: p.heroStart, fontFamily: interFamily.extrabold, fontSize: letters, letterSpacing: -0.5 }}>eS</Text>
     </View>
   )
 }

@@ -6,6 +6,7 @@ import { setEnrollToken } from '../../auth/enrollSession'
 import { useT } from '../../i18n'
 import { usePalette } from '../../theme'
 import { Button, Input, Subtitle, Title } from '../../ui'
+import { DateField } from '../../ui/auth'
 import { useType } from '../../typography'
 
 export default function Verify(): React.ReactElement {
@@ -48,19 +49,14 @@ export default function Verify(): React.ReactElement {
           label={t('mob.nic')}
           placeholder={t('mob.nicPlaceholder')}
           value={nic}
-          onChangeText={setNic}
+          onChangeText={(v) => { setNic(v.toUpperCase().replace(/[^0-9VX]/g, '')); setError('') }}
+          maxLength={12}
           autoCapitalize="characters"
           autoCorrect={false}
         />
-        <Input
-          label={t('mob.dob')}
-          placeholder={t('mob.dobPlaceholder')}
-          value={dob}
-          onChangeText={setDob}
-          keyboardType="numbers-and-punctuation"
-          autoCorrect={false}
-        />
-        {error !== '' && <Text style={{ color: p.danger, fontSize: 16, marginBottom: 10, fontFamily: ty.family.regular, lineHeight: ty.lh(16) }}>{error}</Text>}
+        {/* Picked, never typed: a typed date was the commonest verify failure */}
+        <DateField label={t('mob.dob')} value={dob} onChange={(v) => { setDob(v); setError('') }} />
+        {error !== '' && <Text accessibilityLiveRegion="polite" style={{ color: p.danger, fontSize: 16, marginBottom: 10, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{error}</Text>}
         <Button label={t('mob.verify')} onPress={submit} loading={busy} />
       </ScrollView>
     </KeyboardAvoidingView>

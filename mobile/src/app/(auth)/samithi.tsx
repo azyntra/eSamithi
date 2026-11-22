@@ -7,8 +7,16 @@ import { useAuth } from '../../auth/AuthContext'
 import { resolveSamithiCode, type ResolveErrorKind, type SamithiProfile } from '../../lib/profiles'
 import { useT } from '../../i18n'
 import { usePalette } from '../../theme'
-import { Button, Card, Input, Subtitle, Title } from '../../ui'
+import { Button, Card, GroupLabel, Input, LogoTile, Subtitle, Title } from '../../ui'
 import { useType } from '../../typography'
+
+// "sam4217" → "SAM-4217": letters, a dash, digits — the shape printed on the
+// office letter. Anything that does not fit that shape is left as typed.
+function formatSamithiCode(v: string): string {
+  const s = v.toUpperCase().replace(/[^A-Z0-9-]/g, '')
+  const m = /^([A-Z]{3})-?(\d{1,6})$/.exec(s)
+  return m ? `${m[1]}-${m[2]}` : s
+}
 
 // Samithi-code entry (multi-samithi): resolves the code via the directory
 // service and hands the resulting profile to the rest of the (auth) flow.
@@ -71,12 +79,13 @@ export default function SamithiCode(): React.ReactElement {
 
         {found ? (
           <>
-            <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Ionicons name="checkmark-circle" size={28} color={p.success} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.samithiFound')}</Text>
-                <Text style={{ color: p.text, fontSize: 18, marginTop: 2, fontFamily: ty.family.bold, lineHeight: ty.lh(18) }}>{found.name}</Text>
+            <Card style={{ alignItems: 'center', paddingVertical: 24 }}>
+              <LogoTile size={56} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
+                <Ionicons name="checkmark-circle" size={18} color={p.success} />
+                <Text style={{ color: p.success, fontSize: 14, fontFamily: ty.family.semibold, lineHeight: ty.lh(14) }}>{t('mob.samithiFound')}</Text>
               </View>
+              <Text accessibilityLiveRegion="polite" style={{ color: p.text, fontSize: 22, marginTop: 4, fontFamily: ty.family.bold, lineHeight: ty.lh(22), textAlign: 'center' }}>{found.name}</Text>
             </Card>
             <View style={{ height: 16 }} />
             <Button label={t('mob.samithiContinue')} onPress={() => selectProfile(found)} />
@@ -93,18 +102,22 @@ export default function SamithiCode(): React.ReactElement {
               label={t('mob.samithiCode')}
               placeholder={t('mob.samithiCodePlaceholder')}
               value={code}
-              onChangeText={(v) => setCode(v.toUpperCase())}
+              onChangeText={(v) => { setCode(formatSamithiCode(v)); setError('') }}
               autoCapitalize="characters"
               autoCorrect={false}
             />
-            {error ? <Text style={{ color: p.danger, fontSize: 16, marginBottom: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(16) }}>{error}</Text> : null}
+            {error ? (
+              <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', gap: 8, backgroundColor: p.dangerBg, borderRadius: 10, padding: 12, marginBottom: 12 }}>
+                <Ionicons name="alert-circle-outline" size={20} color={p.danger} />
+                <Text style={{ flex: 1, color: p.danger, fontSize: 14, fontFamily: ty.family.semibold, lineHeight: ty.lh(14) }}>{error}</Text>
+              </View>
+            ) : null}
             <Button label={busy ? t('mob.samithiChecking') : t('mob.samithiCheck')} onPress={submit} disabled={busy} />
 
             {profiles.length > 0 && (
               <>
-                <Text style={{ color: p.textMuted, fontSize: 14, marginTop: 28, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>
-                  {t('mob.samithiExisting')}
-                </Text>
+                <View style={{ height: 12 }} />
+                <GroupLabel>{t('mob.samithiExisting')}</GroupLabel>
                 <Card style={{ paddingVertical: 4 }}>
                   {profiles.map((profile, i) => (
                     <Pressable
@@ -114,7 +127,7 @@ export default function SamithiCode(): React.ReactElement {
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        paddingVertical: 14,
+                        minHeight: 56,
                         borderTopWidth: i === 0 ? 0 : 1,
                         borderTopColor: p.border
                       }}

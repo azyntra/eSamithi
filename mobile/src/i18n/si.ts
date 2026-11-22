@@ -1179,5 +1179,11 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'mob.reqMaxLoan': 'සමිතිය {amount} දක්වා ණය දෙයි.',
   'mob.reqPendingLimit': 'වරකට ඉල්ලීම් 3 ක් දක්වා බලා සිටිය හැක.',
   'mob.reqPurposePh': 'උදා: වී වගාව, නිවාස අලුත්වැඩියා',
-  'mob.reqBackToList': 'මගේ ඉල්ලීම් වෙත'
+  'mob.reqBackToList': 'මගේ ඉල්ලීම් වෙත',
+  'mob.pinEntered': 'ඉලක්කම් {n} ක් ඇතුළත් කළා',
+  'mob.pinDelete': 'මකන්න',
+  'mob.pickDate': 'දිනයක් තෝරන්න',
+  'mob.pinStepChoose': 'ඉලක්කම් 4 සිට 6 දක්වා PIN අංකයක් තෝරන්න',
+  'mob.pinStepConfirm': 'එම PIN අංකය නැවත ඇතුළත් කරන්න',
+  'mob.continue': 'ඉදිරියට'
 }

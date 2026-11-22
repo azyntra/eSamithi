@@ -1176,7 +1176,13 @@ export const en = {
   'mob.reqMaxLoan': 'The society lends up to {amount}.',
   'mob.reqPendingLimit': 'You can have up to 3 requests waiting at a time.',
   'mob.reqPurposePh': 'e.g. paddy cultivation, house repair',
-  'mob.reqBackToList': 'Back to my requests'
+  'mob.reqBackToList': 'Back to my requests',
+  'mob.pinEntered': '{n} digits entered',
+  'mob.pinDelete': 'Delete',
+  'mob.pickDate': 'Choose a date',
+  'mob.pinStepChoose': 'Choose a PIN of 4 to 6 digits',
+  'mob.pinStepConfirm': 'Enter the same PIN again',
+  'mob.continue': 'Continue'
 }
 
 export type TranslationKey = keyof typeof en
