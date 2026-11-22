@@ -3,11 +3,12 @@ import { Text, View } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../../i18n'
-import { radius, spacing, usePalette } from '../../../theme'
+import { radius, spacing, type as typeScale, usePalette } from '../../../theme'
 import { interFamily, useType } from '../../../typography'
 import { formatDate } from '../../../lib/date'
+import { formatCurrency } from '../../../lib/money'
 import { useReceipt, type ReceiptKind } from '../../../api/hooks'
-import { Badge, Card, ErrorView, LoadingView, Money, Row, Screen } from '../../../ui'
+import { Badge, Card, ErrorView, LoadingView, LogoTile, Money, Row, Screen } from '../../../ui'
 
 const KINDS: ReceiptKind[] = ['income', 'expense', 'loan-payment']
 
@@ -58,8 +59,9 @@ export default function ReceiptScreen(): React.ReactElement {
     <Screen refreshing={receipt.isRefetching} onRefresh={() => receipt.refetch()}>
       <Card style={{ paddingTop: spacing.xl }}>
         {/* Letterhead */}
-        <View style={{ alignItems: 'center', paddingBottom: spacing.lg, borderBottomWidth: 2, borderBottomColor: p.text, marginBottom: spacing.md }}>
-          <Text style={{ color: p.text, fontSize: 18, fontFamily: ty.family.extrabold, lineHeight: ty.lh(18), textAlign: 'center' }}>
+        <View style={{ alignItems: 'center', paddingBottom: spacing.lg, borderBottomWidth: 1, borderBottomColor: p.border, marginBottom: spacing.md }}>
+          <LogoTile size={40} />
+          <Text style={{ color: p.text, fontSize: 18, fontFamily: ty.family.extrabold, lineHeight: ty.lh(18), textAlign: 'center', marginTop: spacing.sm }}>
             {r.society.name || 'eSamithi'}
           </Text>
           <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14), marginTop: 4 }}>
@@ -70,6 +72,14 @@ export default function ReceiptScreen(): React.ReactElement {
               <Badge text={t('mob.voided')} color={p.onPrimary} bg={p.danger} />
             </View>
           )}
+        </View>
+
+        {/* The amount leads: it is what the member opened the receipt to see */}
+        <View accessible accessibilityLabel={`${amountLabel}: ${formatCurrency(r.amount)}`} style={{ alignItems: 'center', paddingVertical: spacing.md, marginBottom: spacing.sm }}>
+          <Text style={{ color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.caption) }}>{amountLabel}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: voided ? p.textMuted : p.text, fontSize: typeScale.hero, fontFamily: interFamily.extrabold, fontVariant: ['tabular-nums'], textDecorationLine: voided ? 'line-through' : 'none' }}>
+            {formatCurrency(r.amount)}
+          </Text>
         </View>
 
         <Row label={t('mob.rcptNo')} value={<Text style={{ fontFamily: interFamily.semibold, color: p.text }}>{r.receipt_no}</Text>} />
@@ -103,14 +113,6 @@ export default function ReceiptScreen(): React.ReactElement {
             <Row label={t('mob.rcptAppliedPrincipal')} value={<Money cents={r.principal_paid ?? 0} size={14} />} />
           </>
         )}
-
-        {/* Total */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: p.border, borderStyle: 'dashed', marginTop: spacing.md, paddingTop: spacing.md }}>
-          <Text style={{ color: p.text, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14), flexShrink: 1, marginRight: spacing.md }}>
-            {amountLabel}
-          </Text>
-          <Money cents={r.amount} size={20} bold color={voided ? p.textMuted : p.primary} />
-        </View>
 
         {!!r.notes && (
           <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(12), marginTop: spacing.md }}>

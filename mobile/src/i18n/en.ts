@@ -1129,7 +1129,16 @@ export const en = {
   'mob.qaRequests': 'Requests',
   'mob.qaHelp': 'Help',
   'mob.qaAttendance': 'Attendance',
-  'mob.share': 'Share'
+  'mob.share': 'Share',
+  'mob.howToPay': 'How to pay',
+  'mob.howToPayBody': 'Pay at the society office in cash or by bank transfer. Your receipt appears here once the office records it.',
+  'mob.callOffice': 'Call the office',
+  'mob.totalOverdue': 'Total overdue',
+  'mob.originalLoan': 'Original loan {amount}',
+  'mob.repayment': 'Loan repayment',
+  'mob.repaidShort': 'repaid',
+  'mob.payments': '{n} payment(s)',
+  'mob.allClearSub': 'There is nothing for you to pay right now.'
 }
 
 export type TranslationKey = keyof typeof en

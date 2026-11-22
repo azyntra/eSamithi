@@ -1132,5 +1132,14 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'mob.qaRequests': 'ඉල්ලීම්',
   'mob.qaHelp': 'උදව්',
   'mob.qaAttendance': 'පැමිණීම',
-  'mob.share': 'බෙදාගන්න'
+  'mob.share': 'බෙදාගන්න',
+  'mob.howToPay': 'ගෙවන ආකාරය',
+  'mob.howToPayBody': 'සමිති කාර්යාලයේදී මුදලින් හෝ බැංකු මාරුවකින් ගෙවන්න. කාර්යාලය එය සටහන් කළ පසු ඔබේ කුවිතාන්සිය මෙහි දිස්වේ.',
+  'mob.callOffice': 'කාර්යාලයට අමතන්න',
+  'mob.totalOverdue': 'හිඟ මුළු මුදල',
+  'mob.originalLoan': 'මුල් ණය මුදල {amount}',
+  'mob.repayment': 'ණය වාරිකය',
+  'mob.repaidShort': 'ගෙවා ඇත',
+  'mob.payments': 'ගෙවීම් {n}',
+  'mob.allClearSub': 'දැනට ඔබට ගෙවීමට කිසිවක් නැත.'
 }

@@ -3,18 +3,22 @@ import { Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../i18n'
-import { usePalette } from '../../theme'
+import { radius, spacing, type as typeScale, usePalette } from '../../theme'
+import { interFamily, useType } from '../../typography'
 import { useLoan, useSocietyInfo } from '../../api/hooks'
 import { formatDate } from '../../lib/date'
-import { repaidFraction } from '../../lib/loans'
-import { Card, EmptyText, ErrorView, Money, ProgressBar, Row, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner, StatusPill } from '../../ui'
-import { useType } from '../../typography'
+import { formatCurrency } from '../../lib/money'
+import { isOpenLoan, loanOwed, repaidFraction } from '../../lib/loans'
+import { Avatar, ErrorView, LoanRing, Screen, SectionTitle, SkeletonCards, StaleBanner, StatusPill, TimelineRow, useCardStyle } from '../../ui'
 
+// One loan (redesign §6.3.2): the ring and what is still to pay lead; each
+// repayment shows its split as a small table instead of a run-on line.
 export default function LoanDetail(): React.ReactElement {
   const router = useRouter()
   const { t } = useT()
   const p = usePalette()
   const ty = useType()
+  const card = useCardStyle()
   const { id } = useLocalSearchParams<{ id: string }>()
   const loan = useLoan(parseInt(id ?? '0', 10))
   const society = useSocietyInfo()
@@ -29,88 +33,109 @@ export default function LoanDetail(): React.ReactElement {
   }
 
   const d = loan.data!
-  const owed = d.principal_owed + d.interest_owed + d.fines_owed
-  const fraction = repaidFraction(d)
+  const owed = loanOwed(d)
+  const open = isOpenLoan(d)
+  const fraction = repaidFraction(d) ?? (open ? 0 : 1)
+
+  const line = (icon: keyof typeof Ionicons.glyphMap, label: string, cents: number, first?: boolean, color?: string): React.ReactElement => (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 48, borderTopWidth: first ? 0 : 1, borderTopColor: p.border }}>
+      <Ionicons name={icon} size={20} color={p.textMuted} />
+      <Text style={{ flex: 1, color: p.text, fontSize: typeScale.body, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.body) }}>{label}</Text>
+      <Text style={{ color: color ?? p.text, fontSize: typeScale.body, fontFamily: interFamily.semibold, fontVariant: ['tabular-nums'] }}>{formatCurrency(cents)}</Text>
+    </View>
+  )
+
+  const split = (label: string, cents: number): React.ReactElement => (
+    <View style={{ flex: 1 }}>
+      <Text style={{ color: p.textMuted, fontSize: typeScale.micro, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.micro) }}>{label}</Text>
+      {/* No "Rs." here: the total above already carries it, and three of them wrap */}
+      <Text style={{ color: p.text, fontSize: typeScale.caption, fontFamily: interFamily.bold, fontVariant: ['tabular-nums'] }}>{formatCurrency(cents).replace(/^Rs\.\s*/, '')}</Text>
+    </View>
+  )
 
   return (
     <Screen refreshing={loan.isRefetching} onRefresh={() => loan.refetch()}>
       {loan.isError && <StaleBanner />}
-      <Card>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+
+      <View style={[card, { padding: spacing.lg }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <StatusPill status={d.status} />
-          <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.loanIssued', { date: formatDate(d.date_issued) })}</Text>
+          <Text style={{ color: p.textMuted, fontSize: typeScale.micro, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.micro) }}>{t('mob.loanIssued', { date: formatDate(d.date_issued) })}</Text>
         </View>
-        {d.is_migrated === 1 && (
-          <Text style={{ color: p.textMuted, fontSize: 14, fontStyle: 'italic', marginBottom: 8, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>{t('mob.migratedLoan')}</Text>
-        )}
-        <Row label={t('mob.originalAmount')} value={<Money cents={d.principal_amount} />} />
-        <Row label={t('mob.principal')} value={<Money cents={d.principal_owed} />} />
-        <Row label={t('mob.interest')} value={<Money cents={d.interest_owed} color={d.interest_owed > 0 ? p.warning : undefined} />} />
-        <Row label={t('mob.fines')} value={<Money cents={d.fines_owed} color={d.fines_owed > 0 ? p.danger : undefined} />} />
-        <View style={{ borderTopWidth: 1, borderTopColor: p.border, marginTop: 4 }}>
-          <Row label={t('mob.totalOwed')} value={<Money cents={owed} bold size={17} color={owed > 0 ? p.warning : p.success} />} bold />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginTop: spacing.lg }}>
+          <LoanRing fraction={fraction} tone={d.status === 'Overdue' ? 'danger' : 'success'} size={96} label={t('mob.repaidShort')} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.caption) }}>{t('mob.stillToPay')}</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: p.text, fontSize: typeScale.display, fontFamily: interFamily.extrabold, fontVariant: ['tabular-nums'] }}>{formatCurrency(owed)}</Text>
+            <Text style={{ color: p.textMuted, fontSize: typeScale.micro, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.micro) }}>{t('mob.originalLoan', { amount: formatCurrency(d.principal_amount) })}</Text>
+          </View>
         </View>
-        {(d.status === 'Active' || d.status === 'Overdue') && fraction !== null && (
-          <>
-            <ProgressBar value={fraction} color={d.status === 'Overdue' ? p.danger : p.success} />
-            <Text style={{ color: p.textMuted, fontSize: 12, marginTop: 4, fontFamily: ty.family.regular, lineHeight: ty.lh(12) }}>
-              {t('mob.paidPercent', { p: Math.round(fraction * 100) })}
-            </Text>
-          </>
-        )}
-      </Card>
+        <View style={{ marginTop: spacing.lg }}>
+          {line('cash-outline', t('mob.principal'), d.principal_owed, true)}
+          {line('trending-up-outline', t('mob.interest'), d.interest_owed)}
+          {line('warning-outline', t('mob.fines'), d.fines_owed, false, d.fines_owed > 0 ? p.danger : undefined)}
+        </View>
+        {d.is_migrated === 1 ? (
+          <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, backgroundColor: p.surfaceAlt, borderRadius: radius.sm, padding: spacing.md }}>
+            <Ionicons name="information-circle-outline" size={18} color={p.textMuted} />
+            <Text style={{ flex: 1, color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.caption) }}>{t('mob.migratedLoan')}</Text>
+          </View>
+        ) : null}
+      </View>
 
-      {d.guarantors.length > 0 && (
+      {d.guarantors.length > 0 ? (
         <>
-          <SectionHeader>{t('mob.guarantors')}</SectionHeader>
-          <Card>
+          <SectionTitle title={t('mob.guarantors')} />
+          <View style={[card, { paddingHorizontal: spacing.lg }]}>
             {d.guarantors.map((name, i) => (
-              <Text key={i} style={{ color: p.text, fontSize: 16, paddingVertical: 6, fontFamily: ty.family.regular, lineHeight: ty.lh(16) }}>
-                {name}
-              </Text>
-            ))}
-          </Card>
-        </>
-      )}
-
-      <SectionHeader>{t('mob.repayments')}</SectionHeader>
-      <Card style={{ paddingVertical: 4 }}>
-        {d.payments.length === 0 && <EmptyText>{t('mob.noRepayments')}</EmptyText>}
-        {d.payments.map((payment, i) => {
-          const paid = payment.principal_paid + payment.interest_paid + payment.fines_paid
-          return (
-            <ScalePressable
-              key={payment.id}
-              accessibilityRole="button"
-              scaleTo={0.985}
-              onPress={() => router.push({ pathname: '/receipt/[kind]/[id]', params: { kind: 'loan-payment', id: String(payment.id) } })}
-              style={{ paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.border }}
-            >
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{formatDate(payment.date)}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Money cents={paid} bold color={p.success} />
-                  <Ionicons name="chevron-forward" size={16} color={p.textMuted} />
-                </View>
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 56, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.border }}>
+                <Avatar name={name} size={36} />
+                <Text style={{ flex: 1, color: p.text, fontSize: typeScale.body, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.body) }}>{name}</Text>
               </View>
-              <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14) }}>
-                {t('mob.principal')}: {(payment.principal_paid / 100).toLocaleString()} · {t('mob.interest')}:{' '}
-                {(payment.interest_paid / 100).toLocaleString()} · {t('mob.fines')}: {(payment.fines_paid / 100).toLocaleString()}
-              </Text>
-            </ScalePressable>
-          )
-        })}
-      </Card>
-
-      {society.isSuccess && (
-        <>
-          <SectionHeader>{t('mob.loanTerms')}</SectionHeader>
-          <Card>
-            <Row label={t('mob.monthlyInterest')} value={society.data.monthly_interest_rate == null ? '—' : `${society.data.monthly_interest_rate}%`} />
-            <Row label={t('mob.lateFine')} value={society.data.late_fine_rate == null ? '—' : `${society.data.late_fine_rate}%`} />
-          </Card>
+            ))}
+          </View>
         </>
-      )}
+      ) : null}
+
+      <SectionTitle title={t('mob.repayments')} />
+      <View style={[card, { paddingHorizontal: spacing.md + 2 }]}>
+        {d.payments.length === 0 ? (
+          <Text style={{ color: p.textMuted, fontSize: typeScale.body, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.body), textAlign: 'center', paddingVertical: spacing.xl }}>{t('mob.noRepayments')}</Text>
+        ) : null}
+        {d.payments.map((pay, i) => (
+          <View key={pay.id} style={{ borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.border, paddingBottom: spacing.md }}>
+            <TimelineRow
+              first
+              date={pay.date}
+              title={t('mob.repayment')}
+              cents={pay.principal_paid + pay.interest_paid + pay.fines_paid}
+              direction="in"
+              onPress={() => router.push({ pathname: '/receipt/[kind]/[id]', params: { kind: 'loan-payment', id: String(pay.id) } })}
+            />
+            <View style={{ flexDirection: 'row', gap: spacing.sm, marginLeft: 56, backgroundColor: p.surfaceAlt, borderRadius: radius.sm, padding: spacing.sm + 2 }}>
+              {split(t('mob.principal'), pay.principal_paid)}
+              {split(t('mob.interest'), pay.interest_paid)}
+              {split(t('mob.fines'), pay.fines_paid)}
+            </View>
+          </View>
+        ))}
+      </View>
+
+      {society.isSuccess ? (
+        <>
+          <SectionTitle title={t('mob.loanTerms')} />
+          <View style={[card, { paddingHorizontal: spacing.lg }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48 }}>
+              <Text style={{ flex: 1, color: p.text, fontSize: typeScale.body, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.body) }}>{t('mob.monthlyInterest')}</Text>
+              <Text style={{ color: p.text, fontSize: typeScale.body, fontFamily: interFamily.semibold }}>{society.data.monthly_interest_rate == null ? '—' : `${society.data.monthly_interest_rate}%`}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 48, borderTopWidth: 1, borderTopColor: p.border }}>
+              <Text style={{ flex: 1, color: p.text, fontSize: typeScale.body, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.body) }}>{t('mob.lateFine')}</Text>
+              <Text style={{ color: p.text, fontSize: typeScale.body, fontFamily: interFamily.semibold }}>{society.data.late_fine_rate == null ? '—' : `${society.data.late_fine_rate}%`}</Text>
+            </View>
+          </View>
+        </>
+      ) : null}
     </Screen>
   )
 }
