@@ -20,7 +20,8 @@ const EMPTY: AnnouncementPayload = {
   deceased_member_id: null,
   funeral_date: null,
   funeral_location: null,
-  event_date: null
+  event_date: null,
+  show_until: null
 }
 
 function fromAnnouncement(a: Announcement): AnnouncementPayload {
@@ -32,7 +33,8 @@ function fromAnnouncement(a: Announcement): AnnouncementPayload {
     deceased_member_id: a.deceased_member_id,
     funeral_date: toDateInput(a.funeral_date) || null,
     funeral_location: a.funeral_location,
-    event_date: toDateInput(a.event_date) || null
+    event_date: toDateInput(a.event_date) || null,
+    show_until: toDateInput(a.show_until) || null
   }
 }
 
@@ -132,6 +134,11 @@ export function AnnouncementSheet({ open, onOpenChange, editing }: { open: boole
             {({ id }) => <Input id={id} type="date" value={form.event_date ?? ''} onChange={(e) => set('event_date', e.target.value || null)} />}
           </Field>
         )}
+
+        {/* Old notices leave the member app by themselves; blank = the automatic period */}
+        <Field label={t('msg.showUntil')} description={t('msg.showUntilHint')}>
+          {({ id }) => <Input id={id} type="date" value={form.show_until ?? ''} onChange={(e) => set('show_until', e.target.value || null)} />}
+        </Field>
 
         <Field label={t('msg.body')}>
           {({ id }) => <Textarea id={id} rows={5} value={form.body ?? ''} onChange={(e) => set('body', e.target.value)} placeholder={t('msg.bodyPlaceholder')} />}

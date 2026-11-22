@@ -94,7 +94,7 @@ export function AnnouncementsTab({ create = false, onCreateHandled }: { create?:
             const Icon = meta.icon
             return (
               <li key={a.id}>
-                <Card className={cn('gap-0 transition-opacity', !a.is_active && 'opacity-70')} data-announcement={a.id}>
+                <Card className={cn('gap-0 transition-opacity', (!a.is_active || a.expired === 1) && 'opacity-70')} data-announcement={a.id}>
                   <CardContent className="flex flex-wrap items-start gap-3 py-4">
                     <span className={cn('grid size-9 shrink-0 place-items-center rounded-lg', meta.tone)}>
                       <Icon className="size-4" />
@@ -110,6 +110,11 @@ export function AnnouncementsTab({ create = false, onCreateHandled }: { create?:
                             {t('msg.hidden')}
                           </Badge>
                         )}
+                        {a.is_active === 1 && a.expired === 1 && (
+                          <Badge variant="neutral" className="text-[11px]" title={t('msg.expiredHint')}>
+                            {t('msg.expired')}
+                          </Badge>
+                        )}
                       </div>
                       {a.type === 'death' && (
                         <p className="mt-1 text-sm text-muted-foreground">
@@ -122,7 +127,15 @@ export function AnnouncementsTab({ create = false, onCreateHandled }: { create?:
                         </p>
                       )}
                       {a.body && <p className="mt-1 text-sm whitespace-pre-line text-foreground/90">{a.body}</p>}
-                      <p className="mt-1.5 text-xs text-subtle-foreground">{formatDateTime(a.created_at, lang)}</p>
+                      <p className="mt-1.5 text-xs text-subtle-foreground">
+                        {formatDateTime(a.created_at, lang)}
+                        {a.is_active === 1 && a.visible_until && (
+                          <>
+                            {' · '}
+                            {a.expired === 1 ? t('msg.expiredOn', { date: formatDate(a.visible_until, lang) }) : t('msg.visibleUntil', { date: formatDate(a.visible_until, lang) })}
+                          </>
+                        )}
+                      </p>
                     </div>
                     <div className="flex items-center gap-1">
                       <Button size="icon-sm" variant="ghost" aria-label={`${t('common.edit')}: ${a.title}`} onClick={() => openEdit(a)}>

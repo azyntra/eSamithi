@@ -306,6 +306,18 @@ async function loanPaymentBillNo(pool) {
   }
 }
 
+// 019 — announcements.show_until: an optional "show in the member app until"
+// date. NULL = the automatic period in lib/announcements.js.
+async function announcementShowUntil(pool) {
+  const [cols] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'announcements' AND COLUMN_NAME = 'show_until'`
+  );
+  if (cols.length === 0) {
+    await pool.query('ALTER TABLE announcements ADD COLUMN show_until DATE DEFAULT NULL AFTER event_date');
+  }
+}
+
 // 014 — web staff sessions (requirements §6.6): rotating refresh tokens, one
 // family per sign-in, plus lockout / password-change bookkeeping on users.
 // Inert for the desktop and mobile apps; all columns nullable or defaulted.
@@ -447,5 +459,6 @@ module.exports = [
   { id: '015_staff_auth_events', up: staffAuthEvents },
   { id: '016_loan_payment_bill_no', up: loanPaymentBillNo },
   { id: '017_member_app_activity', up: memberAppActivity },
-  { id: '018_mobile_attendance', up: mobileAttendance }
+  { id: '018_mobile_attendance', up: mobileAttendance },
+  { id: '019_announcement_show_until', up: announcementShowUntil }
 ];

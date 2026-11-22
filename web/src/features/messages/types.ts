@@ -14,6 +14,12 @@ export interface Announcement {
   funeral_date: string | null
   funeral_location: string | null
   event_date: string | null
+  /** Staff-chosen last day in the member app; null = the automatic period */
+  show_until: string | null
+  /** Last day the member app shows it (show_until or the automatic period) */
+  visible_until: string
+  /** 1 once visible_until has passed: kept here, gone from the app */
+  expired: number
   is_active: number
   created_at: string
 }
@@ -27,6 +33,7 @@ export interface AnnouncementPayload {
   funeral_date: string | null
   funeral_location: string | null
   event_date: string | null
+  show_until: string | null
 }
 
 export type RequestStatus = 'Pending' | 'Approved' | 'Rejected' | 'Done'
@@ -102,6 +109,7 @@ export function scrubAnnouncement(p: AnnouncementPayload): AnnouncementPayload {
     deceased_member_id: p.type === 'death' ? (p.deceased_member_id ?? null) : null,
     funeral_date: p.type === 'death' && p.funeral_date ? p.funeral_date : null,
     funeral_location: p.type === 'death' && p.funeral_location?.trim() ? p.funeral_location.trim() : null,
-    event_date: p.type === 'meeting' && p.event_date ? p.event_date : null
+    event_date: p.type === 'meeting' && p.event_date ? p.event_date : null,
+    show_until: p.show_until || null
   }
 }

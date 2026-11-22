@@ -2,6 +2,8 @@ const express = require('express');
 const { getPool } = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 const { sendPushToAllMembers } = require('../lib/push');
+const { VISIBLE_UNTIL_SQL } = require('../lib/announcements');
+const { societyToday } = require('../lib/attendance');
 
 // Staff-authored notices (death / meeting / general) shown in the member
 // app's Notices tab. Viewers are read-only via authMiddleware's method guard.
@@ -19,18 +21,27 @@ function validate(d) {
   if (d.type === 'meeting' && !d.event_date) {
     throw Object.assign(new Error('The meeting date is required'), { statusCode: 400 });
   }
+  if (d.show_until != null && d.show_until !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(String(d.show_until))) {
+    throw Object.assign(new Error('Invalid "show until" date'), { statusCode: 400 });
+  }
 }
 
-// GET /api/v1/announcements — staff sees everything, inactive included
+const showUntil = (d) => (d.show_until ? String(d.show_until) : null);
+
+// GET /api/v1/announcements — staff sees everything, hidden and expired
+// included; visible_until/expired say whether the member app still shows it.
 router.get('/', async (_req, res, next) => {
   try {
     const [rows] = await getPool().query(`
-      SELECT a.*, m.full_name as deceased_member_name
+      SELECT a.*, m.full_name as deceased_member_name,
+             DATE_FORMAT(a.show_until, '%Y-%m-%d') as show_until,
+             DATE_FORMAT(${VISIBLE_UNTIL_SQL}, '%Y-%m-%d') as visible_until,
+             (${VISIBLE_UNTIL_SQL} < ?) as expired
       FROM announcements a
       LEFT JOIN members m ON a.deceased_member_id = m.id
       ORDER BY a.created_at DESC, a.id DESC
-    `);
-    res.json(rows.map(r => ({ ...r, is_active: Number(r.is_active) })));
+    `, [societyToday()]);
+    res.json(rows.map(r => ({ ...r, is_active: Number(r.is_active), expired: Number(r.expired) })));
   } catch (err) { next(err); }
 });
 
@@ -42,13 +53,13 @@ router.post('/', async (req, res, next) => {
 
     const pool = getPool();
     const [result] = await pool.query(
-      `INSERT INTO announcements (type, title, body, deceased_name, deceased_member_id, funeral_date, funeral_location, event_date, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO announcements (type, title, body, deceased_name, deceased_member_id, funeral_date, funeral_location, event_date, show_until, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         d.type, String(d.title).trim(), d.body || null,
         d.deceased_name || null, d.deceased_member_id || null,
         d.funeral_date || null, d.funeral_location || null,
-        d.event_date || null, req.user.id
+        d.event_date || null, showUntil(d), req.user.id
       ]
     );
 
@@ -71,13 +82,13 @@ router.put('/:id', async (req, res, next) => {
     const d = req.body;
     validate(d);
     await getPool().query(
-      `UPDATE announcements SET type=?, title=?, body=?, deceased_name=?, deceased_member_id=?, funeral_date=?, funeral_location=?, event_date=?
+      `UPDATE announcements SET type=?, title=?, body=?, deceased_name=?, deceased_member_id=?, funeral_date=?, funeral_location=?, event_date=?, show_until=?
        WHERE id=?`,
       [
         d.type, String(d.title).trim(), d.body || null,
         d.deceased_name || null, d.deceased_member_id || null,
         d.funeral_date || null, d.funeral_location || null,
-        d.event_date || null, parseInt(req.params.id)
+        d.event_date || null, showUntil(d), parseInt(req.params.id)
       ]
     );
     res.json({ success: true });

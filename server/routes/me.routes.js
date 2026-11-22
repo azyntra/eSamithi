@@ -5,6 +5,8 @@ const { getMemberStatement } = require('../lib/memberQueries');
 const { accrueLoan, getRates } = require('../lib/loanAccrual');
 const { getSetting, isMigrationMode } = require('../lib/settings');
 const { attendancePermission } = require('../middleware/attendanceStaff');
+const { VISIBLE_UNTIL_SQL } = require('../lib/announcements');
+const { societyToday } = require('../lib/attendance');
 
 // Member self-service API for the mobile app. Every query is hard-scoped to
 // req.member.id — a member can only ever read their own rows.
@@ -302,17 +304,19 @@ router.get('/benefits-schedule', async (_req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/v1/me/announcements — active notices, newest first
+// GET /api/v1/me/announcements — active, unexpired notices, newest first.
+// Old notices drop out by themselves (rules in lib/announcements.js).
 router.get('/announcements', async (_req, res, next) => {
   try {
     const [rows] = await getPool().query(`
-      SELECT id, type, title, body, deceased_name,
-             DATE_FORMAT(funeral_date, '%Y-%m-%d') as funeral_date, funeral_location,
-             DATE_FORMAT(event_date, '%Y-%m-%d') as event_date,
-             DATE_FORMAT(created_at, '%Y-%m-%d') as created_at
-      FROM announcements WHERE is_active = 1
-      ORDER BY created_at DESC, id DESC LIMIT 50
-    `);
+      SELECT a.id, a.type, a.title, a.body, a.deceased_name,
+             DATE_FORMAT(a.funeral_date, '%Y-%m-%d') as funeral_date, a.funeral_location,
+             DATE_FORMAT(a.event_date, '%Y-%m-%d') as event_date,
+             DATE_FORMAT(a.created_at, '%Y-%m-%d') as created_at
+      FROM announcements a
+      WHERE a.is_active = 1 AND ${VISIBLE_UNTIL_SQL} >= ?
+      ORDER BY a.created_at DESC, a.id DESC LIMIT 50
+    `, [societyToday()]);
     res.json(rows);
   } catch (err) { next(err); }
 });
