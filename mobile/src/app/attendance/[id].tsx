@@ -21,7 +21,7 @@ import {
 } from '../../api/hooks'
 import { classifyMarkError, createRepeatGuard, parseCardPayload, uuid4 } from '../../lib/attendance'
 import { formatTime } from '../../lib/date'
-import { Button, Card, EmptyText, ErrorView, ListRow, Screen, Segmented, SkeletonCards, useToast } from '../../ui'
+import { Button, Card, EmptyText, ErrorView, ListRow, Screen, SegmentedTabs, SkeletonCards, useToast } from '../../ui'
 
 // The attendance scanner (docs/MOBILE-STAFF-ATTENDANCE-REQUIREMENTS.md §4.4).
 // Scan: continuous camera QR reading with a result card, haptics and undo.
@@ -238,11 +238,12 @@ export default function AttendanceScanner(): React.ReactElement {
         <Text numberOfLines={2} style={{ color: p.text, fontSize: 18, fontFamily: ty.family.bold, lineHeight: ty.lh(18) }}>
           {data.event.title}
         </Text>
-        <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.semibold, lineHeight: ty.lh(14) }}>
-          {t('mob.attPresentCount', { count: data.present.length })}
-          {'  ·  '}
-          {t('mob.attByYou', { count: byMe })}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' }}>
+          <View style={{ backgroundColor: p.successBg, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 4 }}>
+            <Text style={{ color: p.success, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>{t('mob.attPresentCount', { count: data.present.length })}</Text>
+          </View>
+          <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.semibold, lineHeight: ty.lh(14) }}>{t('mob.attByYou', { count: byMe })}</Text>
+        </View>
         {pending.length > 0 && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: p.warningBg, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 6, marginTop: 4 }}>
             <Ionicons name="cloud-offline-outline" size={16} color={p.warning} />
@@ -252,7 +253,7 @@ export default function AttendanceScanner(): React.ReactElement {
           </View>
         )}
         <View style={{ marginTop: 6 }}>
-          <Segmented<Tab>
+          <SegmentedTabs<Tab>
             options={[
               { value: 'scan', label: t('mob.attScan') },
               { value: 'search', label: t('mob.attSearch') },
@@ -291,7 +292,13 @@ export default function AttendanceScanner(): React.ReactElement {
                   onBarcodeScanned={onScanned}
                 />
               )}
-              <View pointerEvents="none" style={{ position: 'absolute', left: '18%', top: '18%', right: '18%', bottom: '18%', borderWidth: 3, borderColor: 'rgba(255,255,255,0.85)', borderRadius: radius.md }} />
+              <View pointerEvents="none" style={{ position: 'absolute', left: '18%', top: '18%', right: '18%', bottom: '18%' }}>
+                {/* Corner marks frame the card without hiding it */}
+                <View style={{ position: 'absolute', left: 0, top: 0, width: 44, height: 44, borderLeftWidth: 4, borderTopWidth: 4, borderColor: '#ffffff', borderTopLeftRadius: radius.md }} />
+                <View style={{ position: 'absolute', right: 0, top: 0, width: 44, height: 44, borderRightWidth: 4, borderTopWidth: 4, borderColor: '#ffffff', borderTopRightRadius: radius.md }} />
+                <View style={{ position: 'absolute', left: 0, bottom: 0, width: 44, height: 44, borderLeftWidth: 4, borderBottomWidth: 4, borderColor: '#ffffff', borderBottomLeftRadius: radius.md }} />
+                <View style={{ position: 'absolute', right: 0, bottom: 0, width: 44, height: 44, borderRightWidth: 4, borderBottomWidth: 4, borderColor: '#ffffff', borderBottomRightRadius: radius.md }} />
+              </View>
               <Pressable
                 onPress={() => setTorch((v) => !v)}
                 accessibilityRole="button"
@@ -400,7 +407,7 @@ function ResultCard({ result, onUndo, busy }: { result: ScanResult; onUndo: (mem
           onPress={() => onUndo(undoId as number)}
           disabled={busy}
           accessibilityRole="button"
-          style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.md, borderWidth: 1.5, borderColor: tone.fg, opacity: busy ? 0.5 : 1 }}
+          style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: 14, borderRadius: radius.md, borderWidth: 1.5, borderColor: tone.fg, backgroundColor: p.surface, opacity: busy ? 0.5 : 1 }}
         >
           <Text style={{ color: tone.fg, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>{t('mob.attUndo')}</Text>
         </Pressable>
@@ -517,7 +524,7 @@ function ListTab({
     <Screen refreshing={refreshing} onRefresh={onRefresh}>
       {mode === 'absent' && <Note text={t('mob.attAbsentModeNote')} />}
       <View style={{ height: mode === 'absent' ? spacing.md : 0 }} />
-      <Segmented<'present' | 'absent'>
+      <SegmentedTabs<'present' | 'absent'>
         options={[
           { value: 'present', label: `${t('mob.attPresent')} (${present.length})` },
           { value: 'absent', label: `${t('mob.attAbsent')} (${absent.length})` }

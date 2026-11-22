@@ -6,7 +6,7 @@ import { usePalette } from '../../theme'
 import { useType } from '../../typography'
 import { useAttendanceEvents, useCreateAttendanceEvent, type AttendanceEventType, type AttendanceMode } from '../../api/hooks'
 import { classifyMarkError, windowDates } from '../../lib/attendance'
-import { Button, Input, Screen, SectionHeader, Segmented, useToast } from '../../ui'
+import { Button, Callout, GroupLabel, Input, Screen, SegmentedTabs, useToast } from '../../ui'
 
 // Create an event from the phone (requirements FR-3.2): a funeral is often
 // announced when the office is closed. The date can only be yesterday, today
@@ -46,8 +46,8 @@ export default function NewAttendanceEvent(): React.ReactElement {
 
   return (
     <Screen>
-      <SectionHeader>{t('mob.attType')}</SectionHeader>
-      <Segmented<AttendanceEventType>
+      <GroupLabel>{t('mob.attType')}</GroupLabel>
+      <SegmentedTabs<AttendanceEventType>
         options={[
           { value: 'funeral', label: t('mob.attTypeFuneral') },
           { value: 'meeting', label: t('mob.attTypeMeeting') },
@@ -65,8 +65,8 @@ export default function NewAttendanceEvent(): React.ReactElement {
         maxLength={255}
         error={error}
       />
-      <SectionHeader>{t('mob.attDate')}</SectionHeader>
-      <Segmented<'yesterday' | 'today' | 'tomorrow'>
+      <GroupLabel>{t('mob.attDate')}</GroupLabel>
+      <SegmentedTabs<'yesterday' | 'today' | 'tomorrow'>
         options={[
           { value: 'yesterday', label: t('mob.attYesterday') },
           { value: 'today', label: t('mob.attToday') },
@@ -75,8 +75,8 @@ export default function NewAttendanceEvent(): React.ReactElement {
         value={day}
         onChange={setDay}
       />
-      <SectionHeader>{t('mob.attMethod')}</SectionHeader>
-      <Segmented<AttendanceMode>
+      <GroupLabel>{t('mob.attMethod')}</GroupLabel>
+      <SegmentedTabs<AttendanceMode>
         options={[
           { value: 'present', label: t('mob.attModePresent') },
           { value: 'absent', label: t('mob.attModeAbsent') }
@@ -84,10 +84,9 @@ export default function NewAttendanceEvent(): React.ReactElement {
         value={mode}
         onChange={setMode}
       />
-      <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, lineHeight: ty.lh(14), marginTop: 8 }}>
-        {mode === 'present' ? t('mob.attModePresentHint') : t('mob.attModeAbsentHint')}
-      </Text>
-      <View style={{ height: 24 }} />
+      <View style={{ height: 12 }} />
+      <Callout text={mode === 'present' ? t('mob.attModePresentHint') : t('mob.attModeAbsentHint')} />
+      <View style={{ height: 12 }} />
       <Button label={t('mob.attCreate')} icon="checkmark-circle-outline" onPress={submit} loading={create.isPending} />
     </Screen>
   )

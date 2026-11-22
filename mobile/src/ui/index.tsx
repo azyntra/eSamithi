@@ -537,8 +537,8 @@ export function EmptyState({ icon, text }: { icon: keyof typeof Ionicons.glyphMa
   const ty = useType()
   return (
     <Animated.View entering={FadeIn.duration(dur.enter)} style={{ alignItems: 'center', paddingVertical: spacing.xxxl + 4, gap: spacing.lg - 2 }}>
-      <View style={{ width: 72, height: 72, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
-        <Ionicons name={icon} size={30} color={p.primaryOnSoft} />
+      <View style={{ width: 72, height: 72, borderRadius: radius.pill, backgroundColor: p.surfaceAlt, borderWidth: 1, borderColor: p.border, alignItems: 'center', justifyContent: 'center' }}>
+        <Ionicons name={icon} size={30} color={p.primary} />
       </View>
       <Text style={{ color: p.textMuted, fontSize: typeScale.body, fontFamily: ty.family.regular, textAlign: 'center', paddingHorizontal: spacing.xxl, lineHeight: ty.lh(typeScale.body) }}>
         {text}
@@ -663,8 +663,8 @@ export function ErrorView({ onRetry }: { onRetry: () => void }): React.ReactElem
   const { t } = useT()
   return (
     <Animated.View entering={FadeIn.duration(dur.enter)} style={{ alignItems: 'center', paddingVertical: spacing.xxxl, paddingHorizontal: spacing.lg }}>
-      <View style={{ width: 72, height: 72, borderRadius: radius.pill, backgroundColor: p.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg - 2 }}>
-        <Ionicons name="cloud-offline-outline" size={30} color={p.primaryOnSoft} />
+      <View style={{ width: 72, height: 72, borderRadius: radius.pill, backgroundColor: p.surfaceAlt, borderWidth: 1, borderColor: p.border, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg - 2 }}>
+        <Ionicons name="cloud-offline-outline" size={30} color={p.textMuted} />
       </View>
       <Text style={{ color: p.textMuted, fontSize: typeScale.body, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.body), textAlign: 'center', marginBottom: spacing.lg }}>
         {t('mob.errorLoad')}
@@ -690,7 +690,7 @@ export function ListRow({
   first
 }: {
   icon?: keyof typeof Ionicons.glyphMap
-  iconTone?: 'brand' | 'success' | 'warning' | 'danger'
+  iconTone?: 'brand' | 'success' | 'warning' | 'danger' | 'memorial'
   label: string
   sublabel?: string
   value?: string
@@ -704,7 +704,8 @@ export function ListRow({
     brand: { fg: p.primaryOnSoft, bg: p.primarySoft },
     success: { fg: p.success, bg: p.successBg },
     warning: { fg: p.warning, bg: p.warningBg },
-    danger: { fg: p.danger, bg: p.dangerBg }
+    danger: { fg: p.danger, bg: p.dangerBg },
+    memorial: { fg: p.memorial, bg: p.memorialBg }
   }
   const tone = tones[iconTone ?? 'brand']
 

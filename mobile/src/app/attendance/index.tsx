@@ -5,7 +5,7 @@ import { useT } from '../../i18n'
 import { useAttendanceEvents, type AttendanceEvent } from '../../api/hooks'
 import { dayLabelKey } from '../../lib/attendance'
 import { formatDate } from '../../lib/date'
-import { Button, Card, EmptyState, ErrorView, ListRow, Screen, SkeletonCards, StaleBanner, Subtitle } from '../../ui'
+import { Button, Callout, Card, EmptyState, ErrorView, ListRow, Screen, SkeletonCards, StaleBanner } from '../../ui'
 
 // Mark Attendance — the events open for marking from a phone (yesterday,
 // today, tomorrow). Reached only by attendance staff; the server refuses
@@ -35,7 +35,9 @@ export default function AttendanceEvents(): React.ReactElement {
   return (
     <Screen refreshing={events.isRefetching} onRefresh={() => events.refetch()}>
       {events.isError && <StaleBanner />}
-      <Subtitle>{t('mob.attEventsIntro')}</Subtitle>
+      <Callout icon="scan-outline" tone="brand" text={t('mob.attEventsIntro')} />
+      <Button label={t('mob.attNewEvent')} icon="add-circle-outline" onPress={() => router.push('/attendance/new')} />
+      <View style={{ height: 16 }} />
       {rows.length === 0 ? (
         <EmptyState icon="calendar-outline" text={t('mob.attNoEvents')} />
       ) : (
@@ -45,7 +47,7 @@ export default function AttendanceEvents(): React.ReactElement {
               key={e.id}
               first={i === 0}
               icon={e.type === 'funeral' ? 'flower-outline' : e.type === 'meeting' ? 'people-outline' : 'calendar-outline'}
-              iconTone={e.type === 'funeral' ? 'danger' : e.type === 'meeting' ? 'brand' : 'warning'}
+              iconTone={e.type === 'funeral' ? 'memorial' : e.type === 'meeting' ? 'brand' : 'warning'}
               label={e.title}
               sublabel={`${typeLabel(e)} · ${whenLabel(e)} · ${t('mob.attPresentCount', { count: e.attendee_count ?? 0 })}`}
               onPress={() => router.push({ pathname: '/attendance/[id]', params: { id: String(e.id) } })}
@@ -53,9 +55,6 @@ export default function AttendanceEvents(): React.ReactElement {
           ))}
         </Card>
       )}
-      <View style={{ marginTop: 8 }}>
-        <Button label={t('mob.attNewEvent')} icon="add-circle-outline" onPress={() => router.push('/attendance/new')} />
-      </View>
     </Screen>
   )
 }
