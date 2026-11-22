@@ -1,6 +1,6 @@
 # eSamithi Member App — Redesign Requirements ("eSamithi Calm")
 
-**Status:** Draft for owner approval · **Date:** 22 November 2026 · **App:** eSamithi Member 1.5.0 (Android versionCode 9, runtime `ea464a6c…`)
+**Status:** Approved 22 Nov 2026 · phases 1–6 shipped over the air the same day (see §9) · **Date:** 22 November 2026 · **App:** eSamithi Member 1.5.0 (Android versionCode 9, runtime `ea464a6c…`)
 **Owner:** Sachira · **Applies to:** `mobile/` (Expo SDK 57, React Native, expo-router)
 **Visual mockups:** <https://claude.ai/artifact/5BDwRGjFJsHEcYWjoni6nJ> (private until shared from its Share menu)
 **Supersedes, for look, layout and navigation:** `ESAMITHI-MOBILE-UIUX-REQUIREMENTS.md` (Sept 2026). That document's motion, Sinhala-typography and Android-trap rules **remain in force** and are restated in §1.4.
@@ -192,7 +192,7 @@ icons, borders and state indicators ≥ 3:1.
 | `surface` | `#FFFFFF` | `#111C30` | Cards, sheets |
 | `surfaceAlt` | `#F6F8FC` | `#17243C` | Insets, input fill, icon chips |
 | `border` | `#E2E8F1` | `#22314B` | Hairlines (decorative, no contrast requirement) |
-| `borderStrong` | `#8593A8` | `#5C7194` | Input and control boundaries — **3.12:1** / **3.44:1** |
+| `borderStrong` | `#7E8CA2` | `#5C7194` | Input and control boundaries — **3.41:1** on surface, **3.21:1** on surfaceAlt / **3.44:1** |
 | `text` | `#0F2547` | `#E6ECF5` | Body — **15.26:1** / **14.34:1** on surface |
 | `textMuted` | `#52627A` | `#9EADC2` | Secondary — **6.20:1** / **7.47:1** on surface, **5.72:1** / **8.14:1** on bg |
 | `textSubtle` | `#7A889C` | `#7486A0` | Placeholders and non-essential hints only — **3.60:1** / **4.59:1** |
@@ -222,7 +222,7 @@ Sinhala line-height ratio 1.55, Latin 1.35; Sinhala bold ceiling 700.
 
 | Token | Size (sp) | Family | Use |
 |---|---|---|---|
-| `display` | **34** | Inter ExtraBold, tabular | **New.** Hero amounts only (Home owed, My Money totals, receipt total, Dues total) |
+| `hero` (code name; `display` stays 28) | **34** | Inter ExtraBold, tabular | **New.** Hero amounts only (Dues total, receipt amount, funds total) |
 | `title` | 28 | extrabold | Screen titles (large header), hero greeting |
 | `heading` | 22 | bold | Card heroes, notice titles |
 | `subheading` | 18 | semibold | Section titles, list primary text in cards |
@@ -350,8 +350,8 @@ Me ─┬─ header: avatar, name, member no., society → Profile
 
 ### 4.3 Route map (old → new)
 
-Every old path keeps working through an expo-router redirect, so links in push payloads,
-saved state and any shared URL never break.
+As built: no push payload, deep link or saved state pointed at the old tab or Payouts routes
+(push taps opened the Notices tab), so the old files were removed rather than redirected.
 
 | Old route | New route | Note |
 |---|---|---|
@@ -769,14 +769,14 @@ must match. Each phase is independently shippable and leaves no half-styled scre
 
 | Phase | Scope | Exit criteria |
 |---|---|---|
-| **P0 · Approval** | This document + mockups | Owner signs off D1–D4 and the open decisions §11 |
-| **P1 · Foundations** | Tokens v2 (`theme.tsx`), `display` size, `spacing.huge`; new components (§5) built and unused; illustrations; `check-tokens.mjs` | Gates green; no visible change to members |
-| **P2 · Navigation + Home** | 5 tabs, `money` and `me` routes, redirects, TabBar v2, HeroHeader, StatusCard, QuickActions, StatTiles; push routing §4.4 | Every old route still opens; push → notice works on a real phone |
-| **P3 · My Money** | Contributions / Loans / Payouts segments, Dues, Loan detail, Receipt | Screenshot matrix §10; amounts reconcile with web statement for the test member |
-| **P4 · Notices + Puruka** | NoticeCard variants, Notice detail, memorial treatment; Puruka feed/detail/new stepper/mine | Death notice reviewed by the owner on a phone |
-| **P5 · Me + Auth** | Me, Profile, Requests, Benefits, Guarantees, Society, Funds, Help, settings; Welcome, Society code, Verify (DateField), PinPad set/login, Lock screen | Full sign-up from a fresh install in Sinhala on a real phone |
-| **P6 · Staff** | Attendance events, new, scanner restyle | Scanner session of 20 cards at an event without regressions |
-| **P7 · Binary (Play)** | Splash + adaptive icon matching Welcome; `uses-feature android.hardware.screen.portrait required=false`; optional native polish (e.g. blur on sheets) | New versionCode on Play; new runtime fingerprint; OTA lane re-pointed |
+| **P0 · Approval** ✅ | This document + mockups | Approved 22 Nov 2026; §11 defaults taken |
+| **P1 · Foundations** ✅ `4ffb4816` | Tokens v2 (`theme.tsx`), `display` size, `spacing.huge`; new components (§5) built and unused; illustrations; `check-tokens.mjs` | Gates green; no visible change to members |
+| **P2 · Navigation + Home** ✅ `4ffb4816` | 5 tabs, `money` and `me` routes, redirects, TabBar v2, HeroHeader, StatusCard, QuickActions, StatTiles; push routing §4.4 | Every old route still opens; push → notice works on a real phone |
+| **P3 · My Money** ✅ `5fa738fd` | Contributions / Loans / Payouts segments, Dues, Loan detail, Receipt | Screenshot matrix §10; amounts reconcile with web statement for the test member |
+| **P4 · Notices + Puruka** ✅ `4ffb4816` (Notices) · `a8d3a83f` (Puruka) | NoticeCard variants, Notice detail, memorial treatment; Puruka feed/detail/new stepper/mine | Death notice reviewed by the owner on a phone |
+| **P5 · Me + Auth** ✅ `d10fc68d` (Me) · `d6c74ead` (sign-in) | Me, Profile, Requests, Benefits, Guarantees, Society, Funds, Help, settings; Welcome, Society code, Verify (DateField), PinPad set/login, Lock screen | Full sign-up from a fresh install in Sinhala on a real phone |
+| **P6 · Staff** ✅ `0914bb67` | Attendance events, new, scanner restyle | Scanner session of 20 cards at an event without regressions |
+| **P7 · Binary (Play)** — pending owner go-ahead | Splash + adaptive icon matching Welcome; `uses-feature android.hardware.screen.portrait required=false`; optional native polish (e.g. blur on sheets) | New versionCode on Play; new runtime fingerprint; OTA lane re-pointed |
 
 Sequencing: foundations first so screens only consume; navigation with Home because the
 tab change is the biggest visible shift and Home is where members land; then by traffic.
