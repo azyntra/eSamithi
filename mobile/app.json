@@ -2,7 +2,7 @@
   "expo": {
     "name": "eSamithi",
     "slug": "esamithi-member",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "runtimeVersion": {
       "policy": "fingerprint"
     },
@@ -62,11 +62,11 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0B1F3B",
+          "backgroundColor": "#1752B4",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 110,
+          "imageWidth": 120,
           "dark": {
-            "backgroundColor": "#0B1F3B"
+            "backgroundColor": "#174A9F"
           }
         }
       ],
@@ -94,7 +94,8 @@
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": true
         }
-      ]
+      ],
+      "./plugins/withPortraitNotRequired"
     ],
     "experiments": {
       "typedRoutes": true,
