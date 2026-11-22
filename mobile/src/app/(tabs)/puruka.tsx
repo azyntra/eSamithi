@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import React, { useMemo, useState } from 'react'
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../i18n'
-import { radius, spacing, usePalette, useThemeMode } from '../../theme'
-import { useType } from '../../typography'
+import { radius, spacing, type as typeScale, usePalette } from '../../theme'
+import { interFamily, useType } from '../../typography'
 import { photoUrl } from '../../api/client'
 import {
   usePurukaCategories,
@@ -14,7 +14,8 @@ import {
   type PurukaPost,
   type PurukaType
 } from '../../api/hooks'
-import { Badge, BrandGradient, Button, Chip, EmptyState, ErrorView, Money, ScalePressable, Screen, Segmented, SkeletonCards, StaleBanner } from '../../ui'
+import { BottomSheet, Button, Chip, EmptyState, ErrorView, Fab, ListScreen, PageTitle, ScalePressable, Screen, Segmented, SegmentedTabs, SkeletonCards, StaleBanner, useCardStyle } from '../../ui'
+import { formatCurrency } from '../../lib/money'
 import { dur, useReducedMotion } from '../../motion'
 
 // Category code → icon; admin-added categories fall back to the tag icon
@@ -39,132 +40,109 @@ function PostTile({ post, onPress }: { post: PurukaPost; onPress: () => void }):
   const reduce = useReducedMotion()
   const p = usePalette()
   const ty = useType()
-  const { scheme } = useThemeMode()
+  const card = useCardStyle()
   const catLabel = lang === 'si' ? post.category_si : post.category_en
   const wanted = post.type === 'wanted'
+  const sold = post.status === 'Sold'
   return (
-    <ScalePressable
-      onPress={onPress}
-      accessibilityRole="button"
-      scaleTo={0.97}
-      style={{
-        width: '48%',
-        backgroundColor: scheme === 'dark' ? p.surface : p.surfaceElevated,
-        borderRadius: radius.lg,
-        overflow: 'hidden',
-        marginBottom: spacing.md,
-        // Hairline in both schemes — Android elevation smudges large radii
-        borderWidth: 1,
-        borderColor: p.border
-      }}
-    >
-      <View style={{ height: 130, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+    <ScalePressable onPress={onPress} accessibilityRole="button" scaleTo={0.97} style={[card, { flex: 1, overflow: 'hidden' }]}>
+      <View style={{ aspectRatio: 4 / 3, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
         {post.photos.length > 0 ? (
           <Image
             source={{ uri: photoUrl(post.photos[0]) }}
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: '100%', height: '100%', opacity: sold ? 0.55 : 1 }}
             contentFit="cover"
             transition={reduce ? 0 : dur.gesture}
             recyclingKey={String(post.id)}
           />
         ) : (
-          <Ionicons name={categoryIcon(post.category_code)} size={40} color={p.border} />
+          <Ionicons name={categoryIcon(post.category_code)} size={36} color={p.textSubtle} />
         )}
-        {post.status === 'Sold' ? (
-          <View style={{ position: 'absolute', top: 8, left: 8 }}>
-            <Badge text={wanted ? t('mob.pkFound') : t('mob.pkSold')} color={p.onPrimary} bg={p.danger} />
-          </View>
-        ) : wanted ? (
-          <View style={{ position: 'absolute', top: 8, left: 8 }}>
-            <Badge text={t('mob.pkWanted')} color={p.onPrimary} bg={p.primary} />
+        {sold || wanted ? (
+          <View style={{ position: 'absolute', top: spacing.sm, left: spacing.sm, backgroundColor: p.surface, borderRadius: radius.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 2 }}>
+            <Text style={{ color: sold ? p.textMuted : p.primaryOnSoft, fontSize: typeScale.micro, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.micro) }}>
+              {sold ? (wanted ? t('mob.pkFound') : t('mob.pkSold')) : t('mob.pkWanted')}
+            </Text>
           </View>
         ) : null}
       </View>
-      <View style={{ padding: spacing.md - 2 }}>
-        <Text style={{ color: p.text, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }} numberOfLines={1}>{post.title}</Text>
-        <View style={{ marginTop: 3 }}>
-          {post.price !== null
-            ? <Money cents={post.price} size={14.5} bold color={p.primary} />
-            : <Text style={{ color: p.primary, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>{wanted ? t('mob.pkOpenBudget') : t('mob.pkNegotiable')}</Text>}
-        </View>
-        <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(12), marginTop: 3 }} numberOfLines={1}>
-          {catLabel}{post.location ? ` · ${post.location}` : ''}
-        </Text>
-        {!!post.seller_name && (
-          <Text style={{ color: p.textMuted, fontSize: 12, fontFamily: ty.family.regular, lineHeight: ty.lh(12), marginTop: 2 }} numberOfLines={1}>
-            {post.seller_name}
-          </Text>
+      <View style={{ padding: spacing.md }}>
+        <Text numberOfLines={2} style={{ color: p.text, fontSize: typeScale.caption, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.caption), minHeight: ty.lh(typeScale.caption) * 2 }}>{post.title}</Text>
+        {post.price !== null ? (
+          <Text numberOfLines={1} adjustsFontSizeToFit style={{ color: p.text, fontSize: typeScale.body, fontFamily: interFamily.extrabold, fontVariant: ['tabular-nums'], marginTop: spacing.xs }}>{formatCurrency(post.price)}</Text>
+        ) : (
+          <Text numberOfLines={1} style={{ color: p.primaryOnSoft, fontSize: typeScale.caption, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.caption), marginTop: spacing.xs }}>{wanted ? t('mob.pkOpenBudget') : t('mob.pkNegotiable')}</Text>
         )}
+        <Text numberOfLines={1} style={{ color: p.textMuted, fontSize: typeScale.micro, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.micro), marginTop: 2 }}>
+          {[catLabel, post.location].filter(Boolean).join(' · ')}
+        </Text>
       </View>
     </ScalePressable>
   )
 }
 
+// Puruka feed (redesign §6.5.1): title, search, one Filters sheet instead of an
+// inline panel, a two-column grid that loads more as you scroll, and a
+// floating New post button.
 export default function Puruka(): React.ReactElement {
   const { t, lang } = useT()
   const p = usePalette()
   const ty = useType()
   const router = useRouter()
-
   const categories = usePurukaCategories()
 
   const [category, setCategory] = useState<number | 'all'>('all')
   const [type, setType] = useState<'all' | PurukaType>('all')
   const [searchInput, setSearchInput] = useState('')
   const [q, setQ] = useState('')
-  const [showFilters, setShowFilters] = useState(false)
+  const [sheet, setSheet] = useState(false)
+  // Draft values inside the sheet; applied together with "Show results"
   const [location, setLocation] = useState('')
   const [minStr, setMinStr] = useState('')
   const [maxStr, setMaxStr] = useState('')
   const [avail, setAvail] = useState<PurukaFilters['avail']>('all')
+  const [applied, setApplied] = useState({ location: '', minStr: '', maxStr: '', avail: 'all' as PurukaFilters['avail'] })
 
-  const rupees = (s: string): number | null => {
-    const v = parseFloat(s)
-    return Number.isFinite(v) && v >= 0 ? Math.round(v * 100) : null
+  const rupees = (v: string): number | null => {
+    const n = parseFloat(v)
+    return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : null
   }
   const filters: PurukaFilters = {
     category,
     type,
     q,
-    location: showFilters ? location : '',
-    minPrice: showFilters ? rupees(minStr) : null,
-    maxPrice: showFilters ? rupees(maxStr) : null,
-    avail: showFilters ? avail : 'all'
+    location: applied.location,
+    minPrice: rupees(applied.minStr),
+    maxPrice: rupees(applied.maxStr),
+    avail: applied.avail
   }
+  const activeFilters = [applied.location.trim() !== '', rupees(applied.minStr) !== null, rupees(applied.maxStr) !== null, applied.avail !== 'all'].filter(Boolean).length
 
   const feed = usePurukaFeed(filters)
   const items = feed.data?.pages.flatMap((page) => page.items) ?? []
+  // Two tiles per list row, so the grid still virtualises
+  const rows = useMemo(() => {
+    const out: PurukaPost[][] = []
+    for (let i = 0; i < items.length; i += 2) out.push(items.slice(i, i + 2))
+    return out
+  }, [items])
 
-  return (
-    <Screen refreshing={feed.isRefetching && !feed.isFetchingNextPage} onRefresh={() => feed.refetch()}>
-      {feed.isError && feed.data && <StaleBanner />}
+  const openPost = (post: PurukaPost): void => router.push({ pathname: '/puruka/[id]', params: { id: String(post.id) } })
 
-      {/* Community tagline */}
-      <Text style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.semibold, lineHeight: ty.lh(14), marginBottom: spacing.md - 2 }}>
-        {t('mob.pkTagline')}
-      </Text>
+  const inputStyle = { backgroundColor: p.surfaceAlt, borderColor: p.borderStrong, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: spacing.md, minHeight: 48, fontSize: typeScale.body, fontFamily: ty.family.regular, color: p.text }
 
-      {/* Sell vs. wanted — a primary axis, always visible */}
-      <View style={{ marginBottom: spacing.md }}>
-        <Segmented<'all' | PurukaType>
-          options={[
-            { value: 'all', label: t('mob.pkAll') },
-            { value: 'sell', label: t('mob.pkTypeSell') },
-            { value: 'wanted', label: t('mob.pkTypeWanted') }
-          ]}
-          value={type}
-          onChange={setType}
-        />
-      </View>
-
-      {/* Search + filters toggle + new post */}
+  const header = (
+    <View>
+      <PageTitle title={t('mob.tabPuruka')} subtitle={t('mob.pkTagline')} />
+      {feed.isError && feed.data ? <StaleBanner /> : null}
       <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md }}>
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: p.surface, borderColor: p.border, borderWidth: 1.5, borderRadius: radius.md, paddingHorizontal: spacing.md }}>
-          <Ionicons name="search-outline" size={18} color={p.textMuted} />
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: p.surface, borderColor: p.borderStrong, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: spacing.md, minHeight: 48 }}>
+          <Ionicons name="search-outline" size={20} color={p.textMuted} />
           <TextInput
-            style={{ flex: 1, paddingVertical: spacing.md, paddingHorizontal: spacing.sm, fontSize: 16, fontFamily: ty.family.regular, color: p.text }}
+            style={{ flex: 1, paddingHorizontal: spacing.sm, fontSize: typeScale.body, fontFamily: ty.family.regular, color: p.text }}
             placeholder={t('mob.pkSearch')}
-            placeholderTextColor={p.textMuted}
+            placeholderTextColor={p.textSubtle}
+            accessibilityLabel={t('mob.pkSearch')}
             value={searchInput}
             onChangeText={(v) => {
               setSearchInput(v)
@@ -173,114 +151,110 @@ export default function Puruka(): React.ReactElement {
             onSubmitEditing={() => setQ(searchInput)}
             returnKeyType="search"
           />
-          {q !== '' && (
-            <Pressable onPress={() => { setSearchInput(''); setQ('') }} accessibilityRole="button">
-              <Ionicons name="close-circle" size={18} color={p.textMuted} />
+          {q !== '' ? (
+            <Pressable onPress={() => { setSearchInput(''); setQ('') }} accessibilityRole="button" accessibilityLabel={t('common.close')} style={{ padding: spacing.xs }}>
+              <Ionicons name="close-circle" size={20} color={p.textMuted} />
             </Pressable>
-          )}
+          ) : null}
         </View>
         <ScalePressable
-          onPress={() => setShowFilters((v) => !v)}
+          onPress={() => setSheet(true)}
           accessibilityRole="button"
+          accessibilityLabel={t('mob.pkFilters')}
           haptic="selection"
-          style={{ backgroundColor: showFilters ? p.primary : p.surface, borderColor: showFilters ? p.primary : p.border, borderWidth: 1.5, borderRadius: radius.md, width: 46, alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 48, minHeight: 48, borderRadius: radius.md, borderWidth: 1, borderColor: activeFilters > 0 ? p.primary : p.borderStrong, backgroundColor: activeFilters > 0 ? p.primarySoft : p.surface, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Ionicons name="options-outline" size={20} color={showFilters ? p.onPrimary : p.textMuted} />
+          <Ionicons name="options-outline" size={22} color={activeFilters > 0 ? p.primaryOnSoft : p.text} />
+          {activeFilters > 0 ? (
+            <View style={{ position: 'absolute', top: -6, right: -6, minWidth: 20, height: 20, borderRadius: 10, backgroundColor: p.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: p.bg }}>
+              <Text style={{ color: p.onPrimary, fontSize: typeScale.micro, fontFamily: interFamily.bold }}>{activeFilters}</Text>
+            </View>
+          ) : null}
         </ScalePressable>
-        {/* Gradient behind a full-size Pressable — a gradient child would
-            swallow taps off the icon on Android (see Button) */}
-        <View style={{ borderRadius: radius.md, width: 46, overflow: 'hidden' }}>
-          <BrandGradient rounded={radius.md} />
-          <ScalePressable
-            onPress={() => router.push('/puruka-new')}
-            accessibilityRole="button"
-            haptic="impact"
-            style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
-          >
-            <Ionicons name="add" size={26} color={p.onHero} />
-          </ScalePressable>
-        </View>
       </View>
-
-      {/* Extra filters: availability, price range, location */}
-      {showFilters && (
-        <View style={{ backgroundColor: p.surface, borderColor: p.border, borderWidth: 1, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, gap: spacing.md - 2 }}>
-          <Segmented<PurukaFilters['avail']>
-            options={[
-              { value: 'all', label: t('mob.pkAll') },
-              { value: 'available', label: t('mob.pkAvailable') },
-              { value: 'sold', label: t('mob.pkSold') }
-            ]}
-            value={avail}
-            onChange={setAvail}
-          />
-          <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-            <TextInput
-              style={{ flex: 1, backgroundColor: p.bg, borderColor: p.border, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: spacing.md - 2, paddingVertical: spacing.sm + 1, fontSize: 14, fontFamily: ty.family.regular, color: p.text }}
-              placeholder={t('mob.pkMinPrice')}
-              placeholderTextColor={p.textMuted}
-              keyboardType="decimal-pad"
-              value={minStr}
-              onChangeText={setMinStr}
-            />
-            <TextInput
-              style={{ flex: 1, backgroundColor: p.bg, borderColor: p.border, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: spacing.md - 2, paddingVertical: spacing.sm + 1, fontSize: 14, fontFamily: ty.family.regular, color: p.text }}
-              placeholder={t('mob.pkMaxPrice')}
-              placeholderTextColor={p.textMuted}
-              keyboardType="decimal-pad"
-              value={maxStr}
-              onChangeText={setMaxStr}
-            />
-          </View>
-          <TextInput
-            style={{ backgroundColor: p.bg, borderColor: p.border, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: spacing.md - 2, paddingVertical: spacing.sm + 1, fontSize: 14, fontFamily: ty.family.regular, color: p.text }}
-            placeholder={t('mob.pkLocationFilter')}
-            placeholderTextColor={p.textMuted}
-            value={location}
-            onChangeText={setLocation}
-          />
-        </View>
-      )}
-
-      {/* Category chips (from the server — admin-manageable) */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: spacing.lg - 2 }} contentContainerStyle={{ gap: spacing.sm }}>
+      <SegmentedTabs<'all' | PurukaType>
+        options={[
+          { value: 'all', label: t('mob.pkAll') },
+          { value: 'sell', label: t('mob.pkTypeSell') },
+          { value: 'wanted', label: t('mob.pkTypeWanted') }
+        ]}
+        value={type}
+        onChange={setType}
+      />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: spacing.md }} contentContainerStyle={{ gap: spacing.sm }}>
         {[{ id: 'all' as const, label: t('mob.pkAll'), code: '' },
           ...(categories.data ?? []).map((c) => ({ id: c.id, label: lang === 'si' ? c.label_si : c.label_en, code: c.code }))
-        ].map((chip) => {
-          const selected = category === chip.id
-          return (
-            <Chip key={String(chip.id)} label={chip.label} selected={selected} onPress={() => setCategory(chip.id)} />
-          )
-        })}
+        ].map((chip) => (
+          <Chip key={String(chip.id)} label={chip.label} icon={chip.code ? categoryIcon(chip.code) : undefined} selected={category === chip.id} onPress={() => setCategory(chip.id)} />
+        ))}
       </ScrollView>
+    </View>
+  )
 
-      {feed.isPending ? (
-        <SkeletonCards cards={4} />
-      ) : feed.isError && !feed.data ? (
-        <ErrorView onRetry={() => feed.refetch()} />
-      ) : items.length === 0 ? (
-        <EmptyState icon="storefront-outline" text={t('mob.pkEmpty')} />
-      ) : (
-        <>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-            {items.map((post) => (
-              <PostTile
-                key={post.id}
-                post={post}
-                onPress={() => router.push({ pathname: '/puruka/[id]', params: { id: String(post.id) } })}
-              />
-            ))}
-          </View>
-          {feed.hasNextPage && (
-            <Button
-              label={t('mob.pkLoadMore')}
-              variant="secondary"
-              loading={feed.isFetchingNextPage}
-              onPress={() => feed.fetchNextPage()}
-            />
-          )}
-        </>
+  const body = feed.isPending ? (
+    <Screen><PageTitle title={t('mob.tabPuruka')} subtitle={t('mob.pkTagline')} /><SkeletonCards cards={4} /></Screen>
+  ) : feed.isError && !feed.data ? (
+    <Screen refreshing={feed.isRefetching} onRefresh={() => feed.refetch()}><PageTitle title={t('mob.tabPuruka')} /><ErrorView onRetry={() => feed.refetch()} /></Screen>
+  ) : (
+    <ListScreen<PurukaPost[]>
+      data={rows}
+      keyExtractor={(row) => String(row[0]?.id)}
+      renderItem={(row) => (
+        <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md }}>
+          {row.map((post) => <PostTile key={post.id} post={post} onPress={() => openPost(post)} />)}
+          {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
+        </View>
       )}
-    </Screen>
+      header={header}
+      empty={<EmptyState icon="storefront-outline" text={t('mob.pkEmpty')} />}
+      footer={feed.isFetchingNextPage ? <ActivityIndicator color={p.primary} style={{ marginVertical: spacing.lg }} /> : <View style={{ height: spacing.huge + spacing.xl }} />}
+      refreshing={feed.isRefetching && !feed.isFetchingNextPage}
+      onRefresh={() => feed.refetch()}
+      onEndReached={() => { if (feed.hasNextPage && !feed.isFetchingNextPage) feed.fetchNextPage() }}
+    />
+  )
+
+  return (
+    <View style={{ flex: 1, backgroundColor: p.bg }}>
+      {body}
+      <Fab icon="add" label={t('mob.pkFab')} onPress={() => router.push('/puruka-new')} />
+      <BottomSheet
+        visible={sheet}
+        onClose={() => setSheet(false)}
+        title={t('mob.pkFilters')}
+        footer={
+          <View style={{ gap: spacing.sm }}>
+            <Button label={t('mob.pkShowResults')} onPress={() => { setApplied({ location, minStr, maxStr, avail }); setSheet(false) }} />
+            <Button
+              label={t('mob.pkClearFilters')}
+              variant="secondary"
+              onPress={() => {
+                setLocation(''); setMinStr(''); setMaxStr(''); setAvail('all')
+                setApplied({ location: '', minStr: '', maxStr: '', avail: 'all' })
+                setSheet(false)
+              }}
+            />
+          </View>
+        }
+      >
+        <Text style={{ color: p.text, fontSize: typeScale.caption, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.caption), marginBottom: spacing.sm }}>{t('mob.pkAvailability')}</Text>
+        <Segmented<PurukaFilters['avail']>
+          options={[
+            { value: 'all', label: t('mob.pkAll') },
+            { value: 'available', label: t('mob.pkAvailable') },
+            { value: 'sold', label: t('mob.pkSold') }
+          ]}
+          value={avail}
+          onChange={setAvail}
+        />
+        <Text style={{ color: p.text, fontSize: typeScale.caption, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.caption), marginTop: spacing.lg, marginBottom: spacing.sm }}>{t('mob.pkPriceRange')}</Text>
+        <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+          <TextInput style={[inputStyle, { flex: 1 }]} placeholder={t('mob.pkMinPrice')} placeholderTextColor={p.textSubtle} keyboardType="decimal-pad" value={minStr} onChangeText={setMinStr} accessibilityLabel={t('mob.pkMinPrice')} />
+          <TextInput style={[inputStyle, { flex: 1 }]} placeholder={t('mob.pkMaxPrice')} placeholderTextColor={p.textSubtle} keyboardType="decimal-pad" value={maxStr} onChangeText={setMaxStr} accessibilityLabel={t('mob.pkMaxPrice')} />
+        </View>
+        <Text style={{ color: p.text, fontSize: typeScale.caption, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.caption), marginTop: spacing.lg, marginBottom: spacing.sm }}>{t('mob.pkLocationFilter')}</Text>
+        <TextInput style={inputStyle} placeholder={t('mob.pkLocationFilter')} placeholderTextColor={p.textSubtle} value={location} onChangeText={setLocation} accessibilityLabel={t('mob.pkLocationFilter')} />
+      </BottomSheet>
+    </View>
   )
 }

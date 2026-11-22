@@ -5,7 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import * as ImagePicker from 'expo-image-picker'
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator'
 import { useT } from '../i18n'
-import { usePalette } from '../theme'
+import { radius, spacing, type as typeScale, usePalette } from '../theme'
 import { errorMessage } from '../api/client'
 import {
   useCreatePurukaPost,
@@ -16,7 +16,7 @@ import {
   type PurukaType
 } from '../api/hooks'
 import { categoryIcon } from './(tabs)/puruka'
-import { Button, Input, Screen, SectionHeader, Segmented, useToast } from '../ui'
+import { Button, Chip, Input, ScalePressable, Screen, useCardStyle, useToast } from '../ui'
 import { useType } from '../typography'
 
 const MAX_PHOTOS = 3
@@ -54,6 +54,9 @@ export default function PurukaNewPost(): React.ReactElement {
   const [location, setLocation] = useState('')
   const [photoUris, setPhotoUris] = useState<string[]>([])
   const [prefilled, setPrefilled] = useState(false)
+  const [step, setStep] = useState(0)
+  const [stepError, setStepError] = useState<string | null>(null)
+  const card = useCardStyle()
 
   // Prefill: from the existing post (edit) or the member profile (create)
   useEffect(() => {
@@ -152,120 +155,163 @@ export default function PurukaNewPost(): React.ReactElement {
 
   const wanted = type === 'wanted'
 
+  // Steps (redesign §6.5.3). Photos are fixed once posted, so editing skips them.
+  type Step = 'type' | 'photos' | 'details' | 'price'
+  const steps: Step[] = editId ? ['type', 'details', 'price'] : ['type', 'photos', 'details', 'price']
+  const current = steps[Math.min(step, steps.length - 1)]
+  const last = step >= steps.length - 1
+  const stepTitle = {
+    type: t('mob.pkStepType'),
+    photos: t('mob.pkStepPhotos'),
+    details: t('mob.pkStepDetails'),
+    price: t('mob.pkStepPrice')
+  }[current]
+
+  const next = (): void => {
+    if (current === 'details') {
+      if (!title.trim()) return setStepError(t('mob.pkNeedTitle'))
+      if (categoryId === null) return setStepError(t('mob.pkNeedCategory'))
+    }
+    setStepError(null)
+    if (last) submit()
+    else setStep((n) => n + 1)
+  }
+  const back = (): void => {
+    setStepError(null)
+    if (step === 0) router.back()
+    else setStep((n) => n - 1)
+  }
+
+  const typeCard = (value: PurukaType, icon: keyof typeof Ionicons.glyphMap, label: string, hint: string): React.ReactElement => {
+    const selected = type === value
+    return (
+      <ScalePressable
+        accessibilityRole="radio"
+        accessibilityState={{ selected }}
+        haptic="selection"
+        onPress={() => setType(value)}
+        style={[card, { padding: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md, borderWidth: selected ? 2 : 1, borderColor: selected ? p.primary : p.border }]}
+      >
+        <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: selected ? p.primarySoft : p.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={icon} size={26} color={selected ? p.primaryOnSoft : p.textMuted} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: p.text, fontSize: typeScale.heading, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.heading) }}>{label}</Text>
+          <Text style={{ color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.caption) }}>{hint}</Text>
+        </View>
+        <Ionicons name={selected ? 'radio-button-on' : 'radio-button-off'} size={24} color={selected ? p.primary : p.textMuted} />
+      </ScalePressable>
+    )
+  }
+
   return (
     <Screen>
-      {/* Sell vs. wanted — the primary choice; drives the labels below */}
-      <View style={{ marginBottom: 16 }}>
-        <Segmented<PurukaType>
-          options={[
-            { value: 'sell', label: t('mob.pkTypeSell') },
-            { value: 'wanted', label: t('mob.pkTypeWanted') }
-          ]}
-          value={type}
-          onChange={setType}
-        />
+      {/* Progress */}
+      <Text style={{ color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.caption) }}>
+        {t('mob.pkStepOf', { n: step + 1, total: steps.length })}
+      </Text>
+      <View style={{ flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm, marginBottom: spacing.lg }}>
+        {steps.map((s2, i) => (
+          <View key={s2} style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: i <= step ? p.primary : p.border }} />
+        ))}
       </View>
+      <Text accessibilityRole="header" style={{ color: p.text, fontSize: typeScale.title, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.title), marginBottom: spacing.lg }}>{stepTitle}</Text>
 
-      {/* Photos — creation only; fixed once posted */}
-      {!editId && (
+      {current === 'type' ? (
         <>
-          <SectionHeader>{t('mob.pkPhotos')}</SectionHeader>
-          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+          {typeCard('sell', 'pricetag-outline', t('mob.pkTypeSell'), t('mob.pkSellHint'))}
+          {typeCard('wanted', 'search-outline', t('mob.pkTypeWanted'), t('mob.pkWantedHint'))}
+        </>
+      ) : null}
+
+      {current === 'photos' ? (
+        <>
+          <Text style={{ color: p.textMuted, fontSize: typeScale.body, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.body), marginBottom: spacing.lg }}>{t('mob.pkPhotosHint')}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }}>
             {photoUris.map((uri) => (
-              <View key={uri} style={{ position: 'relative' }}>
-                <Image source={{ uri }} style={{ width: 86, height: 86, borderRadius: 12, backgroundColor: p.surfaceAlt }} />
+              <View key={uri}>
+                <Image source={{ uri }} style={{ width: 100, height: 100, borderRadius: radius.md, backgroundColor: p.surfaceAlt }} />
                 <Pressable
                   onPress={() => setPhotoUris((prev) => prev.filter((u) => u !== uri))}
                   accessibilityRole="button"
-                  style={{ position: 'absolute', top: -6, right: -6, backgroundColor: p.danger, borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center' }}
+                  accessibilityLabel={t('common.delete')}
+                  hitSlop={8}
+                  style={{ position: 'absolute', top: -8, right: -8, backgroundColor: p.text, borderRadius: 14, width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: p.bg }}
                 >
-                  <Ionicons name="close" size={13} color={p.onPrimary} />
+                  <Ionicons name="close" size={16} color={p.bg} />
                 </Pressable>
               </View>
             ))}
-            {photoUris.length < MAX_PHOTOS && (
+            {photoUris.length < MAX_PHOTOS ? (
               <Pressable
                 onPress={pickPhotos}
                 accessibilityRole="button"
-                style={{ width: 86, height: 86, borderRadius: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: p.border, alignItems: 'center', justifyContent: 'center' }}
+                style={{ width: 100, height: 100, borderRadius: radius.md, borderWidth: 1.5, borderStyle: 'dashed', borderColor: p.borderStrong, alignItems: 'center', justifyContent: 'center', backgroundColor: p.surface }}
               >
-                <Ionicons name="camera-outline" size={24} color={p.textMuted} />
-                <Text style={{ color: p.textMuted, fontSize: 12, marginTop: 2, fontFamily: ty.family.regular, lineHeight: ty.lh(12) }}>{t('mob.pkAddPhoto')}</Text>
+                <Ionicons name="camera-outline" size={28} color={p.primary} />
+                <Text style={{ color: p.primary, fontSize: typeScale.micro, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.micro), marginTop: spacing.xs }}>{t('mob.pkAddPhoto')}</Text>
               </Pressable>
-            )}
+            ) : null}
           </View>
         </>
-      )}
+      ) : null}
 
-      <Input label={t('mob.pkTitleField')} value={title} onChangeText={setTitle} placeholder={wanted ? t('mob.pkWantedTitlePh') : t('mob.pkTitlePh')} maxLength={120} />
-
-      <Text style={{ color: p.text, fontSize: 16, marginBottom: 8, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{t('mob.pkCategory')}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-        {(categories.data ?? []).map((cat) => {
-          const selected = categoryId === cat.id
-          return (
-            <Pressable
-              key={cat.id}
-              onPress={() => setCategoryId(cat.id)}
-              accessibilityRole="button"
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                paddingHorizontal: 12,
-                paddingVertical: 9,
-                borderRadius: 18,
-                backgroundColor: selected ? p.primary : p.surface,
-                borderWidth: 1,
-                borderColor: selected ? p.primary : p.border
-              }}
-            >
-              <Ionicons name={categoryIcon(cat.code)} size={15} color={selected ? p.onPrimary : p.textMuted} />
-              <Text style={{ color: selected ? p.onPrimary : p.textMuted, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>
-                {lang === 'si' ? cat.label_si : cat.label_en}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
-
-      <Input
-        label={wanted ? t('mob.pkBudget') : t('mob.pkPrice')}
-        value={priceStr}
-        onChangeText={setPriceStr}
-        keyboardType="decimal-pad"
-        placeholder={wanted ? t('mob.pkBudgetPh') : '1500.00'}
-      />
-
-      {/* Community fair-price notice (requirement P3.2) — guidance for sellers only */}
-      {!wanted && (
-        <View style={{ backgroundColor: p.surfaceAlt, borderRadius: 12, padding: 12, marginBottom: 14, marginTop: -6, flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-          <Ionicons name="heart-outline" size={18} color={p.primary} style={{ marginTop: 1 }} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: p.primary, fontSize: 14, marginBottom: 2, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>{t('mob.pkTagline')}</Text>
-            <Text style={{ color: p.textMuted, fontSize: 12, lineHeight: ty.lh(12), fontFamily: ty.family.regular }}>{t('mob.pkFairPrice')}</Text>
+      {current === 'details' ? (
+        <>
+          <Input label={t('mob.pkTitleField')} value={title} onChangeText={(v) => { setTitle(v); setStepError(null) }} placeholder={wanted ? t('mob.pkWantedTitlePh') : t('mob.pkTitlePh')} maxLength={120} />
+          <Text style={{ color: p.text, fontSize: typeScale.body, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.body), marginBottom: spacing.sm }}>{t('mob.pkCategory')}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg }}>
+            {(categories.data ?? []).map((cat) => (
+              <Chip key={cat.id} label={lang === 'si' ? cat.label_si : cat.label_en} icon={categoryIcon(cat.code)} selected={categoryId === cat.id} onPress={() => { setCategoryId(cat.id); setStepError(null) }} />
+            ))}
           </View>
+          <Input label={t('mob.pkDesc')} value={description} onChangeText={setDescription} multiline numberOfLines={4} style={{ minHeight: 110, textAlignVertical: 'top' }} maxLength={1000} />
+          <Input label={t('mob.pkLocation')} value={location} onChangeText={setLocation} maxLength={120} />
+        </>
+      ) : null}
+
+      {current === 'price' ? (
+        <>
+          <Input
+            label={wanted ? t('mob.pkBudget') : t('mob.pkPrice')}
+            value={priceStr}
+            onChangeText={setPriceStr}
+            keyboardType="decimal-pad"
+            placeholder={wanted ? t('mob.pkBudgetPh') : '1500.00'}
+          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 48, marginBottom: spacing.lg }}>
+            <Switch value={negotiable} onValueChange={setNegotiable} trackColor={{ true: p.primary }} accessibilityLabel={wanted ? t('mob.pkBudgetFlexible') : t('mob.pkNegotiable')} />
+            <Text style={{ flex: 1, color: p.text, fontSize: typeScale.body, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.body) }}>{wanted ? t('mob.pkBudgetFlexible') : t('mob.pkNegotiable')}</Text>
+          </View>
+          {/* Community fair-price notice (requirement P3.2) — guidance for sellers only */}
+          {!wanted ? (
+            <View style={{ backgroundColor: p.primarySoft, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg, flexDirection: 'row', gap: spacing.sm + 2 }}>
+              <Ionicons name="heart-outline" size={20} color={p.primaryOnSoft} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: p.primaryOnSoft, fontSize: typeScale.caption, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.caption) }}>{t('mob.pkTagline')}</Text>
+                <Text style={{ color: p.primaryOnSoft, fontSize: typeScale.micro, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.micro) }}>{t('mob.pkFairPrice')}</Text>
+              </View>
+            </View>
+          ) : null}
+          <Input label={t('mob.pkPhone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" maxLength={20} />
+        </>
+      ) : null}
+
+      {stepError ? (
+        <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: p.dangerBg, borderRadius: radius.sm, padding: spacing.md, marginBottom: spacing.md }}>
+          <Ionicons name="alert-circle-outline" size={20} color={p.danger} />
+          <Text style={{ flex: 1, color: p.danger, fontSize: typeScale.caption, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.caption) }}>{stepError}</Text>
         </View>
-      )}
+      ) : null}
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16, marginTop: wanted ? 4 : 0 }}>
-        <Switch value={negotiable} onValueChange={setNegotiable} trackColor={{ true: p.primary }} />
-        <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.semibold, lineHeight: ty.lh(16) }}>{wanted ? t('mob.pkBudgetFlexible') : t('mob.pkNegotiable')}</Text>
+      <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.md }}>
+        <View style={{ flex: 1 }}>
+          <Button label={t('mob.stepBack')} variant="secondary" onPress={back} />
+        </View>
+        <View style={{ flex: 1.4 }}>
+          <Button label={last ? (editId ? t('mob.pkSave') : t('mob.pkPublish')) : t('mob.stepNext')} onPress={next} loading={busy} />
+        </View>
       </View>
-
-      <Input
-        label={t('mob.pkDesc')}
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        numberOfLines={4}
-        style={{ minHeight: 100, textAlignVertical: 'top' }}
-        maxLength={1000}
-      />
-      <Input label={t('mob.pkLocation')} value={location} onChangeText={setLocation} maxLength={120} />
-      <Input label={t('mob.pkPhone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" maxLength={20} />
-
-      <Button label={editId ? t('mob.pkSave') : t('mob.pkPublish')} onPress={submit} loading={busy} />
     </Screen>
   )
 }

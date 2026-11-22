@@ -1138,7 +1138,29 @@ export const en = {
   'mob.repayment': 'Loan repayment',
   'mob.repaidShort': 'repaid',
   'mob.payments': '{n} payment(s)',
-  'mob.allClearSub': 'There is nothing for you to pay right now.'
+  'mob.allClearSub': 'There is nothing for you to pay right now.',
+  'mob.pkFilters': 'Filters',
+  'mob.pkShowResults': 'Show results',
+  'mob.pkClearFilters': 'Clear filters',
+  'mob.pkFab': 'New post',
+  'mob.pkPriceRange': 'Price range',
+  'mob.pkAvailability': 'Availability',
+  'mob.pkTaglineEn': 'Buy and sell between members',
+  'mob.pkSellHint': 'Offer something to other members',
+  'mob.pkWantedHint': 'Ask members for something you need',
+  'mob.pkStepType': 'What would you like to do?',
+  'mob.pkStepPhotos': 'Add photos',
+  'mob.pkStepDetails': 'Describe it',
+  'mob.pkStepPrice': 'Price and contact',
+  'mob.pkStepOf': 'Step {n} of {total}',
+  'mob.pkPhotosHint': 'Up to 3 photos. Clear photos help members trust your post.',
+  'mob.stepNext': 'Next',
+  'mob.stepBack': 'Back',
+  'mob.pkNeedTitle': 'Please add a title',
+  'mob.pkNeedCategory': 'Please choose a category',
+  'mob.pkSegActive': 'Active',
+  'mob.pkSegSold': 'Sold',
+  'mob.pkSegExpired': 'Expired'
 }
 
 export type TranslationKey = keyof typeof en

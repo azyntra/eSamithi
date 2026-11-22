@@ -7,13 +7,14 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { dur, ease, timing, useReducedMotion } from '../../motion'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../../i18n'
-import { elevation, radius, spacing, usePalette } from '../../theme'
-import { useType } from '../../typography'
+import { elevation, radius, spacing, type as typeScale, usePalette } from '../../theme'
+import { interFamily, useType } from '../../typography'
+import { formatCurrency } from '../../lib/money'
 import { photoUrl } from '../../api/client'
 import { formatDate } from '../../lib/date'
 import { useDeletePurukaPost, usePurukaPost, useReportPurukaPost, useUpdatePurukaPost } from '../../api/hooks'
 import { categoryIcon } from '../(tabs)/puruka'
-import { Badge, BrandGradient, Button, Card, ErrorView, Money, Row, ScalePressable, Screen, SectionHeader, SkeletonCards, StaleBanner, useToast } from '../../ui'
+import { Avatar, Badge, Button, Card, ErrorView, Row, ScalePressable, Screen, SectionTitle, SkeletonCards, StaleBanner, useToast } from '../../ui'
 import { PhotoViewer } from '../../ui/PhotoViewer'
 
 // "0771234567" → "94771234567" for wa.me; leaves already-international numbers alone
@@ -83,11 +84,12 @@ export default function PurukaPostDetail(): React.ReactElement {
 
   const statusBadge = (): React.ReactElement | null => {
     // "Sold" reads as "Found" on a wanted post — the requester got their item
-    if (item.status === 'Sold') return <Badge text={wanted ? t('mob.pkFound') : t('mob.pkSold')} color={p.onPrimary} bg={p.danger} />
+    // Sold is a neutral fact, not an error — grey, never red
+    if (item.status === 'Sold') return <Badge text={wanted ? t('mob.pkFound') : t('mob.pkSold')} color={p.textMuted} bg={p.surfaceAlt} />
     if (item.status === 'Inactive') return <Badge text={t('mob.pkInactive')} color={p.warning} bg={p.warningBg} />
     if (item.status === 'Removed') return <Badge text={t('mob.pkRemoved')} color={p.danger} bg={p.dangerBg} />
     // Active wanted posts wear a standing "WANTED" pill for context
-    if (wanted) return <Badge text={t('mob.pkWanted')} color={p.onPrimary} bg={p.primary} />
+    if (wanted) return <Badge text={t('mob.pkWanted')} color={p.primaryOnSoft} bg={p.primarySoft} />
     return null
   }
 
@@ -167,7 +169,7 @@ export default function PurukaPostDetail(): React.ReactElement {
 
       {/* Title + status + price */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md - 2, marginBottom: spacing.xs }}>
-        <Text style={{ color: p.text, fontSize: 22, fontFamily: ty.family.extrabold, lineHeight: ty.lh(22), flex: 1 }}>{item.title}</Text>
+        <Text accessibilityRole="header" style={{ color: p.text, fontSize: typeScale.title, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.title), flex: 1 }}>{item.title}</Text>
         {statusBadge()}
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md }}>
@@ -177,8 +179,8 @@ export default function PurukaPostDetail(): React.ReactElement {
           </Text>
         )}
         {item.price !== null
-          ? <Money cents={item.price} size={20} bold color={p.primary} />
-          : wanted && <Text style={{ color: p.primary, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{t('mob.pkOpenBudget')}</Text>}
+          ? <Text style={{ color: p.text, fontSize: typeScale.display, fontFamily: interFamily.extrabold, fontVariant: ['tabular-nums'] }}>{formatCurrency(item.price)}</Text>
+          : wanted && <Text style={{ color: p.primaryOnSoft, fontSize: typeScale.body, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.body) }}>{t('mob.pkOpenBudget')}</Text>}
         {item.negotiable === 1 && <Badge text={wanted ? t('mob.pkBudgetFlexible') : t('mob.pkNegotiable')} color={p.primaryOnSoft} bg={p.primarySoft} />}
       </View>
 
@@ -196,14 +198,9 @@ export default function PurukaPostDetail(): React.ReactElement {
       </Card>
 
       {/* Poster identity — the trust anchor of Puruka */}
-      <SectionHeader>{wanted ? t('mob.pkRequestedBy') : t('mob.pkSeller')}</SectionHeader>
+      <SectionTitle title={wanted ? t('mob.pkRequestedBy') : t('mob.pkSeller')} />
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-        <View style={{ width: 44, height: 44, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-          <BrandGradient rounded={radius.pill} />
-          <Text style={{ color: p.onHero, fontSize: 18, fontFamily: ty.family.extrabold, lineHeight: ty.lh(18) }}>
-            {(item.seller_name || '?').charAt(0).toUpperCase()}
-          </Text>
-        </View>
+        <Avatar name={item.seller_name || '?'} size={48} />
         <View style={{ flex: 1 }}>
           <Text style={{ color: p.text, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{item.seller_name}</Text>
           {!!item.seller_since && (
@@ -237,12 +234,14 @@ export default function PurukaPostDetail(): React.ReactElement {
         </>
       ) : (
         <>
-          <Text
+          <ScalePressable
+            accessibilityRole="button"
             onPress={askReport}
-            style={{ color: p.textMuted, fontSize: 14, fontFamily: ty.family.regular, textAlign: 'center', textDecorationLine: 'underline', paddingVertical: spacing.md - 2, lineHeight: ty.lh(14) }}
+            style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.sm }}
           >
-            {t('mob.pkReport')}
-          </Text>
+            <Ionicons name="flag-outline" size={18} color={p.textMuted} />
+            <Text style={{ color: p.textMuted, fontSize: typeScale.caption, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.caption) }}>{t('mob.pkReport')}</Text>
+          </ScalePressable>
           {/* Space so content scrolls clear of the sticky contact bar */}
           {showContactBar && <View style={{ height: 76 }} />}
         </>

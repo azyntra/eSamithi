@@ -60,8 +60,7 @@ export default function TabsLayout(): React.ReactElement {
         name="notices"
         options={{ title: t('mob.tabNotices'), tabBarBadge: unread > 0 ? (unread > 9 ? '9+' : String(unread)) : undefined }}
       />
-      {/* Puruka keeps its native header until its own redesign phase */}
-      <Tabs.Screen name="puruka" options={{ title: t('mob.tabPuruka'), headerShown: true }} />
+      <Tabs.Screen name="puruka" options={{ title: t('mob.tabPuruka') }} />
       <Tabs.Screen name="me" options={{ title: t('mob.tabMe') }} />
     </Tabs>
   )

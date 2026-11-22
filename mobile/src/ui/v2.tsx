@@ -1,5 +1,5 @@
 import React, { useId } from 'react'
-import { Text, View, type StyleProp, type ViewStyle } from 'react-native'
+import { Modal, Pressable, ScrollView, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -505,4 +505,54 @@ export function useListCardEdge(): (first: boolean, last: boolean) => ViewStyle 
     paddingHorizontal: spacing.md + 2,
     marginBottom: last ? spacing.md : 0
   })
+}
+
+// Bottom sheet on RN's own Modal (no native module, so OTA-safe): grabber,
+// title, content, and one pinned primary action. Backdrop and back button close.
+export function BottomSheet({
+  visible,
+  onClose,
+  title,
+  children,
+  footer
+}: {
+  visible: boolean
+  onClose: () => void
+  title: string
+  children: React.ReactNode
+  footer?: React.ReactNode
+}): React.ReactElement {
+  const p = usePalette()
+  const ty = useType()
+  const { t } = useT()
+  const insets = useSafeAreaInsets()
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("common.close")} onPress={onClose} style={[FILL, { backgroundColor: p.overlay }]} />
+        <View style={{ backgroundColor: p.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: spacing.lg, paddingBottom: insets.bottom + spacing.lg, maxHeight: '85%' }}>
+          <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: p.border, marginTop: spacing.sm, marginBottom: spacing.md }} />
+          <Text accessibilityRole="header" style={{ color: p.text, fontSize: typeScale.heading, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.heading), marginBottom: spacing.md }}>{title}</Text>
+          <ScrollView keyboardShouldPersistTaps="handled">{children}</ScrollView>
+          {footer ? <View style={{ marginTop: spacing.md }}>{footer}</View> : null}
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
+// Floating action button on the hero gradient (gradient behind a full-size
+// Pressable, never a child of it — Android SVG swallows touches)
+export function Fab({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }): React.ReactElement {
+  const p = usePalette()
+  const ty = useType()
+  return (
+    <View style={{ position: 'absolute', right: spacing.lg, bottom: spacing.lg, borderRadius: 28, overflow: 'hidden', shadowColor: p.heroEnd, ...elevation.md }}>
+      <HeroGradient rounded={28} />
+      <ScalePressable accessibilityRole="button" accessibilityLabel={label} haptic="impact" onPress={onPress} style={{ minHeight: 56, paddingLeft: spacing.lg, paddingRight: spacing.xl, flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+        <Ionicons name={icon} size={24} color={p.onHero} />
+        <Text style={{ color: p.onHero, fontSize: typeScale.body, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.body) }}>{label}</Text>
+      </ScalePressable>
+    </View>
+  )
 }

@@ -1,15 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Image, Pressable, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT } from '../i18n'
-import { usePalette } from '../theme'
+import { radius, spacing, type as typeScale, usePalette } from '../theme'
 import { photoUrl } from '../api/client'
-import { useMyPurukaPosts, useUpdatePurukaPost, type PurukaPost } from '../api/hooks'
+import { useMyPurukaPosts, useUpdatePurukaPost } from '../api/hooks'
 import { formatDate } from '../lib/date'
 import { categoryIcon } from './(tabs)/puruka'
-import { Banner, Button, EmptyState, ErrorView, Money, Screen, SkeletonCards, StaleBanner, StatusPill } from '../ui'
-import { useType } from '../typography'
+import { Banner, Button, EmptyState, ErrorView, ScalePressable, Screen, SegmentedTabs, SkeletonCards, StaleBanner, StatusPill, useCardStyle } from '../ui'
+import { formatCurrency } from '../lib/money'
+import { interFamily, useType } from '../typography'
 
 const EXPIRY_WARN_DAYS = 3
 
@@ -18,13 +19,18 @@ function daysUntil(dateStr: string): number {
   return Math.ceil((target.getTime() - Date.now()) / 86400000)
 }
 
+type Seg = 'active' | 'sold' | 'expired'
+
+// My posts (redesign §6.5.4): Active · Sold · Expired, with renew one tap away
 export default function MyPurukaPosts(): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
   const ty = useType()
   const router = useRouter()
+  const card = useCardStyle()
   const posts = useMyPurukaPosts()
   const update = useUpdatePurukaPost()
+  const [seg, setSeg] = useState<Seg>('active')
 
   if (posts.isPending) return <Screen><SkeletonCards cards={3} /></Screen>
   if (posts.isError && !posts.data) {
@@ -35,80 +41,81 @@ export default function MyPurukaPosts(): React.ReactElement {
     )
   }
 
-  const rows = posts.data!
-  const expiringSoon = rows.filter(
-    (post) => post.status === 'Active' && post.expires_at && daysUntil(post.expires_at) <= EXPIRY_WARN_DAYS
-  )
+  const all = posts.data!
+  const inSeg = (status: string): Seg => (status === 'Active' ? 'active' : status === 'Sold' ? 'sold' : 'expired')
+  const rows = all.filter((post) => inSeg(post.status) === seg)
+  const expiringSoon = all.filter((post) => post.status === 'Active' && post.expires_at && daysUntil(post.expires_at) <= EXPIRY_WARN_DAYS)
 
   return (
     <Screen refreshing={posts.isRefetching} onRefresh={() => posts.refetch()}>
       {posts.isError && <StaleBanner />}
+      {expiringSoon.length > 0 && <Banner kind="warning" text={t('mob.pkExpiringSoon', { count: expiringSoon.length })} />}
 
-      {expiringSoon.length > 0 && (
-        <Banner kind="warning" text={t('mob.pkExpiringSoon', { count: expiringSoon.length })} />
-      )}
-
-      <Button label={t('mob.pkSell')} onPress={() => router.push('/puruka-new')} />
-      <View style={{ height: 14 }} />
+      <Button label={t('mob.pkSell')} icon="add" onPress={() => router.push('/puruka-new')} />
+      <View style={{ height: spacing.md }} />
+      <SegmentedTabs<Seg>
+        options={[
+          { value: 'active', label: t('mob.pkSegActive') },
+          { value: 'sold', label: t('mob.pkSegSold') },
+          { value: 'expired', label: t('mob.pkSegExpired') }
+        ]}
+        value={seg}
+        onChange={setSeg}
+      />
+      <View style={{ height: spacing.md }} />
 
       {rows.length === 0 ? (
         <EmptyState icon="pricetags-outline" text={t('mob.pkNoMine')} />
       ) : (
         rows.map((post) => {
-          const expiring = post.status === 'Active' && post.expires_at && daysUntil(post.expires_at) <= EXPIRY_WARN_DAYS
+          const expiring = post.status === 'Active' && !!post.expires_at && daysUntil(post.expires_at) <= EXPIRY_WARN_DAYS
+          const canRenew = expiring || post.status === 'Inactive'
           return (
-            <Pressable
-              key={post.id}
-              onPress={() => router.push({ pathname: '/puruka/[id]', params: { id: String(post.id) } })}
-              accessibilityRole="button"
-              style={{
-                backgroundColor: p.surface,
-                borderColor: expiring ? p.warning : p.border,
-                borderWidth: 1,
-                borderRadius: 14,
-                overflow: 'hidden',
-                marginBottom: 12
-              }}
-            >
-              <View style={{ flexDirection: 'row' }}>
-                <View style={{ width: 92, height: 92, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+            <View key={post.id} style={[card, { overflow: 'hidden', marginBottom: spacing.md, borderColor: expiring ? p.warning : p.border }]}>
+              <ScalePressable
+                onPress={() => router.push({ pathname: '/puruka/[id]', params: { id: String(post.id) } })}
+                accessibilityRole="button"
+                scaleTo={0.99}
+                style={{ flexDirection: 'row' }}
+              >
+                <View style={{ width: 96, minHeight: 96, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
                   {post.photos.length > 0 ? (
                     <Image source={{ uri: photoUrl(post.photos[0]) }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                   ) : (
-                    <Ionicons name={categoryIcon(post.category_code)} size={30} color={p.border} />
+                    <Ionicons name={categoryIcon(post.category_code)} size={30} color={p.textSubtle} />
                   )}
                 </View>
-                <View style={{ flex: 1, padding: 12, justifyContent: 'center' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={{ color: p.text, fontSize: 16, flex: 1, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }} numberOfLines={1}>{post.title}</Text>
+                <View style={{ flex: 1, padding: spacing.md, justifyContent: 'center', gap: spacing.xs }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                    <Text numberOfLines={1} style={{ flex: 1, color: p.text, fontSize: typeScale.body, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.body) }}>{post.title}</Text>
                     <StatusPill status={post.status} />
                   </View>
-                  <View style={{ marginTop: 4 }}>
-                    {post.price !== null
-                      ? <Money cents={post.price} size={14} bold color={p.primary} />
-                      : <Text style={{ color: p.primary, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>{t('mob.pkNegotiable')}</Text>}
-                  </View>
-                  {!!post.expires_at && post.status === 'Active' && (
-                    <Text style={{ color: expiring ? p.warning : p.textMuted, fontSize: 12, marginTop: 3, fontFamily: expiring ? ty.family.bold : ty.family.regular, lineHeight: ty.lh(12) }}>
+                  {post.price !== null ? (
+                    <Text style={{ color: p.text, fontSize: typeScale.body, fontFamily: interFamily.extrabold, fontVariant: ['tabular-nums'] }}>{formatCurrency(post.price)}</Text>
+                  ) : (
+                    <Text style={{ color: p.primaryOnSoft, fontSize: typeScale.caption, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.caption) }}>{t('mob.pkNegotiable')}</Text>
+                  )}
+                  {post.expires_at && post.status === 'Active' ? (
+                    <Text style={{ color: expiring ? p.warning : p.textMuted, fontSize: typeScale.micro, fontFamily: expiring ? ty.family.bold : ty.family.regular, lineHeight: ty.lh(typeScale.micro) }}>
                       {t('mob.pkExpires')}: {formatDate(post.expires_at)}
                     </Text>
-                  )}
+                  ) : null}
                 </View>
-                <View style={{ justifyContent: 'center', paddingRight: 10 }}>
+                <View style={{ justifyContent: 'center', paddingRight: spacing.sm + 2 }}>
                   <Ionicons name="chevron-forward" size={18} color={p.textMuted} />
                 </View>
-              </View>
-              {(expiring || post.status === 'Inactive') && (
+              </ScalePressable>
+              {canRenew ? (
                 <Pressable
                   onPress={() => update.mutate({ id: post.id, data: { action: 'renew' } })}
                   accessibilityRole="button"
-                  style={{ backgroundColor: p.warningBg, paddingVertical: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 }}
+                  style={{ backgroundColor: p.warningBg, minHeight: 48, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: spacing.sm, borderBottomLeftRadius: radius.lg, borderBottomRightRadius: radius.lg }}
                 >
-                  <Ionicons name="refresh-outline" size={15} color={p.warning} />
-                  <Text style={{ color: p.warning, fontSize: 14, fontFamily: ty.family.bold, lineHeight: ty.lh(14) }}>{t('mob.pkRenew')}</Text>
+                  <Ionicons name="refresh-outline" size={18} color={p.warning} />
+                  <Text style={{ color: p.warning, fontSize: typeScale.caption, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.caption) }}>{t('mob.pkRenew')}</Text>
                 </Pressable>
-              )}
-            </Pressable>
+              ) : null}
+            </View>
           )
         })
       )}
