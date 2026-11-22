@@ -18,7 +18,9 @@ const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 export function PinDots({ value, max = 6, error }: { value: string; max?: number; error?: boolean }): React.ReactElement {
   const p = usePalette()
   const { t } = useT()
-  const shown = Math.max(4, Math.min(max, value.length + (value.length < max ? 1 : 0)))
+  // Four dots, growing only as a 5th or 6th digit is actually typed. An extra
+  // empty dot after a complete 4-digit PIN read as "one more digit needed".
+  const shown = Math.max(4, Math.min(max, value.length))
   return (
     <View accessible accessibilityLabel={t('mob.pinEntered', { n: value.length })} style={{ flexDirection: 'row', justifyContent: 'center', gap: spacing.lg, marginVertical: spacing.lg }}>
       {Array.from({ length: shown }).map((_, i) => {
