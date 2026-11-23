@@ -776,7 +776,7 @@ must match. Each phase is independently shippable and leaves no half-styled scre
 | **P4 · Notices + Puruka** ✅ `4ffb4816` (Notices) · `a8d3a83f` (Puruka) | NoticeCard variants, Notice detail, memorial treatment; Puruka feed/detail/new stepper/mine | Death notice reviewed by the owner on a phone |
 | **P5 · Me + Auth** ✅ `d10fc68d` (Me) · `d6c74ead` (sign-in) | Me, Profile, Requests, Benefits, Guarantees, Society, Funds, Help, settings; Welcome, Society code, Verify (DateField), PinPad set/login, Lock screen | Full sign-up from a fresh install in Sinhala on a real phone |
 | **P6 · Staff** ✅ `0914bb67` | Attendance events, new, scanner restyle | Scanner session of 20 cards at an event without regressions |
-| **P7 · Binary (Play)** — pending owner go-ahead | Splash + adaptive icon matching Welcome; `uses-feature android.hardware.screen.portrait required=false`; optional native polish (e.g. blur on sheets) | New versionCode on Play; new runtime fingerprint; OTA lane re-pointed |
+| **P7 · Binary (Play)** 🔄 built `3fd12ed9` — 1.6.0 vc10, runtime `f437a915…`; awaiting Play upload | Splash + adaptive icon matching Welcome; `uses-feature android.hardware.screen.portrait required=false`; optional native polish (e.g. blur on sheets) | New versionCode on Play; new runtime fingerprint; OTA lane re-pointed |
 
 Sequencing: foundations first so screens only consume; navigation with Home because the
 tab change is the biggest visible shift and Home is where members land; then by traffic.
