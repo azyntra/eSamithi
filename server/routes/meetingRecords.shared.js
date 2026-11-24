@@ -40,13 +40,18 @@ function buildRoutes(resolveActor, { kind }) {
     } catch (err) { next(err); }
   };
 
+  // What this person may do, so a screen shows only the actions that work
+  // (the server still checks every one)
+  const can = (actor) => ({ publish: actor.canPublish, moderate: actor.canModerate, withdraw: actor.canWithdraw });
+
   // Reading
-  router.get('/', h((req, pool, _t, actor) => minutes.browse(pool, actor, {
-    year: req.query.year, month: req.query.month, status: req.query.status, page: req.query.page
+  router.get('/', h(async (req, pool, _t, actor) => ({
+    ...(await minutes.browse(pool, actor, { year: req.query.year, month: req.query.month, status: req.query.status, page: req.query.page })),
+    can: can(actor)
   })));
   router.get('/secretary', h((_req, pool, _t, actor) => minutes.secretaryHub(pool, actor)));
-  router.get(`/:id${ID}`, h((req, pool, t, actor) => minutes.getReport(pool, t, actor, req.params.id)));
-  router.get(`/:id${ID}/versions/:no${ID}`, h((req, pool, t, actor) => minutes.getReport(pool, t, actor, req.params.id, req.params.no)));
+  router.get(`/:id${ID}`, h(async (req, pool, t, actor) => ({ ...(await minutes.getReport(pool, t, actor, req.params.id)), can: can(actor) })));
+  router.get(`/:id${ID}/versions/:no${ID}`, h(async (req, pool, t, actor) => ({ ...(await minutes.getReport(pool, t, actor, req.params.id, req.params.no)), can: can(actor) })));
   router.get(`/:id${ID}/comments`, h((req, pool, _t, actor) => minutes.listComments(pool, actor, req.params.id)));
 
   // Drafts

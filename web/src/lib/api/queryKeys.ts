@@ -25,5 +25,11 @@ export const qk = {
   announcements: ['announcements'] as const,
   memberRequests: (status?: string) => (status ? (['member-requests', status] as const) : (['member-requests'] as const)),
   purukaPosts: (filters?: object) => (filters ? (['puruka-posts', filters] as const) : (['puruka-posts'] as const)),
-  purukaCategories: ['puruka-categories'] as const
+  purukaCategories: ['puruka-categories'] as const,
+  // Meeting Records: one root so any change refreshes lists, reports and drafts
+  meetingRecordsRoot: ['meeting-records'] as const,
+  meetingRecords: (filters: object) => ['meeting-records', 'list', filters] as const,
+  meetingRecord: (id: number, versionNo?: number) => ['meeting-records', 'report', id, versionNo ?? 'latest'] as const,
+  meetingComments: (id: number) => ['meeting-records', 'comments', id] as const,
+  meetingDraft: (id: number) => ['meeting-records', 'draft', id] as const
 }

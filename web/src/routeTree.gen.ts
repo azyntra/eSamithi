@@ -17,6 +17,7 @@ import { Route as AppAttendanceRouteImport } from './routes/_app/attendance'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppExpensesRouteImport } from './routes/_app/expenses'
 import { Route as AppIncomesRouteImport } from './routes/_app/incomes'
+import { Route as AppMeetingRecordsRouteImport } from './routes/_app/meeting-records'
 import { Route as AppMessagesRouteImport } from './routes/_app/messages'
 import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
@@ -63,6 +64,11 @@ const AppExpensesRoute = AppExpensesRouteImport.update({
 const AppIncomesRoute = AppIncomesRouteImport.update({
   id: '/incomes',
   path: '/incomes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMeetingRecordsRoute = AppMeetingRecordsRouteImport.update({
+  id: '/meeting-records',
+  path: '/meeting-records',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMessagesRoute = AppMessagesRouteImport.update({
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/expenses': typeof AppExpensesRoute
   '/incomes': typeof AppIncomesRoute
+  '/meeting-records': typeof AppMeetingRecordsRoute
   '/messages': typeof AppMessagesRoute
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/expenses': typeof AppExpensesRoute
   '/incomes': typeof AppIncomesRoute
+  '/meeting-records': typeof AppMeetingRecordsRoute
   '/messages': typeof AppMessagesRoute
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/expenses': typeof AppExpensesRoute
   '/_app/incomes': typeof AppIncomesRoute
+  '/_app/meeting-records': typeof AppMeetingRecordsRoute
   '/_app/messages': typeof AppMessagesRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/settings': typeof AppSettingsRoute
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/incomes'
+    | '/meeting-records'
     | '/messages'
     | '/reports'
     | '/settings'
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/incomes'
+    | '/meeting-records'
     | '/messages'
     | '/reports'
     | '/settings'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/expenses'
     | '/_app/incomes'
+    | '/_app/meeting-records'
     | '/_app/messages'
     | '/_app/reports'
     | '/_app/settings'
@@ -279,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIncomesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/meeting-records': {
+      id: '/_app/meeting-records'
+      path: '/meeting-records'
+      fullPath: '/meeting-records'
+      preLoaderRoute: typeof AppMeetingRecordsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/messages': {
       id: '/_app/messages'
       path: '/messages'
@@ -343,6 +362,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppExpensesRoute: typeof AppExpensesRoute
   AppIncomesRoute: typeof AppIncomesRoute
+  AppMeetingRecordsRoute: typeof AppMeetingRecordsRoute
   AppMessagesRoute: typeof AppMessagesRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -358,6 +378,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppExpensesRoute: AppExpensesRoute,
   AppIncomesRoute: AppIncomesRoute,
+  AppMeetingRecordsRoute: AppMeetingRecordsRoute,
   AppMessagesRoute: AppMessagesRoute,
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,

@@ -4,7 +4,7 @@ import { CODE, signIn } from './helpers'
 
 // Every route is checked in both languages and both themes. WCAG 2.1 A/AA is
 // the bar (requirements §9); a violation here is a real defect, not a warning.
-const ROUTES = ['dashboard', 'members', 'incomes', 'expenses', 'loans', 'wallet', 'attendance', 'messages', 'reports', 'settings']
+const ROUTES = ['dashboard', 'members', 'incomes', 'expenses', 'loans', 'wallet', 'attendance', 'messages', 'meeting-records', 'reports', 'settings']
 
 // Motion keeps opacity fades even under prefers-reduced-motion, and a half
 // faded label really does fail contrast — so wait for the page to settle

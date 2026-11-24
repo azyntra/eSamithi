@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { CalendarDays, Eye, EyeOff, Flower2, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
+import { BookOpenText, CalendarDays, Eye, EyeOff, Flower2, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { EmptyState } from '@/components/EmptyState'
@@ -14,6 +15,9 @@ import { cn } from '@/lib/utils'
 import { AnnouncementSheet } from './AnnouncementSheet'
 import { useAnnouncements, useDeleteAnnouncement, useToggleAnnouncement } from '../queries'
 import type { Announcement, AnnouncementType } from '../types'
+
+// Made by publishing meeting minutes: opened from here, edited there
+const MINUTES_META = { icon: BookOpenText, tone: 'bg-accent text-primary', variant: 'default' as const }
 
 const TYPE_META: Record<AnnouncementType, { icon: typeof Megaphone; tone: string; variant: 'danger' | 'default' | 'success' }> = {
   death: { icon: Flower2, tone: 'bg-danger-soft text-danger', variant: 'danger' },
@@ -90,7 +94,7 @@ export function AnnouncementsTab({ create = false, onCreateHandled }: { create?:
       ) : (
         <ul className="grid gap-3">
           {items.map((a) => {
-            const meta = TYPE_META[a.type] ?? TYPE_META.general
+            const meta = a.type === 'minutes' ? MINUTES_META : TYPE_META[a.type] ?? TYPE_META.general
             const Icon = meta.icon
             return (
               <li key={a.id}>
@@ -106,7 +110,7 @@ export function AnnouncementsTab({ create = false, onCreateHandled }: { create?:
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold">{a.title}</span>
                         <Badge variant={meta.variant} className="text-[11px]">
-                          {a.type === 'death' ? t('msg.typeDeath') : a.type === 'meeting' ? t('msg.typeMeeting') : t('msg.typeGeneral')}
+                          {a.type === 'death' ? t('msg.typeDeath') : a.type === 'meeting' ? t('msg.typeMeeting') : a.type === 'minutes' ? t('msg.typeMinutes') : t('msg.typeGeneral')}
                         </Badge>
                         {!a.is_active && (
                           <Badge variant="neutral" className="text-[11px]">
@@ -141,9 +145,19 @@ export function AnnouncementsTab({ create = false, onCreateHandled }: { create?:
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button size="icon-sm" variant="ghost" aria-label={`${t('common.edit')}: ${a.title}`} onClick={() => openEdit(a)}>
-                        <Pencil />
-                      </Button>
+                      {a.type === 'minutes' ? (
+                        a.meeting_report_id ? (
+                          <Button size="sm" variant="ghost" asChild>
+                            <Link to="/meeting-records" search={{ report: a.meeting_report_id }}>
+                              <BookOpenText /> {t('msg.openMinutes')}
+                            </Link>
+                          </Button>
+                        ) : null
+                      ) : (
+                        <Button size="icon-sm" variant="ghost" aria-label={`${t('common.edit')}: ${a.title}`} onClick={() => openEdit(a)}>
+                          <Pencil />
+                        </Button>
+                      )}
                       <Button size="icon-sm" variant="ghost" aria-label={`${a.is_active ? t('msg.hide') : t('msg.show')}: ${a.title}`} onClick={() => void onToggle(a)}>
                         {a.is_active ? <EyeOff /> : <Eye />}
                       </Button>

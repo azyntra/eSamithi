@@ -5,7 +5,9 @@ export type AnnouncementType = 'death' | 'meeting' | 'general'
 
 export interface Announcement {
   id: number
-  type: AnnouncementType
+  // 'minutes' notices are made by publishing meeting minutes, never by hand
+  type: AnnouncementType | 'minutes'
+  meeting_report_id?: number | null
   title: string
   body: string | null
   deceased_name: string | null

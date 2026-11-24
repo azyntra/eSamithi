@@ -1,8 +1,8 @@
-import { ArrowDownToLine, ArrowUpFromLine, BarChart3, ClipboardCheck, HandCoins, Landmark, LayoutDashboard, Megaphone, Settings, Users, type LucideIcon } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, BarChart3, BookOpenText, ClipboardCheck, HandCoins, Landmark, LayoutDashboard, Megaphone, Settings, Users, type LucideIcon } from 'lucide-react'
 import type { TranslationKey } from '@/lib/i18n'
 
 export interface NavItem {
-  to: '/dashboard' | '/incomes' | '/expenses' | '/loans' | '/wallet' | '/members' | '/attendance' | '/messages' | '/reports' | '/settings'
+  to: '/dashboard' | '/incomes' | '/expenses' | '/loans' | '/wallet' | '/members' | '/attendance' | '/messages' | '/meeting-records' | '/reports' | '/settings'
   key: TranslationKey
   icon: LucideIcon
 }
@@ -34,6 +34,7 @@ export const NAV_GROUPS: NavGroup[] = [
     key: 'nav.groupSociety',
     items: [
       { to: '/messages', key: 'nav.messages', icon: Megaphone },
+      { to: '/meeting-records', key: 'nav.meetingRecords', icon: BookOpenText },
       { to: '/reports', key: 'nav.reports', icon: BarChart3 }
     ]
   },

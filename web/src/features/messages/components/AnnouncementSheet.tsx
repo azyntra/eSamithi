@@ -26,7 +26,8 @@ const EMPTY: AnnouncementPayload = {
 
 function fromAnnouncement(a: Announcement): AnnouncementPayload {
   return {
-    type: a.type,
+    // A minutes notice is never edited here (the list links to the report)
+    type: a.type === 'minutes' ? 'general' : a.type,
     title: a.title,
     body: a.body,
     deceased_name: a.deceased_name,
