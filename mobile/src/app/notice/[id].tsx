@@ -7,7 +7,7 @@ import { radius, spacing, type as typeScale, usePalette } from '../../theme'
 import { useType } from '../../typography'
 import { useAnnouncements } from '../../api/hooks'
 import { formatDate } from '../../lib/date'
-import { DateBlock, ErrorView, ScalePressable, Screen, SkeletonCards, StaleBanner, useCardStyle, useToast } from '../../ui'
+import { Button, DateBlock, ErrorView, ScalePressable, Screen, SkeletonCards, StaleBanner, useCardStyle, useToast } from '../../ui'
 
 // One notice in full (redesign §6.4.1) — where a notice push now lands.
 // Death notices use the memorial treatment: slate, the name first, no red.
@@ -52,8 +52,9 @@ export default function NoticeDetail(): React.ReactElement {
   const meeting = n.type === 'meeting'
   const accent = death ? p.memorial : p.primaryOnSoft
   const tint = death ? p.memorialBg : p.primarySoft
-  const icon: keyof typeof Ionicons.glyphMap = death ? 'flower-outline' : meeting ? 'calendar-outline' : 'megaphone-outline'
-  const kind = death ? t('mob.noticeDeath') : meeting ? t('mob.noticeMeeting') : t('mob.noticeGeneral')
+  const minutes = n.type === 'minutes'
+  const icon: keyof typeof Ionicons.glyphMap = death ? 'flower-outline' : meeting ? 'calendar-outline' : minutes ? 'book-outline' : 'megaphone-outline'
+  const kind = death ? t('mob.noticeDeath') : meeting ? t('mob.noticeMeeting') : minutes ? t('mob.noticeMinutes') : t('mob.noticeGeneral')
   const heading = death ? (n.deceased_name || n.title) : n.title
   const when = death ? n.funeral_date : meeting ? n.event_date : null
 
@@ -105,6 +106,11 @@ export default function NoticeDetail(): React.ReactElement {
         </View>
       ) : null}
 
+      {minutes && n.meeting_report_id ? (
+        <View style={{ marginTop: spacing.lg }}>
+          <Button label={t('mob.mmOpenMinutes')} icon="book-outline" onPress={() => router.push(`/meeting-records/${n.meeting_report_id}`)} />
+        </View>
+      ) : null}
       {n.body ? (
         <Text style={{ color: p.text, fontSize: typeScale.body, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.body) + 4, marginTop: spacing.lg, paddingHorizontal: spacing.xs }}>{n.body}</Text>
       ) : null}

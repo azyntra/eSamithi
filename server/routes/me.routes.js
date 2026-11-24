@@ -318,7 +318,8 @@ router.get('/announcements', async (_req, res, next) => {
       SELECT a.id, a.type, a.title, a.body, a.deceased_name,
              DATE_FORMAT(a.funeral_date, '%Y-%m-%d') as funeral_date, a.funeral_location,
              DATE_FORMAT(a.event_date, '%Y-%m-%d') as event_date,
-             DATE_FORMAT(a.created_at, '%Y-%m-%d') as created_at
+             DATE_FORMAT(a.created_at, '%Y-%m-%d') as created_at,
+             a.meeting_report_id
       FROM announcements a
       WHERE a.is_active = 1 AND ${VISIBLE_UNTIL_SQL} >= ?
       ORDER BY a.created_at DESC, a.id DESC LIMIT 50

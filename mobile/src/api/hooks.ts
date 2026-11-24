@@ -132,7 +132,9 @@ export interface SocietyInfo {
 
 export interface Announcement {
   id: number
-  type: 'death' | 'meeting' | 'general'
+  // 'minutes' = published meeting minutes; meeting_report_id opens the report
+  type: 'death' | 'meeting' | 'general' | 'minutes'
+  meeting_report_id?: number | null
   title: string
   body: string | null
   deceased_name: string | null

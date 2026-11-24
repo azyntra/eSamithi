@@ -68,6 +68,14 @@ export function NoticeCard({ notice, compact, onPress }: { notice: Announcement;
         </View>
       </View>
     )
+  } else if (n.type === 'minutes') {
+    content = (
+      <View style={{ padding: spacing.lg }}>
+        {overline(p.primaryOnSoft, t('mob.noticeMinutes'), 'book-outline', p.primarySoft)}
+        <Text style={{ color: p.text, fontSize: typeScale.heading, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.heading), marginTop: spacing.sm }}>{n.title}</Text>
+        <Text style={{ color: p.primary, fontSize: typeScale.caption, fontFamily: ty.family.semibold, lineHeight: ty.lh(typeScale.caption), marginTop: spacing.xs }}>{t('mob.mmReadAndListen')}</Text>
+      </View>
+    )
   } else {
     content = (
       <View style={{ padding: spacing.lg }}>

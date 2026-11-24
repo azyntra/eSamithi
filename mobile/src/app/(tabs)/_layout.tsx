@@ -14,7 +14,7 @@ export default function TabsLayout(): React.ReactElement {
   const p = usePalette()
   const ty = useType()
   const router = useRouter()
-  const { activeProfile } = useAuth()
+  const { activeProfile, profiles, switchProfile } = useAuth()
 
   // Unread badge: announcements above the per-samithi seen watermark.
   // The query is shared with Home/Notices via React Query, so this adds no
@@ -33,13 +33,27 @@ export default function TabsLayout(): React.ReactElement {
     // A notice push carries { type: 'announcement', id }: open that notice.
     // Anything else (or an older server without an id) lands on the list.
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = (response?.notification?.request?.content?.data ?? {}) as { type?: string; id?: number | string }
+      const data = (response?.notification?.request?.content?.data ?? {}) as { type?: string; id?: number | string; report_id?: number | string; sam?: string }
       const id = Number(data.id)
+      // Meeting minutes pushes name their society (§7.5): switch to it first,
+      // then open the report. A society this phone doesn't have stays put.
+      if (data.type === 'minutes' || data.type === 'minutes_comment' || data.type === 'minutes_secretary') {
+        const reportId = Number(data.report_id)
+        const open = (): void => {
+          if (data.type === 'minutes_secretary') router.push('/meeting-records/secretary')
+          else if (Number.isFinite(reportId) && reportId > 0) router.push(data.type === 'minutes_comment' ? `/meeting-records/${reportId}/comments` : `/meeting-records/${reportId}`)
+          else router.push('/meeting-records')
+        }
+        if (data.sam && data.sam !== activeProfile?.slug && profiles.some((pr) => pr.slug === data.sam)) {
+          switchProfile(data.sam).then(open).catch(() => {})
+        } else open()
+        return
+      }
       if (data.type === 'announcement' && Number.isFinite(id) && id > 0) router.push(`/notice/${id}`)
       else router.push('/(tabs)/notices')
     })
     return () => sub.remove()
-  }, [router, activeProfile?.slug])
+  }, [router, activeProfile?.slug, profiles, switchProfile])
 
   return (
     <Tabs

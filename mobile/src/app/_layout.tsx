@@ -83,6 +83,13 @@ function RootNavigator(): React.ReactElement {
         <Stack.Screen name="attendance/index" options={{ title: t('mob.attTitle') }} />
         <Stack.Screen name="attendance/new" options={{ title: t('mob.attNewEvent') }} />
         <Stack.Screen name="attendance/[id]" options={{ title: t('mob.attTitle') }} />
+        <Stack.Screen name="meeting-records/index" options={{ title: t('mob.mmTitle') }} />
+        <Stack.Screen name="meeting-records/[id]/index" options={{ title: t('mob.mmCategoryMinutes') }} />
+        <Stack.Screen name="meeting-records/[id]/versions" options={{ title: t('mob.mmVersionHistory') }} />
+        <Stack.Screen name="meeting-records/[id]/comments" options={{ title: t('mob.mmComments') }} />
+        <Stack.Screen name="meeting-records/secretary" options={{ title: t('mob.mmSecretaryTitle') }} />
+        <Stack.Screen name="meeting-records/new" options={{ title: t('mob.mmNewMinutes') }} />
+        <Stack.Screen name="meeting-records/draft/[id]" options={{ title: t('mob.mmDraftTitle') }} />
       </Stack.Protected>
       <Stack.Protected guard={status !== 'signedIn'}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />

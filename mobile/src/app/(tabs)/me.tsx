@@ -73,6 +73,7 @@ export default function Me(): React.ReactElement {
 
   const prof = profile.data
   const isStaff = prof?.permissions?.includes('attendance') === true
+  const isSecretary = prof?.permissions?.includes('minutes') === true
   const societyName = society.data?.society_name ?? activeProfile?.name ?? ''
 
   const membership: NavItem[] = [
@@ -84,6 +85,7 @@ export default function Me(): React.ReactElement {
     { href: '/guarantees', icon: 'people-outline', label: t('mob.guarantees') }
   ]
   const societyItems: NavItem[] = [
+    { href: '/meeting-records', icon: 'book-outline', label: t('mob.mmTitle') },
     { href: '/society', icon: 'business-outline', label: t('mob.societyInfo') },
     { href: '/society-funds', icon: 'stats-chart-outline', label: t('mob.fundsTitle') },
     { href: '/help', icon: 'help-buoy-outline', label: t('mob.help') }
@@ -150,6 +152,13 @@ export default function Me(): React.ReactElement {
 
       <GroupLabel>{t('mob.meSafety')}</GroupLabel>
       {group([{ href: '/report', icon: 'shield-checkmark-outline', label: t('mob.reportConcern') }])}
+
+      {isSecretary ? (
+        <>
+          <GroupLabel>{t('mob.mmOfficerGroup')}</GroupLabel>
+          {group([{ href: '/meeting-records/secretary', icon: 'create-outline', label: t('mob.mmSecretaryRow') }])}
+        </>
+      ) : null}
 
       {isStaff ? (
         <>
