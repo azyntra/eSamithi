@@ -44,7 +44,8 @@ export interface MemberRequest {
   member_name: string | null
   member_society_id: string
   member_phone: string | null
-  type: 'loan' | 'correction'
+  // 'concern' = a member's in-app report to the officers (Play Child Safety Standards)
+  type: 'loan' | 'correction' | 'concern'
   amount: number | null
   purpose: string | null
   message: string | null

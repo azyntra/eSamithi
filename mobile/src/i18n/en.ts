@@ -1191,7 +1191,24 @@ export const en = {
   'mob.whatsNewNotices': 'Society news, meetings and death notices',
   'mob.whatsNewPuruka': 'Buy and sell between members',
   'mob.whatsNewMe': 'Your profile, requests and settings',
-  'mob.gotIt': 'Got it'
+  'mob.gotIt': 'Got it',
+  'mob.reportConcern': 'Report a concern',
+  'mob.reportIntro': 'Your report goes privately to your society’s officers, who can remove content and act on it. You will see their reply under My requests.',
+  'mob.reportWhat': 'What is it about?',
+  'mob.reportChildSafety': 'Child safety',
+  'mob.reportChildSafetyHint': 'Anything that could harm or exploit a child',
+  'mob.reportContent': 'Inappropriate content',
+  'mob.reportContentHint': 'A Puruka post or photo that should not be here',
+  'mob.reportOther': 'Something else',
+  'mob.reportOtherHint': 'Any other problem or feedback about the app',
+  'mob.reportDescribe': 'Tell us what happened',
+  'mob.reportDescribePh': 'Which post or member, and what you saw',
+  'mob.reportSend': 'Send report',
+  'mob.reportSent': 'Thank you. Your report has been sent.',
+  'mob.reportUrgent': 'If a child is in danger now, call Childline 1929 or the police on 119.',
+  'mob.reqTypeConcern': 'Concern reported',
+  'mob.meSafety': 'Safety and feedback',
+  'mob.call1929': 'Call 1929'
 }
 
 export type TranslationKey = keyof typeof en

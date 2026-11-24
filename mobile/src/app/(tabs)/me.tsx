@@ -148,6 +148,9 @@ export default function Me(): React.ReactElement {
       <GroupLabel>{t('mob.meSociety')}</GroupLabel>
       {group(societyItems)}
 
+      <GroupLabel>{t('mob.meSafety')}</GroupLabel>
+      {group([{ href: '/report', icon: 'shield-checkmark-outline', label: t('mob.reportConcern') }])}
+
       {isStaff ? (
         <>
           <GroupLabel>{t('mob.meStaff')}</GroupLabel>

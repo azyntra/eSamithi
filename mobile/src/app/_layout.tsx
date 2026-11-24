@@ -65,6 +65,7 @@ function RootNavigator(): React.ReactElement {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="loan/[id]" options={{ title: t('nav.loans') }} />
         <Stack.Screen name="notice/[id]" options={{ title: t('mob.noticeTitle') }} />
+        <Stack.Screen name="report" options={{ title: t('mob.reportConcern') }} />
         <Stack.Screen name="receipt/[kind]/[id]" options={{ title: t('mob.rcptTitle') }} />
         <Stack.Screen name="profile" options={{ title: t('mob.myProfile') }} />
         <Stack.Screen name="benefits" options={{ title: t('mob.benefits') }} />

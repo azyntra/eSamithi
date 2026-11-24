@@ -144,7 +144,7 @@ export interface Announcement {
 
 export interface MemberRequest {
   id: number
-  type: 'loan' | 'correction'
+  type: 'loan' | 'correction' | 'concern'
   amount: number | null
   purpose: string | null
   message: string | null
@@ -154,7 +154,7 @@ export interface MemberRequest {
 }
 
 export interface NewRequest {
-  type: 'loan' | 'correction'
+  type: 'loan' | 'correction' | 'concern'
   amount?: number
   purpose?: string
   message?: string

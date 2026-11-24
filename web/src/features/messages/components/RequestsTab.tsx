@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { Inbox, Phone } from 'lucide-react'
+import { Inbox, Phone, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { EmptyState } from '@/components/EmptyState'
 import { StatusPill } from '@/components/StatusPill'
@@ -23,18 +23,27 @@ import { memberLabel } from '@/lib/members'
 // this is the office side of that queue. Approving a loan request does not
 // create a loan — the money still has to be issued in the loan portfolio,
 // which is what the hint links to.
+// What a request is, in the office's words. Concerns carry their category in
+// `purpose`; child-safety reports are flagged so they are never missed.
+function requestLabel(r: MemberRequest, t: ReturnType<typeof useT>['t']): string {
+  if (r.type === 'loan') return t('msg.reqLoan')
+  if (r.type === 'correction') return t('msg.reqCorrection')
+  const cat = r.purpose === 'child_safety' ? t('msg.concernChildSafety') : r.purpose === 'content' ? t('msg.concernContent') : t('msg.concernOther')
+  return `${t('msg.reqConcern')} · ${cat}`
+}
+
 export function RequestsTab({ pendingOnly, onFilterChange }: { pendingOnly: boolean; onFilterChange: (pending: boolean) => void }) {
   const { t, lang } = useT()
   const list = useMemberRequests(pendingOnly ? 'Pending' : undefined)
   const review = useReviewRequest()
-  const [target, setTarget] = useState<{ req: MemberRequest; status: Extract<RequestStatus, 'Approved' | 'Rejected'> } | null>(null)
+  const [target, setTarget] = useState<{ req: MemberRequest; status: Extract<RequestStatus, 'Approved' | 'Rejected' | 'Done'> } | null>(null)
   const [note, setNote] = useState('')
 
   async function submit() {
     if (!target) return
     try {
       await review.mutateAsync({ id: target.req.id, status: target.status, staff_note: note.trim() || undefined })
-      toast.success(target.status === 'Approved' ? t('msg.approvedToast') : t('msg.rejectedToast'))
+      toast.success(target.status === 'Done' ? t('msg.concernHandledToast') : target.status === 'Approved' ? t('msg.approvedToast') : t('msg.rejectedToast'))
       setTarget(null)
       setNote('')
     } catch (err) {
@@ -72,7 +81,12 @@ export function RequestsTab({ pendingOnly, onFilterChange }: { pendingOnly: bool
               <Card data-request={r.id}>
                 <CardContent className="grid gap-2 py-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold">{r.type === 'loan' ? t('msg.reqLoan') : t('msg.reqCorrection')}</span>
+                    {r.type === 'concern' && r.purpose === 'child_safety' ? (
+                      <Badge variant="danger" className="gap-1 text-[11px]">
+                        <ShieldAlert className="size-3" /> {t('msg.concernChildSafety')}
+                      </Badge>
+                    ) : null}
+                    <span className="text-sm font-semibold">{requestLabel(r, t)}</span>
                     <StatusPill value={r.status} />
                     <span className="ml-auto text-xs text-subtle-foreground">{formatDateTime(r.created_at, lang)}</span>
                   </div>
@@ -101,7 +115,14 @@ export function RequestsTab({ pendingOnly, onFilterChange }: { pendingOnly: bool
                       {t('msg.staffNote')}: {r.staff_note}
                     </p>
                   )}
-                  {r.status === 'Pending' && (
+                  {r.status === 'Pending' && r.type === 'concern' && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Button size="sm" onClick={() => { setNote(''); setTarget({ req: r, status: 'Done' }) }}>
+                        {t('msg.concernMarkHandled')}
+                      </Button>
+                    </div>
+                  )}
+                  {r.status === 'Pending' && r.type !== 'concern' && (
                     <div className="flex flex-wrap gap-2 pt-1">
                       <Button size="sm" onClick={() => { setNote(''); setTarget({ req: r, status: 'Approved' }) }}>
                         {t('msg.approve')}
@@ -121,9 +142,9 @@ export function RequestsTab({ pendingOnly, onFilterChange }: { pendingOnly: bool
       <Dialog open={target !== null} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{target?.status === 'Approved' ? t('msg.approve') : t('msg.reject')}</DialogTitle>
+            <DialogTitle>{target?.status === 'Done' ? t('msg.concernMarkHandled') : target?.status === 'Approved' ? t('msg.approve') : t('msg.reject')}</DialogTitle>
             <DialogDescription>
-              {target ? `${target.req.type === 'loan' ? t('msg.reqLoan') : t('msg.reqCorrection')} — ${target.req.member_name}` : ''}
+              {target ? `${requestLabel(target.req, t)} — ${target.req.member_name}` : ''}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
@@ -145,7 +166,7 @@ export function RequestsTab({ pendingOnly, onFilterChange }: { pendingOnly: bool
               {t('common.cancel')}
             </Button>
             <Button loading={review.isPending} onClick={() => void submit()}>
-              {target?.status === 'Approved' ? t('msg.approve') : t('msg.reject')}
+              {target?.status === 'Done' ? t('msg.concernMarkHandled') : target?.status === 'Approved' ? t('msg.approve') : t('msg.reject')}
             </Button>
           </DialogFooter>
         </DialogContent>

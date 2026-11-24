@@ -350,13 +350,18 @@ router.get('/requests', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/v1/me/requests — submit a loan or correction request
+// Categories for type 'concern' — the in-app reporting mechanism Google Play's
+// Child Safety Standards policy requires (Nov 2026). Stored in `purpose`.
+const CONCERN_CATEGORIES = ['child_safety', 'content', 'other'];
+
+// POST /api/v1/me/requests — submit a loan or correction request, or report a
+// concern to the society's officers
 router.post('/requests', async (req, res, next) => {
   try {
     const { type, amount, purpose, message } = req.body;
     const pool = getPool();
 
-    if (!['loan', 'correction'].includes(type)) {
+    if (!['loan', 'correction', 'concern'].includes(type)) {
       return res.status(400).json({ error: 'Invalid request type' });
     }
     if (type === 'loan') {
@@ -385,13 +390,18 @@ router.post('/requests', async (req, res, next) => {
     if (type === 'correction' && (!message || !String(message).trim())) {
       return res.status(400).json({ error: 'Please describe what needs to be corrected' });
     }
+    if (type === 'concern') {
+      if (!CONCERN_CATEGORIES.includes(purpose)) return res.status(400).json({ error: 'Please choose what the concern is about' });
+      if (!message || !String(message).trim()) return res.status(400).json({ error: 'Please describe the concern' });
+    }
 
-    // Keep the queue sane: max 3 pending requests per member
+    // Keep the queue sane: max 3 pending loan/correction requests per member.
+    // A concern is never held back by that limit — a safety report must always go through.
     const [pending] = await pool.query(
-      "SELECT COUNT(*) as count FROM member_requests WHERE member_id = ? AND status = 'Pending'",
+      "SELECT COUNT(*) as count FROM member_requests WHERE member_id = ? AND status = 'Pending' AND type <> 'concern'",
       [req.member.id]
     );
-    if (Number(pending[0].count) >= 3) {
+    if (type !== 'concern' && Number(pending[0].count) >= 3) {
       return res.status(400).json({ error: 'You already have 3 pending requests. Please wait for the office to review them.' });
     }
 
@@ -400,7 +410,7 @@ router.post('/requests', async (req, res, next) => {
       [
         req.member.id, type,
         type === 'loan' ? Math.round(Number(amount)) : null,
-        type === 'loan' ? String(purpose).trim() : null,
+        type === 'loan' ? String(purpose).trim() : type === 'concern' ? purpose : null,
         message ? String(message).trim() : null
       ]
     );

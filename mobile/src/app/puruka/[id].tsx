@@ -108,6 +108,9 @@ export default function PurukaPostDetail(): React.ReactElement {
     const send = (reason: string): void =>
       report.mutate({ id, reason }, { onSuccess: () => toast.show('success', t('mob.pkReportThanks')) })
     Alert.alert(t('mob.pkReport'), t('mob.pkReportWhy'), [
+      // Child safety goes to the society's officers through Report a concern,
+      // with the post pre-filled (Play Child Safety Standards)
+      { text: t('mob.reportChildSafety'), onPress: () => router.push({ pathname: '/report', params: { category: 'child_safety', ref: `Puruka #${id}: ${item.title}` } }) },
       { text: t('mob.pkReportFake'), onPress: () => send('Not genuine') },
       { text: t('mob.pkReportSold'), onPress: () => send('Already sold') },
       { text: t('mob.pkReportBad'), onPress: () => send('Inappropriate') },

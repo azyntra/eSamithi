@@ -69,11 +69,11 @@ export default function Requests(): React.ReactElement {
         <View key={r.id} style={[card, { padding: spacing.lg, marginBottom: spacing.md }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: p.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name={r.type === 'loan' ? 'wallet-outline' : 'create-outline'} size={20} color={p.primary} />
+              <Ionicons name={r.type === 'loan' ? 'wallet-outline' : r.type === 'concern' ? 'shield-checkmark-outline' : 'create-outline'} size={20} color={p.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: p.text, fontSize: typeScale.body, fontFamily: ty.family.bold, lineHeight: ty.lh(typeScale.body) }}>
-                {r.type === 'loan' ? t('mob.reqTypeLoan') : t('mob.reqTypeCorrection')}
+                {r.type === 'loan' ? t('mob.reqTypeLoan') : r.type === 'concern' ? t('mob.reqTypeConcern') : t('mob.reqTypeCorrection')}
               </Text>
               <Text style={{ color: p.textMuted, fontSize: typeScale.micro, fontFamily: ty.family.regular, lineHeight: ty.lh(typeScale.micro) }}>{formatDate(r.created_at)}</Text>
               {/* Under the title, not beside it: Sinhala status words are long */}

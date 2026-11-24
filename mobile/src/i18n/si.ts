@@ -1194,5 +1194,22 @@ export const si: Partial<Record<TranslationKey, string>> = {
   'mob.whatsNewNotices': 'සමිති පුවත්, රැස්වීම් සහ මරණ දැන්වීම්',
   'mob.whatsNewPuruka': 'සාමාජිකයින් අතර ගනුදෙනු',
   'mob.whatsNewMe': 'ඔබේ පැතිකඩ, ඉල්ලීම් සහ සැකසුම්',
-  'mob.gotIt': 'හරි'
+  'mob.gotIt': 'හරි',
+  'mob.reportConcern': 'ගැටලුවක් වාර්තා කරන්න',
+  'mob.reportIntro': 'ඔබේ වාර්තාව පෞද්ගලිකව ඔබේ සමිතියේ නිලධාරීන්ට යයි. ඔවුන්ට අන්තර්ගතය ඉවත් කර ක්‍රියාමාර්ග ගත හැක. ඔවුන්ගේ පිළිතුර මගේ ඉල්ලීම් යටතේ පෙනේ.',
+  'mob.reportWhat': 'එය කුමක් ගැනද?',
+  'mob.reportChildSafety': 'ළමා ආරක්ෂාව',
+  'mob.reportChildSafetyHint': 'දරුවෙකුට හානි කළ හැකි හෝ සූරාකෑමට ලක් කළ හැකි ඕනෑම දෙයක්',
+  'mob.reportContent': 'නුසුදුසු අන්තර්ගතය',
+  'mob.reportContentHint': 'මෙහි නොතිබිය යුතු පුරුක පළ කිරීමක් හෝ ඡායාරූපයක්',
+  'mob.reportOther': 'වෙනත් දෙයක්',
+  'mob.reportOtherHint': 'යෙදුම ගැන වෙනත් ගැටලුවක් හෝ අදහසක්',
+  'mob.reportDescribe': 'සිදු වූ දේ අපට කියන්න',
+  'mob.reportDescribePh': 'කුමන පළ කිරීමද හෝ සාමාජිකයාද, සහ ඔබ දුටු දේ',
+  'mob.reportSend': 'වාර්තාව යවන්න',
+  'mob.reportSent': 'ස්තූතියි. ඔබේ වාර්තාව යවා ඇත.',
+  'mob.reportUrgent': 'දරුවෙකු දැන් අනතුරේ නම්, ළමා ඇමතුම් සේවාව 1929 හෝ පොලිසිය 119 අමතන්න.',
+  'mob.reqTypeConcern': 'වාර්තා කළ ගැටලුව',
+  'mob.meSafety': 'ආරක්ෂාව සහ අදහස්',
+  'mob.call1929': '1929 අමතන්න'
 }

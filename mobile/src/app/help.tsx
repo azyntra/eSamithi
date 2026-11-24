@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Linking, Text, View } from 'react-native'
 import Constants from 'expo-constants'
+import { useRouter } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useT, type TranslationKey } from '../i18n'
 import { spacing, type as typeScale, usePalette } from '../theme'
@@ -16,6 +17,7 @@ export default function Help(): React.ReactElement {
   const ty = useType()
   const card = useCardStyle()
   const society = useSocietyInfo()
+  const router = useRouter()
   const [open, setOpen] = useState<string | null>(null)
 
   const claims: Array<{ title: TranslationKey; body: TranslationKey }> = [
@@ -84,6 +86,11 @@ export default function Help(): React.ReactElement {
           </View>
         </>
       ) : null}
+
+      <GroupLabel>{t('mob.meSafety')}</GroupLabel>
+      <Callout icon="shield-checkmark-outline" tone="brand" text={t('mob.reportIntro')}>
+        <Button label={t('mob.reportConcern')} variant="secondary" icon="flag-outline" onPress={() => router.push('/report')} />
+      </Callout>
 
       <GroupLabel>{t('mob.aboutTitle')}</GroupLabel>
       <View style={[card, { padding: spacing.lg, alignItems: 'center', gap: spacing.sm }]}>
