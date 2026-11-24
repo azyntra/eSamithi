@@ -94,7 +94,10 @@ export function AnnouncementsTab({ create = false, onCreateHandled }: { create?:
             const Icon = meta.icon
             return (
               <li key={a.id}>
-                <Card className={cn('gap-0 transition-opacity', (!a.is_active || a.expired === 1) && 'opacity-70')} data-announcement={a.id}>
+                {/* Inactive/expired notices are set apart by a dashed edge and a muted
+                    ground, never by opacity: fading the card fades its grey text
+                    below AA contrast (the badge already says why it is off) */}
+                <Card className={cn('gap-0', (!a.is_active || a.expired === 1) && 'border-dashed bg-muted/40 shadow-none')} data-announcement={a.id}>
                   <CardContent className="flex flex-wrap items-start gap-3 py-4">
                     <span className={cn('grid size-9 shrink-0 place-items-center rounded-lg', meta.tone)}>
                       <Icon className="size-4" />

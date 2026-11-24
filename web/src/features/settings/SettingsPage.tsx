@@ -324,7 +324,7 @@ export function SettingsPage({ tab, onTabChange }: { tab: SettingsTab; onTabChan
                   </>
                 ) : (
                   (users.data ?? []).map((su) => (
-                    <div key={su.id} data-user={su.username} className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 ${su.is_active === 0 ? 'opacity-70' : ''}`}>
+                    <div key={su.id} data-user={su.username} className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3 ${su.is_active === 0 ? 'border-dashed border-muted-foreground/50' : 'border-border'}`}>
                       <div className="flex items-center gap-3">
                         <span className="bg-brand-gradient grid size-9 place-items-center rounded-full text-sm font-bold text-white">{su.full_name.charAt(0).toUpperCase()}</span>
                         <div className="leading-tight">
