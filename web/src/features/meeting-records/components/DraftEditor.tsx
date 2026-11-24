@@ -266,7 +266,7 @@ export function DraftEditor({ id, onBack, onPublished, onDiscarded }: { id: numb
               )}
 
               {d.pages.length > 0 && (
-                <ol className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3">
+                <ol className="grid grid-cols-[repeat(auto-fill,minmax(188px,1fr))] gap-3">
                   {d.pages.map((p, i) => (
                     <li
                       key={p.id}
