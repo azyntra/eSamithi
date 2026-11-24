@@ -443,6 +443,73 @@ async function mobileAttendance(pool) {
   await pool.query("INSERT IGNORE INTO settings (`key`, `value`) VALUES ('app_attendance_enabled', '1')");
 }
 
+// 020 — society officers (docs/MEETING-MINUTES-REQUIREMENTS.md §3, §5.1).
+// A system user can hold a Society Position and be linked to the member
+// account they use in the member app. secretary_slot is 1 for the Secretary
+// and NULL for everyone else, so its UNIQUE key allows exactly one Secretary
+// per society even under a race. A linked member cannot be deleted
+// (ON DELETE RESTRICT); members.routes.js explains that before it happens.
+async function officers(pool) {
+  const hasColumn = async (table, column) => {
+    const [cols] = await pool.query(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      [table, column]
+    );
+    return cols.length > 0;
+  };
+  const hasIndex = async (table, index) => {
+    const [rows] = await pool.query(
+      `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?`,
+      [table, index]
+    );
+    return rows.length > 0;
+  };
+  const hasConstraint = async (table, name) => {
+    const [rows] = await pool.query(
+      `SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = ?`,
+      [table, name]
+    );
+    return rows.length > 0;
+  };
+
+  if (!(await hasColumn('users', 'society_position'))) {
+    await pool.query(`ALTER TABLE users
+      ADD COLUMN society_position ENUM('secretary','president','treasurer') NULL DEFAULT NULL,
+      ADD COLUMN member_id INT NULL DEFAULT NULL`);
+  }
+  if (!(await hasColumn('users', 'secretary_slot'))) {
+    await pool.query(`ALTER TABLE users
+      ADD COLUMN secretary_slot TINYINT AS (IF(society_position = 'secretary', 1, NULL)) STORED`);
+  }
+  if (!(await hasIndex('users', 'uq_users_member'))) {
+    await pool.query('ALTER TABLE users ADD UNIQUE KEY uq_users_member (member_id)');
+  }
+  if (!(await hasIndex('users', 'uq_users_secretary'))) {
+    await pool.query('ALTER TABLE users ADD UNIQUE KEY uq_users_secretary (secretary_slot)');
+  }
+  if (!(await hasConstraint('users', 'fk_users_member'))) {
+    await pool.query(`ALTER TABLE users ADD CONSTRAINT fk_users_member
+      FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE RESTRICT`);
+  }
+
+  // Who changed a position, linked member, role or active flag. No FKs: the
+  // trail must outlive a deleted user (by_name keeps it readable).
+  await pool.query(`CREATE TABLE IF NOT EXISTS officer_events (
+    id           INT PRIMARY KEY AUTO_INCREMENT,
+    user_id      INT          NOT NULL,
+    field        VARCHAR(32)  NOT NULL,
+    before_value VARCHAR(255) NULL DEFAULT NULL,
+    after_value  VARCHAR(255) NULL DEFAULT NULL,
+    by_user_id   INT          NULL DEFAULT NULL,
+    by_name      VARCHAR(255) NULL DEFAULT NULL,
+    created_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_oe_user (user_id, created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+}
+
 module.exports = [
   { id: '000_base_schema', up: baseSchema },
   { id: '004_loan_payment_wallet', up: loanPaymentWallet },
@@ -460,5 +527,6 @@ module.exports = [
   { id: '016_loan_payment_bill_no', up: loanPaymentBillNo },
   { id: '017_member_app_activity', up: memberAppActivity },
   { id: '018_mobile_attendance', up: mobileAttendance },
-  { id: '019_announcement_show_until', up: announcementShowUntil }
+  { id: '019_announcement_show_until', up: announcementShowUntil },
+  { id: '020_officers', up: officers }
 ];

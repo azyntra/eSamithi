@@ -5,6 +5,7 @@ const { getMemberStatement } = require('../lib/memberQueries');
 const { accrueLoan, getRates } = require('../lib/loanAccrual');
 const { getSetting, isMigrationMode } = require('../lib/settings');
 const { attendancePermission } = require('../middleware/attendanceStaff');
+const { secretaryPermission, officerPosition } = require('../lib/officers');
 const { VISIBLE_UNTIL_SQL } = require('../lib/announcements');
 const { societyToday } = require('../lib/attendance');
 
@@ -40,8 +41,13 @@ router.get('/profile', async (req, res, next) => {
     // the whole profile down with it — it just means "no extra permissions".
     const staff = await attendancePermission(req.member.id).catch(() => ({ allowed: false }));
     if (staff.allowed) permissions.push('attendance');
+    // The society's Secretary prepares and publishes meeting minutes
+    // (docs/MEETING-MINUTES-REQUIREMENTS.md §2.1); same fail-soft rule.
+    const secretary = await secretaryPermission(req.member.id).catch(() => ({ allowed: false }));
+    if (secretary.allowed) permissions.push('minutes');
+    const officer_position = await officerPosition(req.member.id).catch(() => null);
 
-    res.json({ ...members[0], is_active: members[0].is_active === null ? 1 : Number(members[0].is_active), dependents, permissions });
+    res.json({ ...members[0], is_active: members[0].is_active === null ? 1 : Number(members[0].is_active), dependents, permissions, officer_position });
   } catch (err) { next(err); }
 });
 

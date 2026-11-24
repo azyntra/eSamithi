@@ -398,6 +398,13 @@ router.delete('/:id', async (req, res, next) => {
       throw Object.assign(new Error('Cannot delete a member who has financial transactions linked to them. Please void or delete their transactions first.'), { statusCode: 400 });
     }
 
+    // A member linked to a system user (e.g. the Secretary) cannot go: the
+    // link would dangle (users.member_id is ON DELETE RESTRICT, §3.4)
+    const [linked] = await pool.query('SELECT username FROM users WHERE member_id = ?', [id]);
+    if (linked.length > 0) {
+      throw Object.assign(new Error(`This member is linked to the system user '${linked[0].username}'. Unlink them first in Settings → System Users.`), { statusCode: 400, code: 'MEMBER_LINKED_TO_USER' });
+    }
+
     await pool.query('DELETE FROM dependents WHERE member_id = ?', [id]);
     await pool.query('DELETE FROM members WHERE id = ?', [id]);
     res.json({ success: true });

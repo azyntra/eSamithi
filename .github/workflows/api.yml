@@ -60,7 +60,7 @@ jobs:
           JWT_SECRET: ci-test-secret
           DEFAULT_TENANT: ci1
           TENANTS_FILE: ${{ github.workspace }}/server/test/fixtures/tenants.ci.json
-        run: node --test test/staffAuth.db.test.js test/attendance.db.test.js
+        run: node --test test/staffAuth.db.test.js test/attendance.db.test.js test/announcements.db.test.js test/concerns.db.test.js test/officers.db.test.js
 
       - name: End-to-end cross-tenant smoke (real API + MySQL)
         run: bash server/test/ci-e2e.sh

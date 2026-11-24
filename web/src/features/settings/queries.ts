@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { qk } from '@/lib/api/queryKeys'
-import { settingsApi, type ExpenseTypePayload, type IncomeTypePayload, type SystemUser } from './api'
+import { settingsApi, type CreateUserPayload, type ExpenseTypePayload, type IncomeTypePayload, type UpdateUserPayload } from './api'
 
 export function useSettings() {
   return useQuery({ queryKey: qk.settings, queryFn: settingsApi.get, staleTime: 5 * 60_000 })
@@ -59,7 +59,14 @@ export function useSystemUsers(enabled = true) {
 }
 export function useCreateUser() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (p: { username: string; password: string; full_name: string; role: SystemUser['role'] }) => settingsApi.createUser(p), onSuccess: () => qc.invalidateQueries({ queryKey: qk.users }) })
+  return useMutation({ mutationFn: (p: CreateUserPayload) => settingsApi.createUser(p), onSuccess: () => qc.invalidateQueries({ queryKey: qk.users }) })
+}
+export function useUpdateUser() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (v: { id: number; payload: UpdateUserPayload }) => settingsApi.updateUser(v.id, v.payload), onSuccess: () => qc.invalidateQueries({ queryKey: qk.users }) })
+}
+export function useUserEvents(id: number | null) {
+  return useQuery({ queryKey: [...qk.users, 'events', id], queryFn: () => settingsApi.userEvents(id as number), enabled: id !== null, staleTime: 15_000 })
 }
 export function useDeleteUser() {
   const qc = useQueryClient()

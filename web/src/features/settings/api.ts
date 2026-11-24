@@ -17,11 +17,59 @@ export interface ExpenseType {
 }
 export type Settings = Record<string, string>
 
+export type SocietyPosition = 'secretary' | 'president' | 'treasurer'
+
 export interface SystemUser {
   id: number
   username: string
   full_name: string
   role: 'admin' | 'user' | 'viewer'
+  // Society officers (docs/MEETING-MINUTES-REQUIREMENTS.md §3)
+  is_active: 0 | 1
+  society_position: SocietyPosition | null
+  member_id: number | null
+  member_name: string | null
+  member_society_id: string | null
+  // null = no linked member; 0 = linked but they can't use the app yet
+  member_app_ready: 0 | 1 | null
+}
+
+export interface CreateUserPayload {
+  username: string
+  password: string
+  full_name: string
+  role: SystemUser['role']
+  society_position?: SocietyPosition | null
+  member_id?: number | null
+  replace_secretary?: boolean
+}
+
+export interface UpdateUserPayload {
+  full_name?: string
+  role?: SystemUser['role']
+  is_active?: boolean
+  society_position?: SocietyPosition | null
+  member_id?: number | null
+  replace_secretary?: boolean
+}
+
+// Who holds the Secretary post when a save would take it (409 SECRETARY_TAKEN)
+export interface SecretaryHolder {
+  user_id: number
+  full_name: string
+  username: string
+  member_name: string | null
+}
+
+export interface OfficerEvent {
+  id: number
+  field: 'role' | 'is_active' | 'society_position' | 'member_id' | 'deleted'
+  before_value: string | null
+  after_value: string | null
+  by_name: string | null
+  created_at: string
+  before_member: string | null
+  after_member: string | null
 }
 
 export interface IncomeTypePayload {
@@ -51,7 +99,9 @@ export const settingsApi = {
   deleteExpenseType: (id: number) => api.delete<{ success: boolean; deactivated?: boolean }>(`/expense-types/${id}`),
 
   users: () => api.get<SystemUser[]>('/users'),
-  createUser: (p: { username: string; password: string; full_name: string; role: SystemUser['role'] }) => api.post<{ success: boolean; id: number }>('/users', p),
+  createUser: (p: CreateUserPayload) => api.post<{ success: boolean; id: number }>('/users', p),
+  updateUser: (id: number, p: UpdateUserPayload) => api.patch<SystemUser>(`/users/${id}`, p),
+  userEvents: (id: number) => api.get<OfficerEvent[]>(`/users/${id}/events`),
   deleteUser: (id: number) => api.delete<{ success: boolean }>(`/users/${id}`),
   resetUserPassword: (id: number, new_password: string) => api.patch<{ success: boolean }>(`/users/${id}/password`, { new_password })
 }

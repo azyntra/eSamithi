@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test test/isolation.test.js test/staffAuth.test.js test/memberActivity.test.js test/attendance.test.js",
-    "test:db": "node --test test/staffAuth.db.test.js test/attendance.db.test.js test/announcements.db.test.js test/concerns.db.test.js"
+    "test:db": "node --test test/staffAuth.db.test.js test/attendance.db.test.js test/announcements.db.test.js test/concerns.db.test.js test/officers.db.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

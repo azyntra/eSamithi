@@ -25,7 +25,7 @@ import { useT } from '@/lib/i18n'
 import type { ExpenseType, IncomeType, SystemUser } from './api'
 import { SecurityTab } from './components/SecurityTab'
 import { TypeDialog } from './components/TypeDialog'
-import { AddUserDialog, ResetPasswordDialog } from './components/UserDialogs'
+import { AddUserDialog, EditUserDialog, POSITION_LABEL, ResetPasswordDialog } from './components/UserDialogs'
 import { useDeleteExpenseType, useDeleteIncomeType, useDeleteUser, useExpenseTypes, useIncomeTypes, useSaveExpenseType, useSaveIncomeType, useSettings, useSystemUsers, useUpdateSettings } from './queries'
 
 import type { SettingsTab } from './tabs'
@@ -51,6 +51,7 @@ export function SettingsPage({ tab, onTabChange }: { tab: SettingsTab; onTabChan
   const [expenseTarget, setExpenseTarget] = useState<ExpenseType | null | undefined>(undefined)
   const [addUser, setAddUser] = useState(false)
   const [resetTarget, setResetTarget] = useState<SystemUser | null>(null)
+  const [editTarget, setEditTarget] = useState<SystemUser | null>(null)
   const [deletingUser, setDeletingUser] = useState<SystemUser | null>(null)
   const [deletingType, setDeletingType] = useState<{ kind: 'income' | 'expense'; row: IncomeType | ExpenseType } | null>(null)
   const [changeSamithi, setChangeSamithi] = useState(false)
@@ -309,6 +310,7 @@ export function SettingsPage({ tab, onTabChange }: { tab: SettingsTab; onTabChan
                 <div>
                   <div className="text-sm font-semibold">{t('settings.tabSystem')}</div>
                   <div className="text-xs text-muted-foreground">{t('settings.systemUsersDesc')}</div>
+                  <div className="text-xs text-muted-foreground">{t('settings.secretaryExplainer')}</div>
                 </div>
                 <Button size="sm" onClick={() => setAddUser(true)}>
                   <UserPlus /> {t('settings.addUser')}
@@ -322,19 +324,32 @@ export function SettingsPage({ tab, onTabChange }: { tab: SettingsTab; onTabChan
                   </>
                 ) : (
                   (users.data ?? []).map((su) => (
-                    <div key={su.id} data-user={su.username} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3">
+                    <div key={su.id} data-user={su.username} className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 ${su.is_active === 0 ? 'opacity-70' : ''}`}>
                       <div className="flex items-center gap-3">
                         <span className="bg-brand-gradient grid size-9 place-items-center rounded-full text-sm font-bold text-white">{su.full_name.charAt(0).toUpperCase()}</span>
                         <div className="leading-tight">
                           <div className="font-medium">{su.full_name}</div>
                           <div className="text-xs text-muted-foreground">@{su.username}</div>
+                          {su.member_id !== null && (
+                            <div className="text-xs text-muted-foreground">
+                              {t('settings.memberLabel', { name: su.member_name ?? '—', number: su.member_society_id ?? '—' })}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {su.is_active === 0 && <Badge variant="neutral">{t('settings.inactive')}</Badge>}
+                        {su.society_position && (
+                          <Badge variant={su.society_position === 'secretary' ? 'brand' : 'outline'}>{t(POSITION_LABEL[su.society_position])}</Badge>
+                        )}
+                        {su.member_app_ready === 0 && <Badge variant="warning">{t('settings.memberNotReadyBadge')}</Badge>}
                         <Badge variant={su.role === 'admin' ? 'brand' : su.role === 'viewer' ? 'neutral' : 'default'} className="gap-1">
                           {su.role === 'admin' ? <ShieldCheck /> : <Shield />}
                           {su.role === 'admin' ? t('settings.roleAdmin') : su.role === 'viewer' ? t('role.viewer') : t('settings.roleUser')}
                         </Badge>
+                        <Button size="sm" variant="outline" aria-label={`${t('common.edit')}: ${su.full_name}`} onClick={() => setEditTarget(su)}>
+                          <Pencil /> {t('common.edit')}
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => setResetTarget(su)}>
                           {t('settings.resetPassword')}
                         </Button>
@@ -412,6 +427,7 @@ export function SettingsPage({ tab, onTabChange }: { tab: SettingsTab; onTabChan
       <TypeDialog kind="expense" type={expenseTarget} onOpenChange={(o) => !o && setExpenseTarget(undefined)} />
       <AddUserDialog open={addUser} onOpenChange={setAddUser} />
       <ResetPasswordDialog user={resetTarget} onOpenChange={(o) => !o && setResetTarget(null)} />
+      <EditUserDialog user={editTarget} isSelf={editTarget?.id === user?.id} onOpenChange={(o) => !o && setEditTarget(null)} />
 
       <ConfirmDialog
         open={deletingUser !== null}
