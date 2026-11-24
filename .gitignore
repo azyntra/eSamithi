@@ -19,6 +19,7 @@ mobile/ios/
 *.env
 !*.env.example
 server/uploads/
+server/private/
 
 # Archives / scratch
 server.zip

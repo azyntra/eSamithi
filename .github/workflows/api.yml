@@ -60,7 +60,9 @@ jobs:
           JWT_SECRET: ci-test-secret
           DEFAULT_TENANT: ci1
           TENANTS_FILE: ${{ github.workspace }}/server/test/fixtures/tenants.ci.json
-        run: node --test test/staffAuth.db.test.js test/attendance.db.test.js test/announcements.db.test.js test/concerns.db.test.js test/officers.db.test.js
+        # one file at a time: the suites share tenant DBs, and parallel runs
+        # can stall on each other's schema locks (seen locally on node 25)
+        run: node --test --test-concurrency=1 test/staffAuth.db.test.js test/attendance.db.test.js test/announcements.db.test.js test/concerns.db.test.js test/officers.db.test.js test/minutes.db.test.js
 
       - name: End-to-end cross-tenant smoke (real API + MySQL)
         run: bash server/test/ci-e2e.sh

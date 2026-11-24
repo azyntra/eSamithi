@@ -85,8 +85,14 @@ fi
 say "Building the new image (no interruption yet)"
 remote "cd '$STACK' && sudo docker compose build api"
 
+# ── 4b. The new image must load its native modules (sharp) and every route
+#        before it replaces the live container — a crash-looping API is
+#        worse than a deploy that stops here
+say "Module load check (new image, throwaway container)"
+remote "cd '$STACK' && sudo docker compose run --rm --no-deps api node -e \"require('sharp'); require('pdf-lib'); require('./lib/minutes'); require('./routes/meetingRecords.routes'); require('./routes/meMeetingRecords.routes'); console.log('modules ok')\""
+
 # ── 5. Migrations, from a throwaway container of the new image ──────────────
-say "Migrations 014 + 015 (additive, guarded; the live container is untouched)"
+say "Migrations (additive, guarded; the live container is untouched)"
 remote "cd '$STACK' && sudo docker compose run --rm --no-deps api node migrate.js"
 
 # ── 6. The only interrupting step ───────────────────────────────────────────

@@ -510,6 +510,135 @@ async function officers(pool) {
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 }
 
+// 021 — meeting records (docs/MEETING-MINUTES-REQUIREMENTS.md §5.2). One
+// report, many versions: version_no is given only at publish, so numbers run
+// 1, 2, 3 with no gaps; draft_slot allows one open draft per report. A
+// published version's files never change (revision drafts point at the same
+// page files until a page is changed). Comments belong to the report, so one
+// thread spans every version.
+async function meetingRecords(pool) {
+  await pool.query(`CREATE TABLE IF NOT EXISTS meeting_reports (
+    id                   INT PRIMARY KEY AUTO_INCREMENT,
+    category             ENUM('minutes') NOT NULL DEFAULT 'minutes',
+    current_version_id   INT          NULL DEFAULT NULL,
+    created_by_member_id INT          NULL DEFAULT NULL,
+    created_by_user_id   INT          NULL DEFAULT NULL,
+    client_ref           CHAR(36)     NULL DEFAULT NULL,
+    created_at           TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    deleted_at           DATETIME     NULL DEFAULT NULL,
+    UNIQUE KEY uq_report_ref (client_ref)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  await pool.query(`CREATE TABLE IF NOT EXISTS meeting_report_versions (
+    id                   INT PRIMARY KEY AUTO_INCREMENT,
+    report_id            INT          NOT NULL,
+    version_no           INT          NULL DEFAULT NULL,
+    state                ENUM('draft','published','withdrawn') NOT NULL DEFAULT 'draft',
+    draft_slot           TINYINT AS (IF(state = 'draft', 1, NULL)) STORED,
+    title                VARCHAR(200) NOT NULL,
+    meeting_date         DATE         NOT NULL,
+    change_summary       VARCHAR(500) NULL DEFAULT NULL,
+    page_count           INT          NOT NULL DEFAULT 0,
+    pdf_file             VARCHAR(64)  NULL DEFAULT NULL,
+    pdf_hash             CHAR(64)     NULL DEFAULT NULL,
+    pdf_bytes            INT          NULL DEFAULT NULL,
+    audio_file           VARCHAR(64)  NULL DEFAULT NULL,
+    audio_ms             INT          NULL DEFAULT NULL,
+    audio_bytes          INT          NULL DEFAULT NULL,
+    audio_mime           VARCHAR(40)  NULL DEFAULT NULL,
+    author_member_id     INT          NULL DEFAULT NULL,
+    author_user_id       INT          NULL DEFAULT NULL,
+    author_name          VARCHAR(255) NULL DEFAULT NULL,
+    author_position      VARCHAR(32)  NULL DEFAULT NULL,
+    author_ref           VARCHAR(64)  NULL DEFAULT NULL,
+    published_at         DATETIME     NULL DEFAULT NULL,
+    publish_ref          CHAR(36)     NULL DEFAULT NULL,
+    notify               TINYINT      NOT NULL DEFAULT 1,
+    notified_at          DATETIME     NULL DEFAULT NULL,
+    withdrawn_at         DATETIME     NULL DEFAULT NULL,
+    withdrawn_by_user_id INT          NULL DEFAULT NULL,
+    withdrawn_reason     VARCHAR(300) NULL DEFAULT NULL,
+    created_at           TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    updated_at           TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_version_no (report_id, version_no),
+    UNIQUE KEY uq_one_draft (report_id, draft_slot),
+    UNIQUE KEY uq_publish_ref (publish_ref),
+    KEY idx_mrv_state_date (state, meeting_date),
+    CONSTRAINT fk_mrv_report FOREIGN KEY (report_id) REFERENCES meeting_reports(id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  await pool.query(`CREATE TABLE IF NOT EXISTS meeting_report_pages (
+    id         INT PRIMARY KEY AUTO_INCREMENT,
+    version_id INT         NOT NULL,
+    position   INT         NOT NULL,
+    file       VARCHAR(64) NOT NULL,
+    thumb      VARCHAR(64) NOT NULL,
+    rotation   SMALLINT    NOT NULL DEFAULT 0,
+    width      INT         NOT NULL,
+    height     INT         NOT NULL,
+    bytes      INT         NOT NULL,
+    client_ref CHAR(36)    NOT NULL,
+    created_at TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_page_ref (version_id, client_ref),
+    KEY idx_mrp_order (version_id, position),
+    KEY idx_mrp_file (file),
+    CONSTRAINT fk_mrp_version FOREIGN KEY (version_id) REFERENCES meeting_report_versions(id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  await pool.query(`CREATE TABLE IF NOT EXISTS meeting_audio_uploads (
+    id             CHAR(36)    PRIMARY KEY,
+    version_id     INT         NOT NULL,
+    total_bytes    INT         NOT NULL,
+    received_bytes INT         NOT NULL DEFAULT 0,
+    duration_ms    INT         NULL DEFAULT NULL,
+    tmp_file       VARCHAR(64) NOT NULL,
+    expires_at     DATETIME    NOT NULL,
+    completed_at   DATETIME    NULL DEFAULT NULL,
+    created_at     TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_mau_version (version_id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+  await pool.query(`CREATE TABLE IF NOT EXISTS meeting_report_comments (
+    id                      INT PRIMARY KEY AUTO_INCREMENT,
+    report_id               INT           NOT NULL,
+    version_id              INT           NOT NULL,
+    parent_id               INT           NULL DEFAULT NULL,
+    author_member_id        INT           NULL DEFAULT NULL,
+    author_user_id          INT           NULL DEFAULT NULL,
+    author_name             VARCHAR(255)  NOT NULL,
+    author_is_secretary     TINYINT       NOT NULL DEFAULT 0,
+    body                    VARCHAR(1000) NOT NULL,
+    status                  ENUM('open','addressed') NOT NULL DEFAULT 'open',
+    addressed_in_version_id INT           NULL DEFAULT NULL,
+    addressed_at            DATETIME      NULL DEFAULT NULL,
+    addressed_by_name       VARCHAR(255)  NULL DEFAULT NULL,
+    hidden_at               DATETIME      NULL DEFAULT NULL,
+    hidden_by_name          VARCHAR(255)  NULL DEFAULT NULL,
+    hidden_reason           VARCHAR(300)  NULL DEFAULT NULL,
+    deleted_at              DATETIME      NULL DEFAULT NULL,
+    client_ref              CHAR(36)      NOT NULL,
+    created_at              TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_comment_ref (report_id, client_ref),
+    KEY idx_mrc_report (report_id, created_at),
+    CONSTRAINT fk_mrc_report FOREIGN KEY (report_id) REFERENCES meeting_reports(id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+}
+
+// 022 — a 'minutes' notice links to the report and the version it announced
+// (§5.3). The unique key makes a second notice for one publication impossible.
+async function announcementMinutes(pool) {
+  const [cols] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'announcements' AND COLUMN_NAME = 'meeting_report_id'`
+  );
+  if (cols.length === 0) {
+    await pool.query(`ALTER TABLE announcements
+      ADD COLUMN meeting_report_id  INT NULL DEFAULT NULL,
+      ADD COLUMN meeting_version_id INT NULL DEFAULT NULL,
+      ADD UNIQUE KEY uq_ann_minutes_version (meeting_version_id)`);
+  }
+}
+
 module.exports = [
   { id: '000_base_schema', up: baseSchema },
   { id: '004_loan_payment_wallet', up: loanPaymentWallet },
@@ -528,5 +657,7 @@ module.exports = [
   { id: '017_member_app_activity', up: memberAppActivity },
   { id: '018_mobile_attendance', up: mobileAttendance },
   { id: '019_announcement_show_until', up: announcementShowUntil },
-  { id: '020_officers', up: officers }
+  { id: '020_officers', up: officers },
+  { id: '021_meeting_records', up: meetingRecords },
+  { id: '022_announcement_minutes', up: announcementMinutes }
 ];

@@ -27,6 +27,9 @@ const reportsRoutes = require('./routes/reports.routes');
 const memberAuthRoutes = require('./routes/memberAuth.routes');
 const meRoutes = require('./routes/me.routes');
 const meAttendanceRoutes = require('./routes/meAttendance.routes');
+const meMeetingRecordsRoutes = require('./routes/meMeetingRecords.routes');
+const meetingRecordsRoutes = require('./routes/meetingRecords.routes');
+const privateFiles = require('./lib/privateFiles');
 // v2: staff-authored notices + member request review queue
 const announcementsRoutes = require('./routes/announcements.routes');
 const memberRequestsRoutes = require('./routes/memberRequests.routes');
@@ -61,6 +64,11 @@ app.use('/api/v1/uploads', (req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 }, express.static(path.join(__dirname, 'uploads'), { maxAge: '7d', immutable: true }));
+
+// Private files (meeting minutes pages, PDFs, recordings) — only through a
+// short-lived signed link; the token names the tenant, so this sits before
+// the tenant middleware like uploads (docs/MEETING-MINUTES-REQUIREMENTS.md §6.2)
+app.get('/api/v1/files/:token', privateFiles.serve);
 
 // ── Health Check ─────────────────────────────────────────────
 // Plain: process liveness. ?deep=1: pings every tenant pool so one broken
@@ -115,9 +123,11 @@ app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/reports', reportsRoutes);
 app.use('/api/v1/member-auth', memberAuthRoutes);
 app.use('/api/v1/me/attendance', meAttendanceRoutes);
+app.use('/api/v1/me/meeting-records', meMeetingRecordsRoutes);
 app.use('/api/v1/me', meRoutes);
 app.use('/api/v1/announcements', announcementsRoutes);
 app.use('/api/v1/member-requests', memberRequestsRoutes);
+app.use('/api/v1/meeting-records', meetingRecordsRoutes);
 app.use('/api/v1/events', eventsRoutes);
 app.use('/api/v1/puruka', purukaRoutes);
 app.use('/api/v1/puruka-admin', purukaAdminRoutes);
@@ -175,6 +185,23 @@ async function start() {
     };
     notifyExpiring();
     setInterval(notifyExpiring, 12 * 60 * 60 * 1000);
+
+    // Meeting minutes: drop audio uploads abandoned for 48 hours
+    const minutes = require('./lib/minutes');
+    const sweepMinutes = async () => {
+      for (const [slug, tenant] of Object.entries(getTenants())) {
+        if (tenant.status !== 'active') continue;
+        try {
+          const n = await minutes.sweep(getPool(slug), slug);
+          if (n > 0) console.log(`[minutes] ${slug}: expired audio uploads removed: ${n}`);
+        } catch (err) {
+          console.error(`[minutes] ${slug}: sweep failed:`, err.message);
+        }
+      }
+    };
+    sweepMinutes();
+    setInterval(sweepMinutes, 12 * 60 * 60 * 1000);
+    if (!privateFiles.ready()) console.warn('⚠ Private file storage not set up (meeting minutes uploads will be refused)');
   } catch (err) {
     console.error('✗ Failed to start server:', err.message);
     process.exit(1);

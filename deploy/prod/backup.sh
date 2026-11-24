@@ -26,6 +26,8 @@ done
 
 # Member photos and other uploads
 tar -czf "$DEST/uploads.tar.gz" -C /opt/esamithi-server uploads
+# Meeting minutes (pages, PDFs, recordings) — private files, kept like uploads
+[ -d /opt/esamithi-private ] && tar -czf "$DEST/private.tar.gz" -C /opt esamithi-private
 
 # Local retention: 7 daily sets (the off-site copy holds 21)
 find /opt/backups -maxdepth 1 -mindepth 1 -type d -mtime +7 -exec rm -rf {} +

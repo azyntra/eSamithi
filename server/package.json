@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test test/isolation.test.js test/staffAuth.test.js test/memberActivity.test.js test/attendance.test.js",
-    "test:db": "node --test test/staffAuth.db.test.js test/attendance.db.test.js test/announcements.db.test.js test/concerns.db.test.js test/officers.db.test.js"
+    "test:db": "node --test --test-concurrency=1 test/staffAuth.db.test.js test/attendance.db.test.js test/announcements.db.test.js test/concerns.db.test.js test/officers.db.test.js test/minutes.db.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -20,6 +20,8 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^2.2.0",
-    "mysql2": "^3.11.0"
+    "mysql2": "^3.11.0",
+    "pdf-lib": "^1.17.1",
+    "sharp": "^0.34.5"
   }
 }

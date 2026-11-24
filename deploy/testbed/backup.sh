@@ -33,6 +33,8 @@ echo "  dumped esamithi_platform ($(du -h "$DEST/esamithi_platform.sql.gz" | cut
 
 # Member photos and other uploads
 tar -czf "$DEST/uploads.tar.gz" -C /opt/server uploads
+# Meeting minutes (pages, PDFs, recordings) — private files, kept like uploads
+[ -d /opt/server-private ] && tar -czf "$DEST/private.tar.gz" -C /opt server-private
 
 # Retention: 14 daily sets
 find /opt/backups -maxdepth 1 -mindepth 1 -type d -mtime +14 -exec rm -rf {} +

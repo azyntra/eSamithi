@@ -39,6 +39,9 @@ services:
       # /internal/server/registry endpoint (multi-server control plane)
       - ./tenants.json:/etc/esamithi/tenants.json
       - /opt/esamithi-server/uploads:/app/uploads
+      # Meeting minutes pages, PDFs and recordings: private, never statically
+      # served (signed links only). Must hold .esamithi-private or uploads are refused.
+      - /opt/esamithi-private:/app/private
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/v1/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
