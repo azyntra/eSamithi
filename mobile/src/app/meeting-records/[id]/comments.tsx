@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react'
-import { Alert, FlatList, KeyboardAvoidingView, Platform, TextInput, View } from 'react-native'
+import { Alert, FlatList, KeyboardAvoidingView, TextInput, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useQueryClient } from '@tanstack/react-query'
 import { useT } from '../../../i18n'
@@ -27,6 +28,7 @@ export default function MinutesComments(): React.ReactElement {
   const p = usePalette()
   const ty = useType()
   const card = useCardStyle()
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const toast = useToast()
   const qc = useQueryClient()
@@ -125,7 +127,10 @@ export default function MinutesComments(): React.ReactElement {
   const canDelete = (c: MinutesComment): boolean => c.is_mine && !c.deleted && Date.now() - new Date(c.created_at).getTime() < DELETE_WINDOW_MS
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: p.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    // 'padding' on Android too: the view adds only the part of the keyboard
+    // that actually overlaps it, so it is right whether or not Android
+    // resized the window (edge-to-edge apps are not resized)
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: p.bg }} behavior="padding">
       <FlatList
         data={threads}
         keyExtractor={(c) => String(c.id)}
@@ -167,7 +172,8 @@ export default function MinutesComments(): React.ReactElement {
         )}
       />
 
-      <View style={{ padding: spacing.md, borderTopWidth: 1, borderTopColor: p.border, backgroundColor: p.surface, gap: spacing.xs }}>
+      {/* Clear of Android's navigation buttons (the app draws edge to edge) */}
+      <View style={{ padding: spacing.md, paddingBottom: Math.max(insets.bottom, spacing.md), borderTopWidth: 1, borderTopColor: p.border, backgroundColor: p.surface, gap: spacing.xs }}>
         {replyTo ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
             <MText size="caption" color={p.textMuted} style={{ flex: 1 }}>{t('mob.mmReplyingTo', { name: replyTo.author_name ?? '' })}</MText>
