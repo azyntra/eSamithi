@@ -19,6 +19,8 @@ import { BottomSheet, Button, Callout, ErrorView, Input, ListRow, Screen, Segmen
 import { DateField } from '../../../ui/auth'
 import { ScalePressable } from '../../../ui/pressable'
 import { PhotoViewer } from '../../../ui/PhotoViewer'
+import { MinutesRecorder } from '../../../ui/MinutesRecorder'
+import { hasAudioPlayback } from '../../../lib/audioSupport'
 import { MText, Pill } from '../../../ui/minutes'
 
 type Step = 'details' | 'pages' | 'recording' | 'publish'
@@ -387,8 +389,19 @@ export default function MinutesDraftEditor(): React.ReactElement {
               <Button label={t('mob.mmRemoveRecording')} variant="danger" icon="trash-outline" loading={busy === 'audio'} onPress={() => void act('audio', () => minutesApi.removeAudio(reportId))} />
             </View>
           ) : null}
-          <Callout icon="mic-outline" tone="warning" text={t('mob.mmRecordUpdate')} />
-          <MText size="caption" color={p.textMuted}>{t('mob.mmRecordLater')}</MText>
+          {hasAudioPlayback() ? (
+            <MinutesRecorder
+              reportId={reportId}
+              slug={activeProfile?.slug}
+              hasAudio={Boolean(d.audio_url)}
+              onUploaded={(next) => { apply(next); toast.show('success', t('mob.mmRecUploaded')) }}
+            />
+          ) : (
+            <>
+              <Callout icon="mic-outline" tone="warning" text={t('mob.mmRecordUpdate')} />
+              <MText size="caption" color={p.textMuted}>{t('mob.mmRecordLater')}</MText>
+            </>
+          )}
           <Button label={t('mob.mmNext')} icon="arrow-forward" onPress={() => setStep('publish')} />
         </View>
       ) : null}

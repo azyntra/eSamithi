@@ -136,7 +136,8 @@ async function versionView(db, tenant, reportId, v, societyName) {
     })),
     pdf_url: v.pdf_file ? urlOf(tenant, reportId, v.pdf_file, { name: pdfName }) : null,
     pdf_bytes: v.pdf_bytes,
-    audio_url: v.audio_file ? urlOf(tenant, reportId, v.audio_file) : null,
+    // A long reading is streamed and seeked for a while: 3 hours, not 30 minutes
+    audio_url: v.audio_file ? urlOf(tenant, reportId, v.audio_file, { ttl: 3 * 60 * 60 }) : null,
     audio_ms: v.audio_ms,
     audio_bytes: v.audio_bytes,
     audio_mime: v.audio_mime

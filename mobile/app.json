@@ -2,7 +2,7 @@
   "expo": {
     "name": "eSamithi",
     "slug": "esamithi-member",
-    "version": "1.6.1",
+    "version": "1.7.0",
     "runtimeVersion": {
       "policy": "fingerprint"
     },
@@ -49,7 +49,6 @@
       },
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
-        "android.permission.RECORD_AUDIO",
         "android.permission.WRITE_SETTINGS"
       ]
     },
@@ -90,12 +89,21 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "eSamithi uses the camera only to scan members' membership QR codes when you mark attendance. Images are not stored or sent anywhere.",
+          "cameraPermission": "eSamithi uses the camera to scan membership QR codes when marking attendance, and to photograph the pages of the meeting minutes when the Secretary prepares them. Page photos are shared only with the members of your society.",
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": true
         }
       ],
-      "./plugins/withPortraitNotRequired"
+      "./plugins/withPortraitNotRequired",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "eSamithi uses the microphone only when the Secretary records the meeting minutes being read. The recording is shared only with the members of your society.",
+          "recordAudioAndroid": true,
+          "enableBackgroundRecording": false,
+          "enableBackgroundPlayback": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

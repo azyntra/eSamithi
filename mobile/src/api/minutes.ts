@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import { File } from 'expo-file-system'
 import { api, photoUrl } from './client'
 
 // Meeting minutes in the member app (docs/MEETING-MINUTES-REQUIREMENTS.md
@@ -233,4 +234,55 @@ export function formatDuration(ms: number | null | undefined): string {
   const m = Math.floor((total % 3600) / 60)
   const s = total % 60
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`
+}
+
+// ── Recording upload: 5 MB pieces, resumable (§6.5) ────────────────────────
+// The file is read a piece at a time (a 30 MB recording never sits in
+// memory at once). A dropped connection resumes from the server's offset;
+// the same uploadId picks up where it stopped even after the app restarts.
+const CHUNK = 5 * 1024 * 1024
+
+export async function uploadRecording(
+  reportId: number,
+  uri: string,
+  uploadId: string,
+  durationMs: number | null,
+  onProgress: (sent: number, total: number) => void
+): Promise<MinutesDraft> {
+  const file = new File(uri)
+  const total = file.size ?? 0
+  if (!total) throw new Error('empty recording')
+  const init = (await api.post<{ received_bytes: number }>(`${BASE}/${reportId}/draft/audio/uploads`, { upload_id: uploadId, total_bytes: total, duration_ms: durationMs })).data
+  let offset = init.received_bytes
+  onProgress(offset, total)
+  let failures = 0
+  while (offset < total) {
+    const handle = file.open()
+    let chunk: Uint8Array
+    try {
+      handle.offset = offset
+      chunk = handle.readBytes(Math.min(CHUNK, total - offset))
+    } finally {
+      handle.close()
+    }
+    try {
+      const r = await api.put<{ received_bytes: number }>(`${BASE}/${reportId}/draft/audio/uploads/${uploadId}`, chunk, {
+        headers: { 'Content-Type': 'application/octet-stream', 'Content-Range': `bytes ${offset}-${offset + chunk.length - 1}/${total}` },
+        transformRequest: [(data: unknown) => data],
+        timeout: 120000
+      })
+      offset = r.data.received_bytes
+      failures = 0
+      onProgress(offset, total)
+    } catch (err) {
+      if (errorCode(err) === 'OFFSET_MISMATCH' && axios.isAxiosError(err)) {
+        offset = (err.response?.data as { received_bytes?: number } | undefined)?.received_bytes ?? offset
+        continue
+      }
+      failures += 1
+      if (failures >= 3) throw err
+      await new Promise((resolve) => setTimeout(resolve, 2000 * failures))
+    }
+  }
+  return (await api.post<MinutesDraft>(`${BASE}/${reportId}/draft/audio/uploads/${uploadId}/complete`)).data
 }

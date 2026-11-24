@@ -14,6 +14,7 @@ import { absolute, errorCode, formatDuration, minutesApi, putDraft, useMinutesCo
 import { BottomSheet, Button, Callout, ErrorView, Screen, SkeletonCards, useCardStyle, useToast } from '../../../ui'
 import { ScalePressable } from '../../../ui/pressable'
 import { PhotoViewer } from '../../../ui/PhotoViewer'
+import { MinutesPlayer } from '../../../ui/MinutesPlayer'
 import { MText, Pill } from '../../../ui/minutes'
 
 // The report reader (§8.1.2): the pages one by one (swipe, or the arrows),
@@ -21,7 +22,7 @@ import { MText, Pill } from '../../../ui/minutes'
 // Listening arrives with the 1.7.0 app; until then the recording shows how to
 // get it.
 export default function MinutesReader(): React.ReactElement {
-  const params = useLocalSearchParams<{ id: string; v?: string; page?: string }>()
+  const params = useLocalSearchParams<{ id: string; v?: string; page?: string; t?: string }>()
   const id = Number(params.id)
   const versionNo = params.v ? Number(params.v) : undefined
   const { t } = useT()
@@ -164,7 +165,15 @@ export default function MinutesReader(): React.ReactElement {
 
       <View style={{ paddingHorizontal: spacing.lg, gap: spacing.md }}>
         {v.audio_url ? (
-          hasAudioPlayback() ? null : (
+          hasAudioPlayback() ? (
+            <MinutesPlayer
+              key={`${id}-${v.version_no}`}
+              url={absolute(v.audio_url) ?? ''}
+              durationMs={v.audio_ms}
+              seekToMs={params.t ? Number(params.t) : null}
+              onSeekHandled={() => router.setParams({ t: undefined })}
+            />
+          ) : (
             <Callout icon="headset-outline" tone="warning" text={t('mob.mmListenUpdate', { d: formatDuration(v.audio_ms) })}>
               <Button label={t('mob.mmUpdateApp')} variant="secondary" icon="download-outline" onPress={() => { Linking.openURL(storeUrl).catch(() => {}) }} />
             </Callout>

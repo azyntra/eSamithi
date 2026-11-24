@@ -89,7 +89,10 @@ export default function MinutesComments(): React.ReactElement {
 
   const onMention = (part: ReturnType<typeof commentParts>[number]): void => {
     if (part.kind === 'page') router.navigate({ pathname: '/meeting-records/[id]', params: { id: String(reportId), page: String(part.page) } })
-    else if (part.kind === 'time' && !hasAudioPlayback()) toast.show('info', t('mob.mmListenNeedsUpdate'))
+    else if (part.kind === 'time') {
+      if (hasAudioPlayback()) router.navigate({ pathname: '/meeting-records/[id]', params: { id: String(reportId), t: String(part.ms) } })
+      else toast.show('info', t('mob.mmListenNeedsUpdate'))
+    }
   }
 
   const renderBody = (c: MinutesComment): React.ReactElement | null => {
