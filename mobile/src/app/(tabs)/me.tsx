@@ -39,7 +39,7 @@ export default function Me(): React.ReactElement {
   const p = usePalette()
   const ty = useType()
   const router = useRouter()
-  const { signOut, profiles, activeProfile, switchProfile, addSamithi } = useAuth()
+  const { signOut, profiles, activeProfile, switchProfile, addSamithi, renameProfile } = useAuth()
   const { mode, setMode } = useThemeMode()
   const profile = useProfile()
   const society = useSocietyInfo()
@@ -75,6 +75,11 @@ export default function Me(): React.ReactElement {
   const isStaff = prof?.permissions?.includes('attendance') === true
   const isSecretary = prof?.permissions?.includes('minutes') === true
   const societyName = society.data?.society_name ?? activeProfile?.name ?? ''
+  // Keep the society switcher's stored name in step with a rename
+  useEffect(() => {
+    const live = society.data?.society_name
+    if (live && activeProfile && live.trim() !== activeProfile.name) void renameProfile(activeProfile.slug, live)
+  }, [society.data?.society_name, activeProfile, renameProfile])
 
   const membership: NavItem[] = [
     { href: '/card', icon: 'id-card-outline', label: t('mob.memberCard') },

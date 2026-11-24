@@ -7,6 +7,7 @@ import { apiBase } from '@/lib/api/samithi'
 import { useSession } from '@/lib/api/session'
 import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
+import { useSettings } from '@/features/settings/queries'
 import { NAV_GROUPS } from './nav'
 
 interface SidebarProps {
@@ -28,6 +29,7 @@ function useApiVersion(): string | null {
 export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
   const { t } = useT()
   const { samithi } = useSession()
+  const societyName = useSettings().data?.society_name?.trim()
   const apiVersion = useApiVersion()
 
   return (
@@ -37,7 +39,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
         {!collapsed && (
           <div className="min-w-0 leading-tight">
             <div className="text-[15px] font-bold tracking-tight text-white">eSamithi</div>
-            <div className="truncate text-[11px] text-sidebar-muted">{samithi?.name ?? t('sidebar.tagline')}</div>
+            <div className="truncate text-[11px] text-sidebar-muted">{societyName || samithi?.name || t('sidebar.tagline')}</div>
           </div>
         )}
       </div>

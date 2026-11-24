@@ -38,6 +38,8 @@ interface AuthContextValue {
   switchProfile: (slug: string) => Promise<void>
   addSamithi: () => void
   signOut: () => Promise<void>
+  // The society renamed itself: keep the name stored on this phone current
+  renameProfile: (slug: string, name: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -49,7 +51,8 @@ const AuthContext = createContext<AuthContextValue>({
   signInWithTokens: async () => {},
   switchProfile: async () => {},
   addSamithi: () => {},
-  signOut: async () => {}
+  signOut: async () => {},
+  renameProfile: async () => {}
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }): React.ReactElement {
@@ -197,9 +200,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     setStatus('signedOut')
   }, [activate, profiles, queryClient, setPendingProfile])
 
+  // A profile's name was resolved from the join code when the society was
+  // added; the society's own settings are the live name (renames reach them)
+  const renameProfile = useCallback(async (slug: string, name: string) => {
+    const clean = name.trim()
+    const current = profiles.find((pr) => pr.slug === slug)
+    if (!clean || !current || current.name === clean) return
+    const updated = { ...current, name: clean }
+    setProfiles(await upsertProfile(updated))
+    if (activeRef.current?.slug === slug) {
+      activeRef.current = updated
+      setActiveProfile(updated)
+    }
+  }, [profiles])
+
   const value = useMemo(
-    () => ({ status, profiles, activeProfile, pendingProfile, setPendingProfile, signInWithTokens, switchProfile, addSamithi, signOut }),
-    [status, profiles, activeProfile, pendingProfile, setPendingProfile, signInWithTokens, switchProfile, addSamithi, signOut]
+    () => ({ status, profiles, activeProfile, pendingProfile, setPendingProfile, signInWithTokens, switchProfile, addSamithi, signOut, renameProfile }),
+    [status, profiles, activeProfile, pendingProfile, setPendingProfile, signInWithTokens, switchProfile, addSamithi, signOut, renameProfile]
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

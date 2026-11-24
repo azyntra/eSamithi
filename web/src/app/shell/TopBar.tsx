@@ -12,6 +12,7 @@ import { leaveSupport } from '@/features/support/SupportBanner'
 import { useT, type TranslationKey } from '@/lib/i18n'
 import { errorMessage } from '@/lib/api/errors'
 import { cn } from '@/lib/utils'
+import { useSettings } from '@/features/settings/queries'
 
 const ROLE_KEY: Record<Role, TranslationKey> = { admin: 'role.admin', user: 'role.user', viewer: 'role.viewer' }
 
@@ -27,6 +28,9 @@ function initials(name: string): string {
 export function TopBar({ onMenu, onSearch, offsetTop = false }: { onMenu: () => void; onSearch: () => void; offsetTop?: boolean }) {
   const { t } = useT()
   const { user, samithi, support } = useSession()
+  // The society's own setting is the live name (a rename reaches it); the
+  // join-code lookup cached on this device is only the fallback
+  const societyName = useSettings().data?.society_name?.trim()
   const router = useRouter()
   const { canInstall, install } = useInstallPrompt()
 
@@ -46,7 +50,7 @@ export function TopBar({ onMenu, onSearch, offsetTop = false }: { onMenu: () => 
       </Button>
 
       <div className="flex min-w-0 items-center gap-2.5">
-        <span className="truncate text-[15px] font-semibold">{samithi?.name ?? 'eSamithi'}</span>
+        <span className="truncate text-[15px] font-semibold">{societyName || samithi?.name || 'eSamithi'}</span>
         {samithi?.code && (
           <Badge variant="default" className="tnum hidden font-mono text-[11px] sm:inline-flex">
             {samithi.code}
