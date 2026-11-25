@@ -28,6 +28,21 @@ const meRoutes = require('../routes/me.routes');
 const membersRoutes = require('../routes/members.routes');
 
 const T = 'ci1';
+
+// Expo push calls are captured, everything else (the test's own API calls)
+// goes through
+const pushes = [];
+const realFetch = global.fetch;
+global.fetch = async (url, init) => {
+  if (String(url).includes('exp.host')) {
+    pushes.push(...JSON.parse(init.body));
+    return new Response(JSON.stringify({ data: [] }), { status: 200 });
+  }
+  return realFetch(url, init);
+};
+const waitForPush = async (n) => {
+  for (let i = 0; i < 40 && pushes.length < n; i++) await new Promise((r) => setTimeout(r, 25));
+};
 let pool;
 let server;
 let base;
@@ -46,6 +61,7 @@ async function call(method, pathname, token, body) {
 }
 
 async function cleanup() {
+  await pool.query("DELETE FROM member_push_tokens WHERE token LIKE 'ExponentPushToken[off-%'");
   await pool.query("DELETE FROM officer_events WHERE user_id IN (SELECT id FROM users WHERE username LIKE 'off\\_%')");
   await pool.query("DELETE FROM users WHERE username LIKE 'off\\_%'");
   await pool.query("DELETE FROM members WHERE society_id LIKE 'OFF-%'");
@@ -130,6 +146,8 @@ test('a member links to at most one user (V2)', async () => {
 });
 
 test('one Secretary: a second needs confirmation and then takes over (V4, §3.3)', async () => {
+  await pool.query("INSERT INTO member_push_tokens (member_id, token) VALUES (?, 'ExponentPushToken[off-sunil]')", [m.sunil]);
+  pushes.length = 0;
   const taken = await call('PATCH', `/users/${sunilUser}`, adminToken, { society_position: 'secretary', member_id: m.sunil });
   assert.strictEqual(taken.status, 409);
   assert.strictEqual(taken.body.code, 'SECRETARY_TAKEN');
@@ -141,6 +159,15 @@ test('one Secretary: a second needs confirmation and then takes over (V4, §3.3)
   const moved = await call('PATCH', `/users/${sunilUser}`, adminToken, { society_position: 'secretary', member_id: m.sunil, replace_secretary: true });
   assert.strictEqual(moved.status, 200);
   assert.strictEqual(moved.body.society_position, 'secretary');
+  // The new Secretary is told, once, with a tap that opens their screen
+  await waitForPush(1);
+  assert.strictEqual(pushes.length, 1);
+  assert.strictEqual(pushes[0].to, 'ExponentPushToken[off-sunil]');
+  assert.deepStrictEqual(pushes[0].data, { type: 'minutes_secretary', sam: T });
+  // Saving again without a change sends nothing more
+  await call('PATCH', `/users/${sunilUser}`, adminToken, { full_name: 'Sunil Silva' });
+  await new Promise((r) => setTimeout(r, 150));
+  assert.strictEqual(pushes.length, 1);
   assert.ok((await permissionsOf('sunil')).includes('minutes'));
   assert.ok(!(await permissionsOf('kamal')).includes('minutes'), 'the old Secretary loses the power at once');
   const [[k]] = await pool.query('SELECT society_position, member_id FROM users WHERE id = ?', [kamalUser]);

@@ -1,4 +1,5 @@
 const { getPool } = require('../db');
+const { sendPushToMembers } = require('./push');
 
 // Society officers (docs/MEETING-MINUTES-REQUIREMENTS.md §2–§3). A system user
 // may hold a Society Position and be linked to the member account they use in
@@ -167,10 +168,32 @@ async function applyUserChanges(conn, target, changes, { actor, replaceSecretary
       }
     }
   }
-  return { disabled: fields.is_active === 0 };
+  // Someone who has just become the (active) Secretary is told so in the app
+  const becameSecretary = next.society_position === 'secretary' && next.is_active !== 0 && next.member_id &&
+    (current.society_position !== 'secretary' || current.member_id !== next.member_id || current.is_active === 0);
+  return { disabled: fields.is_active === 0, newSecretaryMemberId: becameSecretary ? next.member_id : null };
+}
+
+// "You are now the Secretary" (docs/MEETING-MINUTES-REQUIREMENTS.md §3.3 step
+// 5). Sent after the change is committed; a push failure never undoes it.
+// The app opens Me → Meeting minutes (Secretary) from it, switching to this
+// society first when the phone has several.
+async function notifyNewSecretary(pool, tenant, memberId) {
+  try {
+    const [[row]] = await pool.query("SELECT `value` FROM settings WHERE `key` = 'society_name'");
+    const society = row && row.value ? row.value : 'eSamithi';
+    await sendPushToMembers(pool, [memberId], {
+      title: 'ඔබ දැන් ලේකම් · You are now the Secretary',
+      body: `${society}: සභා වාර්තා සකසා ප්‍රකාශයට පත් කිරීමට මම → සමිති නිලධාරී · To prepare and publish meeting minutes: Me → Society officer`,
+      data: { type: 'minutes_secretary', sam: tenant }
+    });
+  } catch (err) {
+    console.error('[officers] secretary push skipped:', err.message);
+  }
 }
 
 module.exports = {
+  notifyNewSecretary,
   POSITIONS,
   ROLES,
   secretaryPermission,

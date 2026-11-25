@@ -57,6 +57,7 @@ router.post('/', async (req, res, next) => {
   } catch (err) { return next(err); }
 
   let conn;
+  let newSecretary = null;
   try {
     conn = await getPool().getConnection();
     await conn.beginTransaction();
@@ -69,12 +70,14 @@ router.post('/', async (req, res, next) => {
     );
     if (Object.keys(changes).length) {
       const target = { id: result.insertId, full_name, role, is_active: 1, society_position: null, member_id: null };
-      await officers.applyUserChanges(conn, target, changes, {
+      const applied = await officers.applyUserChanges(conn, target, changes, {
         actor: await actorOf(req, conn),
         replaceSecretary: req.body.replace_secretary === true
       });
+      newSecretary = applied.newSecretaryMemberId;
     }
     await conn.commit();
+    if (newSecretary) officers.notifyNewSecretary(getPool(), req.tenant, newSecretary);
     res.json({ success: true, id: result.insertId });
   } catch (err) {
     if (conn) await conn.rollback().catch(() => {});
@@ -104,11 +107,12 @@ router.patch('/:id', async (req, res, next) => {
       await conn.rollback();
       return res.status(404).json({ error: 'Unknown user' });
     }
-    const { disabled } = await officers.applyUserChanges(conn, target, changes, {
+    const { disabled, newSecretaryMemberId } = await officers.applyUserChanges(conn, target, changes, {
       actor: await actorOf(req, conn),
       replaceSecretary: req.body.replace_secretary === true
     });
     await conn.commit();
+    if (newSecretaryMemberId) officers.notifyNewSecretary(getPool(), req.tenant, newSecretaryMemberId);
     // A disabled login must not keep a live web session
     if (disabled) await sessions.revokeUser(getPool(), id, 'disabled');
 
