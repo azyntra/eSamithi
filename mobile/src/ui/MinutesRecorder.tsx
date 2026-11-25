@@ -203,9 +203,10 @@ export function MinutesRecorder({ reportId, slug, hasAudio, onUploaded }: { repo
     const bg = tone === 'primary' ? p.primary : tone === 'danger' ? p.danger : p.primarySoft
     const fg = tone === 'soft' ? p.primaryOnSoft : p.onPrimary
     return (
-      <ScalePressable accessibilityRole="button" haptic="impact" onPress={onPress} style={{ flex: 1, minHeight: 64, borderRadius: 32, backgroundColor: bg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm }}>
+      <ScalePressable accessibilityRole="button" haptic="impact" onPress={onPress} style={{ flex: 1, minHeight: 64, borderRadius: 32, backgroundColor: bg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm }}>
         <Ionicons name={icon} size={22} color={fg} />
-        <MText weight="semibold" color={fg}>{label}</MText>
+        {/* Long Sinhala labels wrap inside the button instead of running out of it */}
+        <MText weight="semibold" color={fg} style={{ flexShrink: 1, textAlign: 'center' }}>{label}</MText>
       </ScalePressable>
     )
   }
@@ -250,10 +251,9 @@ export function MinutesRecorder({ reportId, slug, hasAudio, onUploaded }: { repo
           <>
             {phase === 'failed' ? <MText size="caption" weight="semibold" color={p.danger}>{t('mob.mmUploadFailed')}</MText> : null}
             {big('cloud-upload-outline', phase === 'failed' ? t('mob.mmResumeUpload') : t('mob.mmUseRecording'), () => void upload(), 'primary')}
-            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-              <View style={{ flex: 1 }}>{big('refresh', t('mob.mmRecordAgain'), discard, 'soft')}</View>
-              <View style={{ flex: 1 }}>{big('document-attach-outline', t('mob.mmChooseFile'), () => void chooseFile(), 'soft')}</View>
-            </View>
+            {/* Stacked: side by side, the Sinhala labels overlapped (25 Nov 2026) */}
+            {big('refresh', t('mob.mmRecordAgain'), discard, 'soft')}
+            {big('document-attach-outline', t('mob.mmChooseFile'), () => void chooseFile(), 'soft')}
           </>
         )}
       </View>
