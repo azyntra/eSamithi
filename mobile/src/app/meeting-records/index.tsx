@@ -8,6 +8,8 @@ import { useMinutesList, type MinutesRow } from '../../api/minutes'
 import { Chip, EmptyState, ErrorView, Fab, GroupLabel, Screen, SegmentedTabs, SkeletonCards, StaleBanner } from '../../ui'
 import { MinutesRowCard } from '../../ui/minutes'
 
+export { ErrorBoundary } from '../../ui/ErrorScreen'
+
 // Me → Meeting Records (§4.2, §8.1.1): the latest published minutes first,
 // grouped by the month of the meeting. Meeting Minutes is the only category.
 export default function MeetingRecords(): React.ReactElement {

@@ -49,6 +49,12 @@ function currentSlug(): string | undefined {
   return activeApi?.slug ?? BUILD_SAMITHI
 }
 
+// Where crash reports go: the society the member is using now (a testbed
+// society's errors belong on the testbed, not in production's default one)
+export function reportTarget(): { url: string; slug: string | undefined } {
+  return { url: currentApiUrl(), slug: currentSlug() }
+}
+
 export const REFRESH_TOKEN_KEY = 'esamithi.refreshToken' // legacy single-samithi key (migrated on cold start)
 
 export function currentRefreshKey(): string {

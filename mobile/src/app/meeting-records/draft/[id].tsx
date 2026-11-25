@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Alert, Linking, Switch, View } from 'react-native'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator'
 import * as SecureStore from 'expo-secure-store'
 import * as WebBrowser from 'expo-web-browser'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useQueryClient } from '@tanstack/react-query'
 import { useT } from '../../../i18n'
@@ -20,6 +20,7 @@ import { DateField } from '../../../ui/auth'
 import { ScalePressable } from '../../../ui/pressable'
 import { PhotoViewer } from '../../../ui/PhotoViewer'
 import { MText, Pill } from '../../../ui/minutes'
+import { NewMinutesForm } from '../../../ui/NewMinutesForm'
 
 type Step = 'details' | 'pages' | 'recording' | 'publish'
 
@@ -45,10 +46,29 @@ async function preparePage(asset: { uri: string; width?: number; height?: number
 // Pages waiting to upload survive the app closing: kept per society and draft
 const queueKey = (slug: string | undefined, reportId: number): string => `esamithi.mm.queue.${slug ?? 'default'}.${reportId}`
 
-// The Secretary's draft (§8.2.2–§8.2.5): details, pages, recording, publish.
-export default function MinutesDraftEditor(): React.ReactElement {
+// A render error shows a way back instead of an empty screen, and is reported
+export { ErrorBoundary } from '../../../ui/ErrorScreen'
+
+// /meeting-records/draft/new is the new-minutes form; creating the draft
+// turns this same screen into its editor. No navigation happens at that
+// moment (a replace there left Android with a blank window, 25 Nov 2026).
+export default function MinutesDraftRoute(): React.ReactElement {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const reportId = Number(id)
+  const router = useRouter()
+  const { t } = useT()
+  const navigation = useNavigation()
+  const isNew = id === 'new'
+  // Set directly: a <Stack.Screen> title is not re-applied after setParams
+  useLayoutEffect(() => {
+    navigation.setOptions({ title: isNew ? t('mob.mmNewMinutes') : t('mob.mmDraftTitle') })
+  }, [navigation, isNew, t])
+  return isNew
+    ? <NewMinutesForm onCreated={(draft) => router.setParams({ id: String(draft.report_id) })} />
+    : <MinutesDraftEditor key={id} reportId={Number(id)} />
+}
+
+// The Secretary's draft (§8.2.2–§8.2.5): details, pages, recording, publish.
+function MinutesDraftEditor({ reportId }: { reportId: number }): React.ReactElement {
   const { t } = useT()
   const p = usePalette()
   const card = useCardStyle()

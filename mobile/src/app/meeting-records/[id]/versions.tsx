@@ -10,6 +10,8 @@ import { ErrorView, Screen, SkeletonCards, useCardStyle } from '../../../ui'
 import { ScalePressable } from '../../../ui/pressable'
 import { MText, Pill } from '../../../ui/minutes'
 
+export { ErrorBoundary } from '../../../ui/ErrorScreen'
+
 // Version history (§8.1.3): every published version, newest first, each
 // exactly as it was published
 export default function MinutesVersions(): React.ReactElement {

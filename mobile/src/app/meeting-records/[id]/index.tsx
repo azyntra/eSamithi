@@ -16,6 +16,8 @@ import { ScalePressable } from '../../../ui/pressable'
 import { PhotoViewer } from '../../../ui/PhotoViewer'
 import { MText, Pill } from '../../../ui/minutes'
 
+export { ErrorBoundary } from '../../../ui/ErrorScreen'
+
 // The report reader (§8.1.2): the pages one by one (swipe, or the arrows),
 // full-screen zoom on tap, the PDF to save or share, versions and comments.
 // Listening arrives with the 1.7.0 app; until then the recording shows how to

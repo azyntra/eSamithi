@@ -2,7 +2,7 @@ import axios from 'axios'
 import { Platform } from 'react-native'
 import Constants from 'expo-constants'
 import * as Updates from 'expo-updates'
-import { BUILD_API_URL, BUILD_SAMITHI } from '../api/client'
+import { reportTarget } from '../api/client'
 
 // Crash reporting without a tracker SDK (the privacy policy promises none):
 // fatal JS errors and unhandled promise rejections are posted to our own
@@ -23,9 +23,10 @@ export function reportError(err: unknown, isFatal: boolean, context: string): vo
     if (seen.has(key)) return
     seen.add(key)
     sent++
+    const target = reportTarget()
     axios
       .post(
-        `${BUILD_API_URL}/client-errors`,
+        `${target.url}/client-errors`,
         {
           platform: Platform.OS,
           app_version: `${Constants.expoConfig?.version ?? '?'} (${Updates.updateId?.slice(0, 8) ?? 'embedded'})`,
@@ -37,7 +38,7 @@ export function reportError(err: unknown, isFatal: boolean, context: string): vo
         },
         {
           timeout: 10000,
-          headers: BUILD_SAMITHI ? { 'X-Samithi': BUILD_SAMITHI } : undefined
+          headers: target.slug ? { 'X-Samithi': target.slug } : undefined
         }
       )
       .catch(() => {})
