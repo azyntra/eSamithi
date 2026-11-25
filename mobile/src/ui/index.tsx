@@ -323,13 +323,16 @@ export function Button({
           flexDirection: 'row',
           gap: spacing.sm,
           paddingHorizontal: spacing.xl,
+          paddingVertical: spacing.sm,
           backgroundColor: variant === 'secondary' ? p.primarySoft : variant === 'danger' ? p.danger : 'transparent'
         }}
       >
         {/* Label keeps its width while loading so the button doesn't jump */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, opacity: loading ? 0 : 1 }}>
+        {/* flexShrink: a long (Sinhala) label in a half-width button wraps
+            inside it instead of running under its neighbour */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, opacity: loading ? 0 : 1, flexShrink: 1 }}>
           {icon ? <Ionicons name={icon} size={18} color={fg} /> : null}
-          <Text style={{ color: fg, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16) }}>{label}</Text>
+          <Text style={{ color: fg, fontSize: 16, fontFamily: ty.family.bold, lineHeight: ty.lh(16), flexShrink: 1, textAlign: 'center' }}>{label}</Text>
         </View>
         {loading ? (
           <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' }}>
