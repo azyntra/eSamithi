@@ -15,6 +15,10 @@ import '../lib/queryFocus' // wires app-foreground → React Query refetch
 import '../lib/errorReporter' // global JS crash reports → /client-errors
 import { useReducedMotion } from '../motion'
 
+// Last line of defence: a render error anywhere shows a way out and is
+// reported, never a blank window (screens may export their own, closer one)
+export { ErrorBoundary } from '../ui/ErrorScreen'
+
 const queryClient = new QueryClient({
   defaultOptions: {
     // Refetch when the app returns to the foreground or the network reconnects,
@@ -88,7 +92,6 @@ function RootNavigator(): React.ReactElement {
         <Stack.Screen name="meeting-records/[id]/versions" options={{ title: t('mob.mmVersionHistory') }} />
         <Stack.Screen name="meeting-records/[id]/comments" options={{ title: t('mob.mmComments') }} />
         <Stack.Screen name="meeting-records/secretary" options={{ title: t('mob.mmSecretaryTitle') }} />
-        <Stack.Screen name="meeting-records/new" options={{ title: t('mob.mmNewMinutes') }} />
         <Stack.Screen name="meeting-records/draft/[id]" options={{ title: t('mob.mmDraftTitle') }} />
       </Stack.Protected>
       <Stack.Protected guard={status !== 'signedIn'}>

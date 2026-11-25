@@ -10,6 +10,8 @@ import { useProfile } from '../../api/hooks'
 import { Button, Callout, ErrorView, GroupLabel, ListRow, Screen, SkeletonCards, useCardStyle, useToast } from '../../ui'
 import { MinutesRowCard, MText } from '../../ui/minutes'
 
+export { ErrorBoundary } from '../../ui/ErrorScreen'
+
 // The Secretary's starting point (§8.2.1): drafts to continue, published
 // minutes to update, comments waiting for an answer.
 export default function SecretaryHub(): React.ReactElement {
@@ -58,7 +60,7 @@ export default function SecretaryHub(): React.ReactElement {
   const { drafts, published, open_comments } = hub.data
   return (
     <Screen refreshing={hub.isRefetching} onRefresh={() => void hub.refetch()}>
-      <Button label={t('mob.mmNewMinutes')} icon="add-circle-outline" onPress={() => router.push('/meeting-records/new')} />
+      <Button label={t('mob.mmNewMinutes')} icon="add-circle-outline" onPress={() => router.push('/meeting-records/draft/new')} />
       <MText size="caption" color={p.textMuted} style={{ marginTop: spacing.sm }}>{t('mob.mmHubIntro')}</MText>
 
       {drafts.length > 0 ? (

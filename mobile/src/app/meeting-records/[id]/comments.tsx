@@ -15,6 +15,8 @@ import { BottomSheet, Button, EmptyState, ErrorView, Input, ListRow, SegmentedTa
 import { ScalePressable } from '../../../ui/pressable'
 import { MText, Pill } from '../../../ui/minutes'
 
+export { ErrorBoundary } from '../../../ui/ErrorScreen'
+
 type Filter = 'all' | 'open' | 'addressed'
 const DELETE_WINDOW_MS = 15 * 60 * 1000
 
