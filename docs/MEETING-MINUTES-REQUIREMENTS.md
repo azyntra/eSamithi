@@ -1,6 +1,6 @@
 # eSamithi — Meeting Minutes (සභා වාර්තා) Requirements
 
-**Status:** Draft for owner approval · **Date:** 24 November 2026
+**Status:** Approved 24 Nov 2026 · M1–M4 live in production · M5 (1.7.0, recording and listening) built, awaiting Play submission (see §11.1) · **Date:** 24 November 2026, updated 25 November 2026
 **Owner:** Sachira · **Applies to:** `server/` (API), `web/` (office web app and the desktop 1.4.0 shell that loads it), `mobile/` (member app 1.6.1 → 1.7.0)
 **Visual mockups:** <https://claude.ai/artifact/Vrk9dPMn2b2TCcXiAWY8MP> (private until shared from its Share menu). Frames M1–M4 (members), S1–S3 (Secretary), W1–W3 (office web) each cite their section here.
 **Depends on:** `MEMBER-MOBILE-APP-REQUIREMENTS.md` · `MOBILE-APP-REDESIGN-REQUIREMENTS.md` (eSamithi Calm design language, five tabs) · `ESAMITHI-WEB-APP-REQUIREMENTS.md` §4 (web brand) · `MOBILE-STAFF-ATTENDANCE-REQUIREMENTS.md` (the member-as-staff permission pattern this feature reuses)
@@ -925,6 +925,37 @@ Phases M1–M3 do not touch the mobile app. M4 is pure JavaScript on modules alr
 binary (`expo-image-picker`, `expo-image-manipulator`, `expo-file-system`, `expo-sharing`,
 `expo-keep-awake`, gesture-handler, reanimated). The audio areas detect the native module
 (§8.1.2) so the M4 bundle and the M5 bundle share one code path.
+
+### 11.1 Delivery status (25 November 2026)
+
+| Phase | Commits | Status |
+|---|---|---|
+| M0 | 3a2be5ae | Approved 24 Nov 2026 |
+| M1 | 12cb1815, 6b9a0cb9 | Live: API, migration 020 on the production society, web |
+| M2 | fc72c543 | Live: migrations 021–022; private storage `/opt/esamithi-private` (testbed `/opt/server-private`) mounted at `/app/private` and in the nightly backup |
+| M3 | 2b03085a, ed4127b4 | Live: Society → Meeting Records in the office web and desktop shell |
+| M4 | 40e30094 | Live: over-the-air update to 1.6.1 (reaches members once Play approves 1.6.1) |
+| M5 | 567a2a6a, 1748093e | Built: 1.7.0 = version code **13** (`store-assets/esamithi-member-vc13.aab`); privacy page and 3-hour recording links live; waiting for Play upload once 1.6.1 is approved |
+| Follow-ups | e38f0028, 39759adc, 3028a517 | Society name follows renames; comment box clear of the Android navigation bar (OTA to both 1.6.1 and 1.7.0); "You are now the Secretary" push (API deploy pending) |
+
+**Built differently from this document:**
+
+* **No `expo-document-picker`.** `expo-file-system`'s own `File.pickFileAsync` chooses audio files, so 1.7.0 adds only `expo-audio` and `expo-file-system`. Background playback and recording are off, so the only new Android permissions are `RECORD_AUDIO` and `MODIFY_AUDIO_SETTINGS`, with no foreground service.
+* **The microphone is declared not required.** Version code 12 was superseded: Play would have dropped 7 devices without a microphone (`mobile/plugins/withPortraitNotRequired.js`).
+* **Recording links last 3 hours** instead of 30 minutes, so a long reading stays seekable to its end. Pages and PDFs keep 30 minutes.
+* **Pages are reordered with buttons on the phone.** Move earlier, move later and make first are in the page sheet. Drag-and-drop is on the office web only.
+* **"Save or share PDF" opens the PDF in the phone's browser**, which offers download and share, rather than downloading inside the app.
+* **A recording interrupted by the app being killed is not recoverable.** A recording that was *stopped* but not yet uploaded is kept in the app's documents folder and offered again on reopen (§8.2.4).
+* **Not yet built:** the Home "Continue minutes" quick action (§4.2).
+* **Two app runtimes are live.** 1.6.1 phones receive updates from branch `ota-1.6.1`; 1.7.0 phones receive them from `main`. Run `eas fingerprint:compare` against the matching build before each update.
+
+**Still open:**
+
+* Device test of the Secretary flow and of recording (testbed societies only).
+* Play: submit 1.7.0, update Data safety (Audio → voice recordings), and have a native reader check the Sinhala release notes.
+* Assign the real Secretary in Settings → System Users.
+* Confirm the Sinhala vocabulary (§4.4) and the open-decision defaults (§13).
+* Review storage and backup growth after three months (R1).
 
 ---
 
