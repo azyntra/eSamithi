@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCardsHtml, formatPhone, nameSize, numberSize, sheetCount } from './cards'
+import { buildCardsHtml, formatPhone, nameSize, numberSize, sheetCount, hasCardName } from './cards'
 
 const member = (n: number, name: string | null = `Member ${n}`) => ({ id: n, society_id: `S-${String(n).padStart(3, '0')}`, full_name: name })
 
@@ -49,5 +49,15 @@ describe('membership QR cards', () => {
     expect(sheetCount(23)).toBe(3)
     expect(sheetCount(10)).toBe(1)
     expect(sheetCount(0)).toBe(0)
+  })
+})
+
+describe('hasCardName', () => {
+  it('skips members whose name is missing, empty or only spaces', () => {
+    expect(hasCardName({ full_name: 'K. Perera' })).toBe(true)
+    expect(hasCardName({ full_name: 'සුනිල්' })).toBe(true)
+    expect(hasCardName({ full_name: null })).toBe(false)
+    expect(hasCardName({ full_name: '' })).toBe(false)
+    expect(hasCardName({ full_name: '   ' })).toBe(false)
   })
 })

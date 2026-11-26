@@ -26,6 +26,9 @@ export interface CardMember {
   phone?: string | null
 }
 
+/** False for a member with no name (null, empty or only spaces): bulk card printing skips them. */
+export const hasCardName = (m: Pick<CardMember, 'full_name'>): boolean => (m.full_name ?? '').trim() !== ''
+
 export const CARDS_PER_SHEET = 10
 const CARD_W = 85.6
 const CARD_H = 54

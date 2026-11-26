@@ -11,7 +11,7 @@ import { useT } from '@/lib/i18n'
 import { memberLabel } from '@/lib/members'
 import { cn } from '@/lib/utils'
 import { membersApi } from '../api'
-import { buildCardsHtml, sheetCount, type CardMember } from '../cards'
+import { buildCardsHtml, hasCardName, sheetCount, type CardMember } from '../cards'
 import { useMembersSlim } from '../queries'
 import type { QrCardScope } from '../types'
 
@@ -67,10 +67,18 @@ export function PrintCardsDialog({ open, onOpenChange }: { open: boolean; onOpen
   const go = async () => {
     setLoading(true)
     try {
-      const members = await membersApi.qrCards(scope, chosen)
+      // A card with no name is no use to anyone, so members whose name is
+      // empty are left out and the office is told how many.
+      const all = await membersApi.qrCards(scope, chosen)
+      const members = all.filter(hasCardName)
+      const skipped = all.length - members.length
       if (await cards.print(members)) {
-        toast.message(t('members.cardsSummary', { count: members.length, sheets: sheetCount(members.length) }))
+        toast.message(t('members.cardsSummary', { count: members.length, sheets: sheetCount(members.length) }), {
+          description: skipped > 0 ? t('members.cardsSkipped', { count: skipped }) : undefined
+        })
         onOpenChange(false)
+      } else if (skipped > 0 && members.length === 0) {
+        toast.info(t('members.cardsSkipped', { count: skipped }))
       }
     } catch (e) {
       toast.error(errorMessage(e))

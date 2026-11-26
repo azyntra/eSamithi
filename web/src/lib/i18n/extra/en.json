@@ -114,6 +114,7 @@
   "members.cardsPreview": "Preview cards",
   "members.cardsRemove": "Remove {name}",
   "members.cardsScope": "Who to print for",
+  "members.cardsSkipped": "{count} member(s) with no name were left out",
   "members.cardsSummary": "{count} cards on {sheets} A4 sheet(s)",
   "members.cardsTitle": "Print membership QR cards",
   "members.contact": "Contact",

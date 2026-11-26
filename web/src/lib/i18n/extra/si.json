@@ -114,6 +114,7 @@
   "members.cardsPreview": "කාඩ්පත් පෙරදසුන",
   "members.cardsRemove": "{name} ඉවත් කරන්න",
   "members.cardsScope": "මුද්‍රණය කළ යුත්තේ කාටද",
+  "members.cardsSkipped": "නමක් නොමැති සාමාජිකයින් {count}ක් මඟ හැරිණි",
   "members.cardsSummary": "A4 කොළ {sheets}ක කාඩ්පත් {count}ක්",
   "members.cardsTitle": "සාමාජික QR කාඩ්පත් මුද්‍රණය කරන්න",
   "members.contact": "සම්බන්ධතා",
